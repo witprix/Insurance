@@ -3,10 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LIC Policy Dashboard with Auto-Fill</title>
+    <title>LIC Advanced Policy Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- Tesseract.js for Client-Side Image Text Extraction -->
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -26,11 +25,11 @@
         <header class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
             <div>
                 <h1 class="text-3xl font-bold text-slate-900 tracking-tight">LIC Policy Portfolio</h1>
-                <p class="text-slate-500 text-sm mt-1">Advanced tracking with offline OCR auto-fill.</p>
+                <p class="text-slate-500 text-sm mt-1">Advanced multi-layout OCR extraction & analytics.</p>
             </div>
             <button onclick="exportToJson()" class="bg-slate-900 hover:bg-slate-800 text-white px-5 py-2.5 rounded-lg text-sm font-semibold transition-all shadow-md flex items-center gap-2">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                Backup Data (JSON)
+                Backup Data
             </button>
         </header>
 
@@ -55,20 +54,22 @@
             <!-- Add Policy Form -->
             <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200/60 xl:col-span-1 h-fit">
                 
-                <!-- OCR Upload Zone -->
-                <div class="mb-6 p-4 border-2 border-dashed border-slate-300 rounded-xl bg-slate-50 text-center relative hover:bg-slate-100 transition-colors">
-                    <input type="file" id="policyImage" accept="image/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onchange="handleImageUpload(event)">
-                    <div class="flex flex-col items-center gap-2">
-                        <svg class="w-8 h-8 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                <!-- Advanced OCR Upload Zone -->
+                <div class="mb-6 p-5 border-2 border-dashed border-indigo-200 rounded-xl bg-indigo-50/50 text-center relative hover:bg-indigo-50 transition-colors cursor-pointer group">
+                    <input type="file" id="policyImage" accept="image/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" onchange="handleImageUpload(event)">
+                    <div class="flex flex-col items-center gap-2 relative z-0">
+                        <div class="bg-white p-2 rounded-full shadow-sm group-hover:scale-110 transition-transform">
+                            <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                        </div>
                         <div>
-                            <p class="text-sm font-bold text-slate-700">Upload Screenshot to Auto-Fill</p>
-                            <p class="text-xs text-slate-500 mt-1">Extracts details offline securely</p>
+                            <p class="text-sm font-bold text-indigo-900">Scan Policy Screenshot</p>
+                            <p class="text-[11px] text-slate-500 mt-1">Supports Endowment, Money Back, & Whole Life</p>
                         </div>
                     </div>
                 </div>
 
-                <div id="ocrStatus" class="hidden items-center justify-center gap-2 mb-4 p-2 bg-indigo-600 text-white text-xs font-bold rounded-lg shadow-inner">
-                    <div class="spinner"></div> Extracting text... (This may take a few seconds)
+                <div id="ocrStatus" class="hidden items-center justify-center gap-2 mb-4 p-2.5 bg-slate-800 text-white text-xs font-bold rounded-lg shadow-inner">
+                    <div class="spinner"></div> Processing Image Data...
                 </div>
 
                 <form id="policyForm" class="space-y-4">
@@ -79,29 +80,29 @@
                         </div>
                         <div class="col-span-2">
                             <label class="block text-[11px] font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Plan Type</label>
-                            <input type="text" id="pPlanType" placeholder="e.g. Whole Life" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white text-sm">
+                            <input type="text" id="pPlanType" placeholder="e.g. Endowment" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white text-sm font-medium text-indigo-700">
                         </div>
                     </div>
 
                     <div class="grid grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-[11px] font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Basic Sum Assured <span class="text-red-500">*</span></label>
+                            <label class="block text-[11px] font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Sum Assured <span class="text-red-500">*</span></label>
                             <input type="number" id="pSumAssured" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white text-sm">
                         </div>
                         <div>
-                            <label class="block text-[11px] font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Policy Term (Yrs) <span class="text-red-500">*</span></label>
+                            <label class="block text-[11px] font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Policy Term <span class="text-red-500">*</span></label>
                             <input type="number" id="pPolicyTerm" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white text-sm">
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-2 gap-4 bg-slate-50/50 p-4 rounded-xl border border-slate-200 mt-2">
+                    <div class="grid grid-cols-2 gap-4 bg-slate-50/80 p-4 rounded-xl border border-slate-200 mt-2">
                         <div class="col-span-2 pb-1">
                             <p class="text-[11px] font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
-                                <span class="w-2 h-2 rounded-full bg-indigo-500"></span> Premium Details
+                                <span class="w-2 h-2 rounded-full bg-indigo-500"></span> Premium Terms
                             </p>
                         </div>
                         <div>
-                            <label class="block text-[11px] font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Paying Term (Yrs) <span class="text-red-500">*</span></label>
+                            <label class="block text-[11px] font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Paying Term <span class="text-red-500">*</span></label>
                             <input type="number" id="pPayingTerm" required class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm">
                         </div>
                         <div>
@@ -110,7 +111,7 @@
                         </div>
                         <div class="col-span-2">
                             <label class="block text-[11px] font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Payment Mode <span class="text-red-500">*</span></label>
-                            <select id="pMode" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm">
+                            <select id="pMode" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm font-semibold">
                                 <option value="12">Monthly</option>
                                 <option value="4">Quarterly</option>
                                 <option value="2">Half-Yearly</option>
@@ -119,8 +120,8 @@
                         </div>
                     </div>
 
-                    <button type="submit" class="w-full bg-indigo-600 text-white font-bold py-2.5 rounded-lg hover:bg-indigo-700 transition-all mt-6 shadow-sm shadow-indigo-200">
-                        Calculate & Save Policy
+                    <button type="submit" class="w-full bg-indigo-600 text-white font-bold py-3 rounded-lg hover:bg-indigo-700 transition-all mt-6 shadow-sm shadow-indigo-200">
+                        + Save to Portfolio
                     </button>
                 </form>
             </div>
@@ -128,8 +129,8 @@
             <!-- Chart Section -->
             <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200/60 xl:col-span-2 flex flex-col">
                 <div class="flex justify-between items-center mb-6 border-b border-slate-100 pb-3">
-                    <h2 class="text-lg font-bold text-slate-800">Spend vs. Assured Value</h2>
-                    <span class="text-xs font-medium text-slate-400 bg-slate-100 px-2 py-1 rounded">Metrics in INR (₹)</span>
+                    <h2 class="text-lg font-bold text-slate-800">Portfolio Cost Analysis</h2>
+                    <span class="text-xs font-bold text-indigo-700 bg-indigo-50 px-2 py-1 rounded">Metrics in INR (₹)</span>
                 </div>
                 <div class="relative flex-grow min-h-[350px] w-full">
                     <canvas id="spendChart"></canvas>
@@ -143,11 +144,11 @@
                 <table class="w-full text-left border-collapse whitespace-nowrap">
                     <thead>
                         <tr class="bg-slate-50 text-slate-500 text-[11px] uppercase tracking-wider">
-                            <th class="p-4 font-bold border-b border-slate-200">Life Insured & Plan</th>
+                            <th class="p-4 font-bold border-b border-slate-200">Policy Holder & Plan</th>
                             <th class="p-4 font-bold border-b border-slate-200">Sum Assured</th>
-                            <th class="p-4 font-bold border-b border-slate-200">Term Breakdown</th>
+                            <th class="p-4 font-bold border-b border-slate-200">Timeline</th>
                             <th class="p-4 font-bold border-b border-slate-200">Premium Config</th>
-                            <th class="p-4 font-bold border-b border-slate-200 text-right text-indigo-700">Total Spent</th>
+                            <th class="p-4 font-bold border-b border-slate-200 text-right text-indigo-700">Total Invested</th>
                             <th class="p-4 font-bold border-b border-slate-200 text-center">Action</th>
                         </tr>
                     </thead>
@@ -193,7 +194,7 @@
                 grandMonthlyOutflow += metrics.monthlyEquivalent;
                 grandSumAssured += policy.sumAssured;
 
-                chartLabels.push(policy.planType || policy.insured);
+                chartLabels.push(policy.planType || policy.insured.split(' ')[0]);
                 chartSpendData.push(metrics.lifetimeSpend);
                 chartAssuredData.push(policy.sumAssured);
 
@@ -202,23 +203,23 @@
                 tr.innerHTML = `
                     <td class="p-4">
                         <p class="font-bold text-slate-900">${policy.insured}</p>
-                        <p class="text-xs font-medium text-slate-500 mt-0.5">${policy.planType}</p>
+                        <p class="text-xs font-bold text-indigo-600 mt-0.5">${policy.planType}</p>
                     </td>
                     <td class="p-4 font-bold text-emerald-600">${formatMoney(policy.sumAssured)}</td>
                     <td class="p-4">
                         <div class="flex flex-col gap-1 text-xs">
-                            <span class="text-slate-600"><span class="font-bold">${policy.policyTerm}</span> Yrs (Active)</span>
+                            <span class="text-slate-600"><span class="font-bold">${policy.policyTerm}</span> Yrs (Policy)</span>
                             <span class="text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded w-fit"><span class="font-bold">${policy.payingTerm}</span> Yrs (Paying)</span>
                         </div>
                     </td>
                     <td class="p-4">
                         <p class="text-slate-800 font-bold">${formatMoney(policy.installment)}</p>
-                        <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wide mt-0.5">${policy.modeName}</p>
+                        <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wide mt-0.5">${policy.modeName}</p>
                     </td>
                     <td class="p-4 font-black text-right text-indigo-700 text-[15px]">${formatMoney(metrics.lifetimeSpend)}</td>
                     <td class="p-4 text-center">
-                        <button onclick="deletePolicy(${policy.id})" class="text-slate-400 hover:text-red-600 p-2 rounded-lg transition-colors">
-                            <svg class="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                        <button onclick="deletePolicy(${policy.id})" class="text-slate-400 hover:text-red-600 bg-white hover:bg-red-50 p-2 rounded-lg transition-colors border border-transparent hover:border-red-100">
+                            <svg class="w-4 h-4 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                         </button>
                     </td>
                 `;
@@ -241,8 +242,8 @@
                 data: {
                     labels: labels,
                     datasets: [
-                        { label: 'Total Lifetime Spend', data: spendData, backgroundColor: '#6366f1', maxBarThickness: 60, borderRadius: 4 },
-                        { label: 'Basic Sum Assured', data: assuredData, backgroundColor: '#10b981', maxBarThickness: 60, borderRadius: 4 }
+                        { label: 'Total Invested', data: spendData, backgroundColor: '#6366f1', maxBarThickness: 50, borderRadius: 4 },
+                        { label: 'Sum Assured', data: assuredData, backgroundColor: '#10b981', maxBarThickness: 50, borderRadius: 4 }
                     ]
                 },
                 options: {
@@ -254,7 +255,7 @@
             });
         };
 
-        // ===== IMAGE OCR LOGIC =====
+        // ===== ADVANCED OCR LOGIC =====
         const handleImageUpload = (event) => {
             const file = event.target.files[0];
             if (!file) return;
@@ -263,45 +264,50 @@
             status.classList.remove('hidden');
             status.classList.add('flex');
 
-            Tesseract.recognize(
-                file,
-                'eng',
-                { logger: m => { /* Optional: console.log(m) to see progress */ } }
-            ).then(({ data: { text } }) => {
+            Tesseract.recognize(file, 'eng').then(({ data: { text } }) => {
                 parseExtractedText(text);
                 status.classList.add('hidden');
                 status.classList.remove('flex');
-                event.target.value = ''; // Reset input
+                event.target.value = ''; 
             }).catch(err => {
                 console.error(err);
-                alert("Failed to read the image. Please enter details manually.");
+                alert("OCR extraction failed. Please enter details manually.");
                 status.classList.add('hidden');
                 status.classList.remove('flex');
             });
         };
 
         const parseExtractedText = (text) => {
-            // Remove commas to make number parsing easier
+            // Normalize: Remove commas to prevent NaN issues on extraction
             const cleanText = text.replace(/,/g, ''); 
 
             // 1. Life Insured Name
-            const nameMatch = cleanText.match(/Life Insured[\s\S]*?\n([A-Z\s]+)\[/i) || cleanText.match(/Life Insured\s+([A-Z\s]+)/i);
-            if (nameMatch) document.getElementById('pInsured').value = nameMatch[1].trim();
+            // Handles missing [LA] tag and parses until generic next-line words appear
+            const nameMatch = cleanText.match(/Life Insured.*?\n([A-Z\s]+)(?:\[LA\]|\*|Nominee|Basic|$)/i);
+            if (nameMatch) {
+                document.getElementById('pInsured').value = nameMatch[1].replace(/\[LA\]/gi, '').trim();
+            }
 
             // 2. Sum Assured
             const sumMatch = cleanText.match(/Basic Sum assured[\s\S]*?(?:₹|Rs\.?)\s*(\d+)/i);
             if (sumMatch) document.getElementById('pSumAssured').value = sumMatch[1];
 
-            // 3. Plan Type
-            const planMatch = cleanText.match(/Plan type[\s\S]*?\n(.*?)\n/i);
-            if (planMatch && planMatch[1].length < 30) document.getElementById('pPlanType').value = planMatch[1].trim();
+            // 3. Plan Type - Explicit checking for known plans (Endowment, Money Back, Whole Life)
+            const planMatch = cleanText.match(/(Whole Life|Endowment|Money Back)/i);
+            if (planMatch) {
+                document.getElementById('pPlanType').value = planMatch[1];
+            } else {
+                const fallbackPlan = cleanText.match(/Plan type\s*\n?([A-Za-z\s]+)/i);
+                if(fallbackPlan) document.getElementById('pPlanType').value = fallbackPlan[1].substring(0,20).trim();
+            }
 
             // 4. Policy Term
             const pTermMatch = cleanText.match(/Policy term[\s\S]*?(\d+)\s*years/i);
             if (pTermMatch) document.getElementById('pPolicyTerm').value = pTermMatch[1];
 
-            // 5. Premium Paying Term
-            const ppTermMatch = cleanText.match(/Premium paying term[\s\S]*?(\d+)\s*years/i);
+            // 5. Premium Paying/Payment Term 
+            // Handles both "Premium payment term" and "Premium paying term" variations
+            const ppTermMatch = cleanText.match(/Premium pay(?:ing|ment) term[\s\S]*?(\d+)\s*years/i);
             if (ppTermMatch) document.getElementById('pPayingTerm').value = ppTermMatch[1];
 
             // 6. Installment Premium
