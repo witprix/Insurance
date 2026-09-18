@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LIC Policy Dashboard with Auto-Fill</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Tesseract.js for Client-Side Image Text Extraction -->
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        ::-webkit-scrollbar { height: 8px; width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        .spinner { border: 3px solid rgba(255,255,255,0.3); border-radius: 50%; border-top-color: #fff; width: 16px; height: 16px; animation: spin 1s ease-in-out infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 p-4 md:p-8">
+
+    <div class="max-w-7xl mx-auto space-y-6">
+        
+        <header class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+            <div>
+                <h1 class="text-3xl font-bold text-slate-900 tracking-tight">LIC Policy Portfolio</h1>
+                <p class="text-slate-500 text-sm mt-1">Advanced tracking with offline OCR auto-fill.</p>
+            </div>
+            <button onclick="exportToJson()" class="bg-slate-900 hover:bg-slate-800 text-white px-5 py-2.5 rounded-lg text-sm font-semibold transition-all shadow-md flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                Backup Data (JSON)
+            </button>
+        </header>
+
+        <!-- Summary Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200/60 relative overflow-hidden">
+                <p class="text-xs font-bold text-slate-500 uppercase tracking-widest">Total Sum Assured</p>
+                <p class="text-3xl font-black text-emerald-600 mt-2 tracking-tight" id="totalSumAssured">₹0</p>
+            </div>
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200/60">
+                <p class="text-xs font-bold text-slate-500 uppercase tracking-widest">Monthly Premium Outflow</p>
+                <p class="text-3xl font-black text-amber-500 mt-2 tracking-tight" id="monthlyOutflow">₹0</p>
+            </div>
+            <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-l-indigo-600 border-y border-r border-slate-200/60 bg-indigo-50/30">
+                <p class="text-xs font-bold text-slate-500 uppercase tracking-widest">Total Lifetime Spend</p>
+                <p class="text-3xl font-black text-indigo-700 mt-2 tracking-tight" id="lifetimeSpend">₹0</p>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+            
+            <!-- Add Policy Form -->
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200/60 xl:col-span-1 h-fit">
+                
+                <!-- OCR Upload Zone -->
+                <div class="mb-6 p-4 border-2 border-dashed border-slate-300 rounded-xl bg-slate-50 text-center relative hover:bg-slate-100 transition-colors">
+                    <input type="file" id="policyImage" accept="image/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onchange="handleImageUpload(event)">
+                    <div class="flex flex-col items-center gap-2">
+                        <svg class="w-8 h-8 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                        <div>
+                            <p class="text-sm font-bold text-slate-700">Upload Screenshot to Auto-Fill</p>
+                            <p class="text-xs text-slate-500 mt-1">Extracts details offline securely</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="ocrStatus" class="hidden items-center justify-center gap-2 mb-4 p-2 bg-indigo-600 text-white text-xs font-bold rounded-lg shadow-inner">
+                    <div class="spinner"></div> Extracting text... (This may take a few seconds)
+                </div>
+
+                <form id="policyForm" class="space-y-4">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="col-span-2">
+                            <label class="block text-[11px] font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Life Insured <span class="text-red-500">*</span></label>
+                            <input type="text" id="pInsured" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white text-sm">
+                        </div>
+                        <div class="col-span-2">
+                            <label class="block text-[11px] font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Plan Type</label>
+                            <input type="text" id="pPlanType" placeholder="e.g. Whole Life" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white text-sm">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Basic Sum Assured <span class="text-red-500">*</span></label>
+                            <input type="number" id="pSumAssured" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Policy Term (Yrs) <span class="text-red-500">*</span></label>
+                            <input type="number" id="pPolicyTerm" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white text-sm">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4 bg-slate-50/50 p-4 rounded-xl border border-slate-200 mt-2">
+                        <div class="col-span-2 pb-1">
+                            <p class="text-[11px] font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
+                                <span class="w-2 h-2 rounded-full bg-indigo-500"></span> Premium Details
+                            </p>
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Paying Term (Yrs) <span class="text-red-500">*</span></label>
+                            <input type="number" id="pPayingTerm" required class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Installment (₹) <span class="text-red-500">*</span></label>
+                            <input type="number" id="pInstallment" required class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm">
+                        </div>
+                        <div class="col-span-2">
+                            <label class="block text-[11px] font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Payment Mode <span class="text-red-500">*</span></label>
+                            <select id="pMode" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm">
+                                <option value="12">Monthly</option>
+                                <option value="4">Quarterly</option>
+                                <option value="2">Half-Yearly</option>
+                                <option value="1">Yearly</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="w-full bg-indigo-600 text-white font-bold py-2.5 rounded-lg hover:bg-indigo-700 transition-all mt-6 shadow-sm shadow-indigo-200">
+                        Calculate & Save Policy
+                    </button>
+                </form>
+            </div>
+
+            <!-- Chart Section -->
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200/60 xl:col-span-2 flex flex-col">
+                <div class="flex justify-between items-center mb-6 border-b border-slate-100 pb-3">
+                    <h2 class="text-lg font-bold text-slate-800">Spend vs. Assured Value</h2>
+                    <span class="text-xs font-medium text-slate-400 bg-slate-100 px-2 py-1 rounded">Metrics in INR (₹)</span>
+                </div>
+                <div class="relative flex-grow min-h-[350px] w-full">
+                    <canvas id="spendChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Data Table -->
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200/60 overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse whitespace-nowrap">
+                    <thead>
+                        <tr class="bg-slate-50 text-slate-500 text-[11px] uppercase tracking-wider">
+                            <th class="p-4 font-bold border-b border-slate-200">Life Insured & Plan</th>
+                            <th class="p-4 font-bold border-b border-slate-200">Sum Assured</th>
+                            <th class="p-4 font-bold border-b border-slate-200">Term Breakdown</th>
+                            <th class="p-4 font-bold border-b border-slate-200">Premium Config</th>
+                            <th class="p-4 font-bold border-b border-slate-200 text-right text-indigo-700">Total Spent</th>
+                            <th class="p-4 font-bold border-b border-slate-200 text-center">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody" class="text-sm divide-y divide-slate-100"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let policies = [];
+        let chartInstance = null;
+        
+        const formatMoney = (amount) => {
+            return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(amount);
+        };
+
+        const calculatePolicyMetrics = (policy) => {
+            const lifetimeSpend = policy.payingTerm * policy.installment * policy.modeValue;
+            const monthlyEquivalent = (policy.installment * policy.modeValue) / 12;
+            return {
+                lifetimeSpend: Math.max(0, lifetimeSpend),
+                monthlyEquivalent: Math.max(0, monthlyEquivalent)
+            };
+        };
+
+        const updateDashboard = () => {
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
+
+            let grandTotalSpend = 0;
+            let grandMonthlyOutflow = 0;
+            let grandSumAssured = 0;
+            
+            let chartLabels = [];
+            let chartSpendData = [];
+            let chartAssuredData = [];
+
+            policies.forEach((policy) => {
+                const metrics = calculatePolicyMetrics(policy);
+                
+                grandTotalSpend += metrics.lifetimeSpend;
+                grandMonthlyOutflow += metrics.monthlyEquivalent;
+                grandSumAssured += policy.sumAssured;
+
+                chartLabels.push(policy.planType || policy.insured);
+                chartSpendData.push(metrics.lifetimeSpend);
+                chartAssuredData.push(policy.sumAssured);
+
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50/80 transition-colors";
+                tr.innerHTML = `
+                    <td class="p-4">
+                        <p class="font-bold text-slate-900">${policy.insured}</p>
+                        <p class="text-xs font-medium text-slate-500 mt-0.5">${policy.planType}</p>
+                    </td>
+                    <td class="p-4 font-bold text-emerald-600">${formatMoney(policy.sumAssured)}</td>
+                    <td class="p-4">
+                        <div class="flex flex-col gap-1 text-xs">
+                            <span class="text-slate-600"><span class="font-bold">${policy.policyTerm}</span> Yrs (Active)</span>
+                            <span class="text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded w-fit"><span class="font-bold">${policy.payingTerm}</span> Yrs (Paying)</span>
+                        </div>
+                    </td>
+                    <td class="p-4">
+                        <p class="text-slate-800 font-bold">${formatMoney(policy.installment)}</p>
+                        <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wide mt-0.5">${policy.modeName}</p>
+                    </td>
+                    <td class="p-4 font-black text-right text-indigo-700 text-[15px]">${formatMoney(metrics.lifetimeSpend)}</td>
+                    <td class="p-4 text-center">
+                        <button onclick="deletePolicy(${policy.id})" class="text-slate-400 hover:text-red-600 p-2 rounded-lg transition-colors">
+                            <svg class="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            document.getElementById('totalSumAssured').innerText = formatMoney(grandSumAssured);
+            document.getElementById('monthlyOutflow').innerText = formatMoney(grandMonthlyOutflow);
+            document.getElementById('lifetimeSpend').innerText = formatMoney(grandTotalSpend);
+
+            updateChart(chartLabels, chartSpendData, chartAssuredData);
+        };
+
+        const updateChart = (labels, spendData, assuredData) => {
+            const ctx = document.getElementById('spendChart').getContext('2d');
+            if (chartInstance) chartInstance.destroy();
+
+            chartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        { label: 'Total Lifetime Spend', data: spendData, backgroundColor: '#6366f1', maxBarThickness: 60, borderRadius: 4 },
+                        { label: 'Basic Sum Assured', data: assuredData, backgroundColor: '#10b981', maxBarThickness: 60, borderRadius: 4 }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
+                    plugins: { tooltip: { callbacks: { label: function(c) { return c.dataset.label + ': ' + formatMoney(c.raw); } } } }
+                }
+            });
+        };
+
+        // ===== IMAGE OCR LOGIC =====
+        const handleImageUpload = (event) => {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const status = document.getElementById('ocrStatus');
+            status.classList.remove('hidden');
+            status.classList.add('flex');
+
+            Tesseract.recognize(
+                file,
+                'eng',
+                { logger: m => { /* Optional: console.log(m) to see progress */ } }
+            ).then(({ data: { text } }) => {
+                parseExtractedText(text);
+                status.classList.add('hidden');
+                status.classList.remove('flex');
+                event.target.value = ''; // Reset input
+            }).catch(err => {
+                console.error(err);
+                alert("Failed to read the image. Please enter details manually.");
+                status.classList.add('hidden');
+                status.classList.remove('flex');
+            });
+        };
+
+        const parseExtractedText = (text) => {
+            // Remove commas to make number parsing easier
+            const cleanText = text.replace(/,/g, ''); 
+
+            // 1. Life Insured Name
+            const nameMatch = cleanText.match(/Life Insured[\s\S]*?\n([A-Z\s]+)\[/i) || cleanText.match(/Life Insured\s+([A-Z\s]+)/i);
+            if (nameMatch) document.getElementById('pInsured').value = nameMatch[1].trim();
+
+            // 2. Sum Assured
+            const sumMatch = cleanText.match(/Basic Sum assured[\s\S]*?(?:₹|Rs\.?)\s*(\d+)/i);
+            if (sumMatch) document.getElementById('pSumAssured').value = sumMatch[1];
+
+            // 3. Plan Type
+            const planMatch = cleanText.match(/Plan type[\s\S]*?\n(.*?)\n/i);
+            if (planMatch && planMatch[1].length < 30) document.getElementById('pPlanType').value = planMatch[1].trim();
+
+            // 4. Policy Term
+            const pTermMatch = cleanText.match(/Policy term[\s\S]*?(\d+)\s*years/i);
+            if (pTermMatch) document.getElementById('pPolicyTerm').value = pTermMatch[1];
+
+            // 5. Premium Paying Term
+            const ppTermMatch = cleanText.match(/Premium paying term[\s\S]*?(\d+)\s*years/i);
+            if (ppTermMatch) document.getElementById('pPayingTerm').value = ppTermMatch[1];
+
+            // 6. Installment Premium
+            const instMatch = cleanText.match(/Installment premium[\s\S]*?(?:₹|Rs\.?)\s*(\d+)/i);
+            if (instMatch) document.getElementById('pInstallment').value = instMatch[1];
+
+            // 7. Payment Mode
+            const modeMatch = cleanText.match(/Payment Mode[\s\S]*?(Monthly|Quarterly|Yearly|Half-Yearly)/i);
+            if (modeMatch) {
+                const modeStr = modeMatch[1].toLowerCase();
+                const select = document.getElementById('pMode');
+                if (modeStr.includes('month')) select.value = "12";
+                else if (modeStr.includes('quarter')) select.value = "4";
+                else if (modeStr.includes('half')) select.value = "2";
+                else if (modeStr.includes('year')) select.value = "1";
+            }
+        };
+
+        const deletePolicy = (id) => {
+            policies = policies.filter(p => p.id !== id);
+            updateDashboard();
+        };
+
+        const exportToJson = () => {
+            const dataStr = JSON.stringify(policies, null, 2);
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(new Blob([dataStr], { type: "application/json" }));
+            a.download = `lic_portfolio_${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+        };
+
+        document.getElementById('policyForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const modeSelect = document.getElementById('pMode');
+            policies.push({
+                id: Date.now(),
+                insured: document.getElementById('pInsured').value,
+                planType: document.getElementById('pPlanType').value,
+                sumAssured: parseFloat(document.getElementById('pSumAssured').value),
+                policyTerm: parseInt(document.getElementById('pPolicyTerm').value),
+                payingTerm: parseInt(document.getElementById('pPayingTerm').value),
+                installment: parseFloat(document.getElementById('pInstallment').value),
+                modeValue: parseInt(modeSelect.value),
+                modeName: modeSelect.options[modeSelect.selectedIndex].text
+            });
+            updateDashboard();
+            this.reset();
+        });
+
+        updateDashboard();
+    </script>
+</body>
+</html>
