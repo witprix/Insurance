@@ -3,175 +3,316 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LIC Advanced Policy Dashboard</title>
+    <title>LIC Comprehensive Analytics Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
     <style>
         body { font-family: 'Inter', sans-serif; }
         ::-webkit-scrollbar { height: 8px; width: 8px; }
-        ::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 4px; }
+        ::-webkit-scrollbar-track { background: #f8fafc; border-radius: 4px; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-        .spinner { border: 3px solid rgba(255,255,255,0.3); border-radius: 50%; border-top-color: #fff; width: 16px; height: 16px; animation: spin 1s ease-in-out infinite; }
+        
+        .spinner { 
+            border: 3px solid rgba(79,70,229,0.3); 
+            border-radius: 50%; 
+            border-top-color: #4f46e5; 
+            width: 20px; 
+            height: 20px; 
+            animation: spin 1s ease-in-out infinite; 
+        }
+        .spinner-white {
+            border-color: rgba(255,255,255,0.3);
+            border-top-color: #ffffff;
+        }
         @keyframes spin { to { transform: rotate(360deg); } }
+        
+        input[type="date"]::-webkit-calendar-picker-indicator { cursor: pointer; opacity: 0.6; transition: 0.2s; }
+        input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
+
+        /* Toast Animation */
+        @keyframes slideInRight {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes fadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; }
+        }
+        .toast-enter { animation: slideInRight 0.3s ease-out forwards; }
+        .toast-exit { animation: fadeOut 0.3s ease-out forwards; }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-800 p-4 md:p-8">
+<body class="bg-slate-100 text-slate-800 p-4 md:p-6 lg:p-8 min-h-screen">
 
-    <div class="max-w-7xl mx-auto space-y-6">
+    <div id="toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col gap-3 pointer-events-none"></div>
+
+    <div class="max-w-[1400px] mx-auto space-y-6 relative">
         
-        <header class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+        <header class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4 bg-white p-6 rounded-2xl shadow-sm border border-slate-200/60">
             <div>
-                <h1 class="text-3xl font-bold text-slate-900 tracking-tight">LIC Policy Portfolio</h1>
-                <p class="text-slate-500 text-sm mt-1">Advanced multi-layout OCR extraction & analytics.</p>
+                <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">LIC Master Portfolio</h1>
+                <p class="text-slate-500 text-sm mt-1 font-medium">Multi-upload OCR extraction, offline analytics & secure backups.</p>
             </div>
-            <button onclick="exportToJson()" class="bg-slate-900 hover:bg-slate-800 text-white px-5 py-2.5 rounded-lg text-sm font-semibold transition-all shadow-md flex items-center gap-2">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                Backup Data
-            </button>
+            <div class="flex flex-wrap items-center gap-3">
+                <!-- Hidden file input for importing JSON -->
+                <input type="file" id="importFile" accept=".json" class="hidden" onchange="importFromJson(event)">
+                <button onclick="document.getElementById('importFile').click()" class="bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 px-4 py-2.5 rounded-xl text-sm font-bold transition-all shadow-sm flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                    Import JSON
+                </button>
+                <button onclick="exportToJson()" class="bg-slate-900 hover:bg-slate-800 text-white px-4 py-2.5 rounded-xl text-sm font-bold transition-all shadow-md flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                    Backup Data
+                </button>
+            </div>
         </header>
 
-        <!-- Summary Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200/60 relative overflow-hidden">
-                <p class="text-xs font-bold text-slate-500 uppercase tracking-widest">Total Sum Assured</p>
-                <p class="text-3xl font-black text-emerald-600 mt-2 tracking-tight" id="totalSumAssured">₹0</p>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/60 transition-transform hover:-translate-y-1">
+                <p class="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Total Lifetime Spend</p>
+                <p class="text-2xl font-black text-slate-800 mt-1 tracking-tight" id="metricSpend">₹0</p>
             </div>
-            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200/60">
-                <p class="text-xs font-bold text-slate-500 uppercase tracking-widest">Monthly Premium Outflow</p>
-                <p class="text-3xl font-black text-amber-500 mt-2 tracking-tight" id="monthlyOutflow">₹0</p>
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/60 transition-transform hover:-translate-y-1">
+                <p class="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Base Sum Assured</p>
+                <p class="text-2xl font-black text-emerald-600 mt-1 tracking-tight" id="metricSum">₹0</p>
             </div>
-            <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-l-indigo-600 border-y border-r border-slate-200/60 bg-indigo-50/30">
-                <p class="text-xs font-bold text-slate-500 uppercase tracking-widest">Total Lifetime Spend</p>
-                <p class="text-3xl font-black text-indigo-700 mt-2 tracking-tight" id="lifetimeSpend">₹0</p>
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/60 transition-transform hover:-translate-y-1">
+                <p class="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Accrued Bonuses</p>
+                <p class="text-2xl font-black text-blue-600 mt-1 tracking-tight" id="metricBonus">₹0</p>
+            </div>
+            <div class="bg-indigo-600 p-5 rounded-2xl shadow-md border border-indigo-500 relative overflow-hidden transition-transform hover:-translate-y-1">
+                <div class="absolute -right-4 -top-4 opacity-10"><svg class="w-24 h-24 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg></div>
+                <p class="text-[11px] font-bold text-indigo-200 uppercase tracking-widest relative z-10">Est. Total Return Value</p>
+                <p class="text-2xl font-black text-white mt-1 tracking-tight relative z-10" id="metricTotalReturn">₹0</p>
             </div>
         </div>
 
-        <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+        <div class="grid grid-cols-1 xl:grid-cols-12 gap-6">
             
-            <!-- Add Policy Form -->
-            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200/60 xl:col-span-1 h-fit">
+            <div class="xl:col-span-4 flex flex-col gap-6">
                 
-                <!-- Advanced OCR Upload Zone -->
-                <div class="mb-6 p-5 border-2 border-dashed border-indigo-200 rounded-xl bg-indigo-50/50 text-center relative hover:bg-indigo-50 transition-colors cursor-pointer group">
-                    <input type="file" id="policyImage" accept="image/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" onchange="handleImageUpload(event)">
-                    <div class="flex flex-col items-center gap-2 relative z-0">
-                        <div class="bg-white p-2 rounded-full shadow-sm group-hover:scale-110 transition-transform">
-                            <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                        </div>
-                        <div>
-                            <p class="text-sm font-bold text-indigo-900">Scan Policy Screenshot</p>
-                            <p class="text-[11px] text-slate-500 mt-1">Supports Endowment, Money Back, & Whole Life</p>
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/60 h-fit">
+                    
+                    <!-- Advanced Multi-OCR Upload Zone -->
+                    <div class="mb-5 p-6 border-2 border-dashed border-indigo-200 rounded-xl bg-indigo-50/40 text-center relative hover:bg-indigo-50 transition-colors cursor-pointer group">
+                        <!-- Multiple file support added here -->
+                        <input type="file" id="policyImage" multiple accept="image/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" title="Select one or more policy screenshots" onchange="handleMultipleImageUpload(event)">
+                        <div class="flex flex-col items-center gap-3 relative z-0">
+                            <div class="bg-white p-3 rounded-full shadow-sm group-hover:scale-110 group-hover:shadow-md transition-all">
+                                <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                            </div>
+                            <div>
+                                <p class="text-sm font-extrabold text-indigo-900">Upload Policy Screenshots</p>
+                                <p class="text-xs text-slate-500 mt-1 font-medium">Select multiple files to auto-extract to table</p>
+                            </div>
                         </div>
                     </div>
+
+                    <!-- Processing Status Container -->
+                    <div id="ocrStatusContainer" class="hidden flex-col gap-2 mb-5">
+                        <!-- Status items will be injected here -->
+                    </div>
+
+                    <form id="policyForm" class="space-y-5">
+                        <div class="flex items-center gap-2 mb-2">
+                            <hr class="flex-grow border-slate-200">
+                            <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Or Enter Manually</span>
+                            <hr class="flex-grow border-slate-200">
+                        </div>
+                        
+                        <!-- Core Details -->
+                        <div class="space-y-3">
+                            <div class="grid grid-cols-2 gap-3">
+                                <div class="col-span-2">
+                                    <label class="block text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wider">Life Insured <span class="text-red-500">*</span></label>
+                                    <input type="text" id="pInsured" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm font-semibold text-slate-900">
+                                </div>
+                                <div class="col-span-1">
+                                    <label class="block text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wider">Plan Type</label>
+                                    <input type="text" id="pPlanType" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm font-bold text-indigo-700">
+                                </div>
+                                <div class="col-span-1">
+                                    <label class="block text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wider">Sum Assured <span class="text-red-500">*</span></label>
+                                    <input type="number" id="pSumAssured" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm font-bold text-emerald-600">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Timeline & Dates -->
+                        <div class="space-y-3">
+                            <h3 class="text-xs font-black text-slate-800 uppercase tracking-widest border-b pb-2">Timeline Dates</h3>
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wider">Commencement</label>
+                                    <input type="date" id="pCommencement" class="w-full px-2 py-1.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 text-xs font-medium">
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wider">Est. Maturity</label>
+                                    <input type="date" id="pMaturity" class="w-full px-2 py-1.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 text-xs font-medium">
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wider">Next Payout</label>
+                                    <input type="date" id="pNextPayout" class="w-full px-2 py-1.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 text-xs font-medium">
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wider">Next Premium</label>
+                                    <input type="date" id="pNextPremium" class="w-full px-2 py-1.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 text-xs font-medium">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Accrued Bonuses -->
+                        <div class="space-y-3 bg-blue-50/50 p-3 rounded-xl border border-blue-100">
+                            <h3 class="text-xs font-black text-blue-900 uppercase tracking-widest">Accrued Bonuses (₹)</h3>
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wider">Vested / Guar.</label>
+                                    <input type="number" id="pVestedBonus" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm font-semibold text-blue-700" value="0">
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wider">Interim / Loyalty</label>
+                                    <input type="number" id="pInterimBonus" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm font-semibold text-blue-700" value="0">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Premium & Payment Logic -->
+                        <div class="space-y-3 bg-slate-50 p-3 rounded-xl border border-slate-200">
+                            <h3 class="text-xs font-black text-slate-800 uppercase tracking-widest">Premium Configurations</h3>
+                            <div class="grid grid-cols-3 gap-3">
+                                <div class="col-span-1">
+                                    <label class="block text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wider">Term (Yrs)</label>
+                                    <input type="number" id="pPolicyTerm" required placeholder="Policy" class="w-full px-2 py-2 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm font-semibold mb-2">
+                                </div>
+                                <div class="col-span-1">
+                                    <label class="block text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wider">Pay Yrs <span class="text-red-500">*</span></label>
+                                    <input type="number" id="pPayingTerm" required class="w-full px-2 py-2 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm font-semibold">
+                                </div>
+                                <div class="col-span-1">
+                                    <label class="block text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wider">Mode <span class="text-red-500">*</span></label>
+                                    <select id="pMode" class="w-full px-1 py-2 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 text-xs font-bold">
+                                        <option value="12">Monthly</option><option value="4">Quarterly</option><option value="2">Half-Year</option><option value="1">Yearly</option>
+                                    </select>
+                                </div>
+                                <div class="col-span-1">
+                                    <label class="block text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wider">Instal. (₹) <span class="text-red-500">*</span></label>
+                                    <input type="number" id="pInstallment" required class="w-full px-2 py-2 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm font-bold text-slate-800">
+                                </div>
+                                <div class="col-span-2">
+                                    <label class="block text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wider">Rider Prm. (₹)</label>
+                                    <input type="number" id="pRiderPremium" class="w-full px-2 py-2 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm font-semibold text-slate-600" value="0">
+                                </div>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="w-full bg-slate-900 text-white font-black py-3.5 rounded-xl hover:bg-slate-800 transition-all mt-4 shadow-lg shadow-slate-200">
+                            Calculate & Add to Portfolio
+                        </button>
+                    </form>
                 </div>
-
-                <div id="ocrStatus" class="hidden items-center justify-center gap-2 mb-4 p-2.5 bg-slate-800 text-white text-xs font-bold rounded-lg shadow-inner">
-                    <div class="spinner"></div> Processing Image Data...
-                </div>
-
-                <form id="policyForm" class="space-y-4">
-                    <div class="grid grid-cols-2 gap-4">
-                        <div class="col-span-2">
-                            <label class="block text-[11px] font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Life Insured <span class="text-red-500">*</span></label>
-                            <input type="text" id="pInsured" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white text-sm">
-                        </div>
-                        <div class="col-span-2">
-                            <label class="block text-[11px] font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Plan Type</label>
-                            <input type="text" id="pPlanType" placeholder="e.g. Endowment" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white text-sm font-medium text-indigo-700">
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-[11px] font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Sum Assured <span class="text-red-500">*</span></label>
-                            <input type="number" id="pSumAssured" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white text-sm">
-                        </div>
-                        <div>
-                            <label class="block text-[11px] font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Policy Term <span class="text-red-500">*</span></label>
-                            <input type="number" id="pPolicyTerm" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white text-sm">
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-4 bg-slate-50/80 p-4 rounded-xl border border-slate-200 mt-2">
-                        <div class="col-span-2 pb-1">
-                            <p class="text-[11px] font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
-                                <span class="w-2 h-2 rounded-full bg-indigo-500"></span> Premium Terms
-                            </p>
-                        </div>
-                        <div>
-                            <label class="block text-[11px] font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Paying Term <span class="text-red-500">*</span></label>
-                            <input type="number" id="pPayingTerm" required class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm">
-                        </div>
-                        <div>
-                            <label class="block text-[11px] font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Installment (₹) <span class="text-red-500">*</span></label>
-                            <input type="number" id="pInstallment" required class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm">
-                        </div>
-                        <div class="col-span-2">
-                            <label class="block text-[11px] font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Payment Mode <span class="text-red-500">*</span></label>
-                            <select id="pMode" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm font-semibold">
-                                <option value="12">Monthly</option>
-                                <option value="4">Quarterly</option>
-                                <option value="2">Half-Yearly</option>
-                                <option value="1">Yearly</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <button type="submit" class="w-full bg-indigo-600 text-white font-bold py-3 rounded-lg hover:bg-indigo-700 transition-all mt-6 shadow-sm shadow-indigo-200">
-                        + Save to Portfolio
-                    </button>
-                </form>
             </div>
 
-            <!-- Chart Section -->
-            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200/60 xl:col-span-2 flex flex-col">
-                <div class="flex justify-between items-center mb-6 border-b border-slate-100 pb-3">
-                    <h2 class="text-lg font-bold text-slate-800">Portfolio Cost Analysis</h2>
-                    <span class="text-xs font-bold text-indigo-700 bg-indigo-50 px-2 py-1 rounded">Metrics in INR (₹)</span>
+            <div class="xl:col-span-8 flex flex-col gap-6">
+                
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/60 flex flex-col">
+                    <div class="flex justify-between items-center mb-6 border-b border-slate-100 pb-3">
+                        <h2 class="text-xl font-extrabold text-slate-800">Return on Investment Analysis</h2>
+                        <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest bg-slate-100 px-3 py-1.5 rounded-md">Spend vs Total Returns (Sum + Bonus)</span>
+                    </div>
+                    <div class="relative flex-grow min-h-[380px] w-full">
+                        <canvas id="spendChart"></canvas>
+                    </div>
                 </div>
-                <div class="relative flex-grow min-h-[350px] w-full">
-                    <canvas id="spendChart"></canvas>
-                </div>
-            </div>
-        </div>
 
-        <!-- Data Table -->
-        <div class="bg-white rounded-xl shadow-sm border border-slate-200/60 overflow-hidden">
-            <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse whitespace-nowrap">
-                    <thead>
-                        <tr class="bg-slate-50 text-slate-500 text-[11px] uppercase tracking-wider">
-                            <th class="p-4 font-bold border-b border-slate-200">Policy Holder & Plan</th>
-                            <th class="p-4 font-bold border-b border-slate-200">Sum Assured</th>
-                            <th class="p-4 font-bold border-b border-slate-200">Timeline</th>
-                            <th class="p-4 font-bold border-b border-slate-200">Premium Config</th>
-                            <th class="p-4 font-bold border-b border-slate-200 text-right text-indigo-700">Total Invested</th>
-                            <th class="p-4 font-bold border-b border-slate-200 text-center">Action</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tableBody" class="text-sm divide-y divide-slate-100"></tbody>
-                </table>
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden">
+                    <div class="p-5 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
+                        <h2 class="text-lg font-bold text-slate-800">Detailed Policy Ledger</h2>
+                        <button onclick="clearAllData()" class="text-xs font-bold text-red-500 hover:text-red-700 bg-white border border-red-200 px-3 py-1.5 rounded-lg transition-colors">Clear All</button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse whitespace-nowrap">
+                            <thead>
+                                <tr class="bg-white text-slate-400 text-[10px] uppercase tracking-widest border-b border-slate-200">
+                                    <th class="px-5 py-4 font-bold">Policy & Insured</th>
+                                    <th class="px-5 py-4 font-bold">Important Dates</th>
+                                    <th class="px-5 py-4 font-bold">Total Returns (Sum+Bonus)</th>
+                                    <th class="px-5 py-4 font-bold text-right text-slate-800">Total Lifetime Spend</th>
+                                    <th class="px-5 py-4 font-bold text-center">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tableBody" class="text-sm divide-y divide-slate-100 bg-white">
+                                <!-- Empty state fallback handled in JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
+
         </div>
     </div>
 
     <script>
+        // Core State
         let policies = [];
         let chartInstance = null;
         
+        // ===== UTILITY FUNCTIONS =====
         const formatMoney = (amount) => {
-            return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(amount);
+            return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(amount || 0);
+        };
+        
+        const formatDate = (dateStr) => {
+            if(!dateStr) return "-";
+            const d = new Date(dateStr);
+            if(isNaN(d)) return "-";
+            return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
         };
 
+        // Advanced Custom Toast Notification System
+        const showToast = (message, type = 'success') => {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            
+            // Define styles based on success or error (Negative testing feedback)
+            const baseClasses = "toast-enter pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg border text-sm font-bold min-w-[250px] max-w-[400px]";
+            const typeClasses = type === 'success' 
+                ? "bg-emerald-50 border-emerald-200 text-emerald-800" 
+                : "bg-red-50 border-red-200 text-red-800";
+            
+            const icon = type === 'success' 
+                ? `<svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>`
+                : `<svg class="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>`;
+
+            toast.className = `${baseClasses} ${typeClasses}`;
+            toast.innerHTML = `${icon} <span class="flex-grow">${message}</span>`;
+            
+            container.appendChild(toast);
+
+            // Auto-remove after 4 seconds
+            setTimeout(() => {
+                toast.classList.replace('toast-enter', 'toast-exit');
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
+        };
+
+        // ===== CALCULATION LOGIC =====
         const calculatePolicyMetrics = (policy) => {
-            const lifetimeSpend = policy.payingTerm * policy.installment * policy.modeValue;
-            const monthlyEquivalent = (policy.installment * policy.modeValue) / 12;
+            const safeInstallment = parseFloat(policy.installment) || 0;
+            const safeRider = parseFloat(policy.riderPremium) || 0;
+            const safeMode = parseInt(policy.modeValue) || 1;
+            const safePayingTerm = parseInt(policy.payingTerm) || 0;
+
+            const totalMonthlyPremium = safeInstallment + safeRider;
+            const lifetimeSpend = safePayingTerm * totalMonthlyPremium * safeMode;
+            const totalReturns = (parseFloat(policy.sumAssured) || 0) + (parseFloat(policy.vestedBonus) || 0) + (parseFloat(policy.interimBonus) || 0);
+            
             return {
                 lifetimeSpend: Math.max(0, lifetimeSpend),
-                monthlyEquivalent: Math.max(0, monthlyEquivalent)
+                totalReturns: Math.max(0, totalReturns)
             };
         };
 
@@ -180,45 +321,54 @@
             tbody.innerHTML = '';
 
             let grandTotalSpend = 0;
-            let grandMonthlyOutflow = 0;
             let grandSumAssured = 0;
+            let grandTotalBonus = 0;
             
             let chartLabels = [];
             let chartSpendData = [];
-            let chartAssuredData = [];
+            let chartSumAssuredData = [];
+            let chartBonusData = [];
+
+            if (policies.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="px-5 py-12 text-center text-slate-400 font-medium">No policies added yet. Upload screenshots or enter details manually.</td></tr>`;
+            }
 
             policies.forEach((policy) => {
                 const metrics = calculatePolicyMetrics(policy);
+                const policyTotalBonus = (parseFloat(policy.vestedBonus) || 0) + (parseFloat(policy.interimBonus) || 0);
                 
                 grandTotalSpend += metrics.lifetimeSpend;
-                grandMonthlyOutflow += metrics.monthlyEquivalent;
-                grandSumAssured += policy.sumAssured;
+                grandSumAssured += (parseFloat(policy.sumAssured) || 0);
+                grandTotalBonus += policyTotalBonus;
 
-                chartLabels.push(policy.planType || policy.insured.split(' ')[0]);
+                chartLabels.push(policy.planType || policy.insured.split(' ')[0] || 'Unknown');
                 chartSpendData.push(metrics.lifetimeSpend);
-                chartAssuredData.push(policy.sumAssured);
+                chartSumAssuredData.push(parseFloat(policy.sumAssured) || 0);
+                chartBonusData.push(policyTotalBonus);
 
                 const tr = document.createElement('tr');
-                tr.className = "hover:bg-slate-50/80 transition-colors";
+                tr.className = "hover:bg-slate-50/60 transition-colors";
                 tr.innerHTML = `
-                    <td class="p-4">
+                    <td class="px-5 py-4">
                         <p class="font-bold text-slate-900">${policy.insured}</p>
                         <p class="text-xs font-bold text-indigo-600 mt-0.5">${policy.planType}</p>
+                        <p class="text-[10px] font-medium text-slate-500 mt-1">Pays: ${formatMoney((parseFloat(policy.installment)||0) + (parseFloat(policy.riderPremium)||0))} / ${policy.modeName}</p>
                     </td>
-                    <td class="p-4 font-bold text-emerald-600">${formatMoney(policy.sumAssured)}</td>
-                    <td class="p-4">
-                        <div class="flex flex-col gap-1 text-xs">
-                            <span class="text-slate-600"><span class="font-bold">${policy.policyTerm}</span> Yrs (Policy)</span>
-                            <span class="text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded w-fit"><span class="font-bold">${policy.payingTerm}</span> Yrs (Paying)</span>
+                    <td class="px-5 py-4">
+                        <div class="flex flex-col gap-1.5 text-[11px] font-medium text-slate-600">
+                            <span class="flex justify-between w-40"><span>Commenced:</span> <span class="font-bold text-slate-800">${formatDate(policy.commencement)}</span></span>
+                            <span class="flex justify-between w-40"><span>Matures:</span> <span class="font-bold text-slate-800">${formatDate(policy.maturity)}</span></span>
+                            <span class="flex justify-between w-40"><span>Next Prem:</span> <span class="font-bold text-slate-800">${formatDate(policy.nextPremium)}</span></span>
                         </div>
                     </td>
-                    <td class="p-4">
-                        <p class="text-slate-800 font-bold">${formatMoney(policy.installment)}</p>
-                        <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wide mt-0.5">${policy.modeName}</p>
+                    <td class="px-5 py-4">
+                        <p class="font-black text-emerald-600 text-[15px]">${formatMoney(metrics.totalReturns)}</p>
+                        <p class="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-wide">Base: ${formatMoney(policy.sumAssured)}</p>
+                        <p class="text-[10px] font-bold text-blue-500 mt-0.5 uppercase tracking-wide">Bonus: ${formatMoney(policyTotalBonus)}</p>
                     </td>
-                    <td class="p-4 font-black text-right text-indigo-700 text-[15px]">${formatMoney(metrics.lifetimeSpend)}</td>
-                    <td class="p-4 text-center">
-                        <button onclick="deletePolicy(${policy.id})" class="text-slate-400 hover:text-red-600 bg-white hover:bg-red-50 p-2 rounded-lg transition-colors border border-transparent hover:border-red-100">
+                    <td class="px-5 py-4 font-black text-right text-slate-800 text-[15px] align-top">${formatMoney(metrics.lifetimeSpend)}</td>
+                    <td class="px-5 py-4 text-center align-top">
+                        <button onclick="deletePolicy(${policy.id})" title="Delete Policy" class="text-slate-400 hover:text-red-500 hover:bg-red-50 p-2 rounded-lg transition-colors border border-transparent hover:border-red-100">
                             <svg class="w-4 h-4 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                         </button>
                     </td>
@@ -226,137 +376,338 @@
                 tbody.appendChild(tr);
             });
 
-            document.getElementById('totalSumAssured').innerText = formatMoney(grandSumAssured);
-            document.getElementById('monthlyOutflow').innerText = formatMoney(grandMonthlyOutflow);
-            document.getElementById('lifetimeSpend').innerText = formatMoney(grandTotalSpend);
+            // Update Header Cards
+            document.getElementById('metricSpend').innerText = formatMoney(grandTotalSpend);
+            document.getElementById('metricSum').innerText = formatMoney(grandSumAssured);
+            document.getElementById('metricBonus').innerText = formatMoney(grandTotalBonus);
+            document.getElementById('metricTotalReturn').innerText = formatMoney(grandSumAssured + grandTotalBonus);
 
-            updateChart(chartLabels, chartSpendData, chartAssuredData);
+            updateStackedChart(chartLabels, chartSpendData, chartSumAssuredData, chartBonusData);
         };
 
-        const updateChart = (labels, spendData, assuredData) => {
+        const updateStackedChart = (labels, spendData, sumData, bonusData) => {
             const ctx = document.getElementById('spendChart').getContext('2d');
             if (chartInstance) chartInstance.destroy();
 
             chartInstance = new Chart(ctx, {
                 type: 'bar',
                 data: {
-                    labels: labels,
+                    labels: labels.length > 0 ? labels : ['No Data'],
                     datasets: [
-                        { label: 'Total Invested', data: spendData, backgroundColor: '#6366f1', maxBarThickness: 50, borderRadius: 4 },
-                        { label: 'Sum Assured', data: assuredData, backgroundColor: '#10b981', maxBarThickness: 50, borderRadius: 4 }
+                        { 
+                            label: 'Total Lifetime Spend', 
+                            data: spendData.length > 0 ? spendData : [0], 
+                            backgroundColor: '#1e293b', 
+                            stack: 'Stack 0',
+                            maxBarThickness: 50,
+                            borderRadius: 4
+                        },
+                        { 
+                            label: 'Base Sum Assured', 
+                            data: sumData.length > 0 ? sumData : [0], 
+                            backgroundColor: '#10b981', 
+                            stack: 'Stack 1',
+                            maxBarThickness: 50
+                        },
+                        { 
+                            label: 'Accrued Bonuses', 
+                            data: bonusData.length > 0 ? bonusData : [0], 
+                            backgroundColor: '#3b82f6', 
+                            stack: 'Stack 1',
+                            maxBarThickness: 50,
+                            borderRadius: { topLeft: 4, topRight: 4, bottomLeft: 0, bottomRight: 0 }
+                        }
                     ]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
                     interaction: { mode: 'index', intersect: false },
-                    plugins: { tooltip: { callbacks: { label: function(c) { return c.dataset.label + ': ' + formatMoney(c.raw); } } } }
+                    plugins: { 
+                        tooltip: { 
+                            backgroundColor: 'rgba(15, 23, 42, 0.95)',
+                            titleFont: { family: "'Inter', sans-serif", size: 13, weight: '700' },
+                            bodyFont: { family: "'Inter', sans-serif", size: 13, weight: '500' },
+                            padding: 12,
+                            callbacks: { 
+                                label: function(c) { return ' ' + c.dataset.label + ': ' + formatMoney(c.raw); } 
+                            } 
+                        },
+                        legend: {
+                            labels: { usePointStyle: true, boxWidth: 8, font: { family: "'Inter', sans-serif", weight: '600' } }
+                        }
+                    },
+                    scales: {
+                        x: { grid: { display: false }, stacked: true, ticks: { font: { family: "'Inter', sans-serif", weight: '600' }, color: '#64748b' } },
+                        y: { 
+                            stacked: true, 
+                            border: { display: false },
+                            grid: { color: '#f1f5f9' },
+                            ticks: { 
+                                font: { family: "'Inter', sans-serif", weight: '600' }, color: '#94a3b8',
+                                callback: function(value) {
+                                    if (value >= 100000) return '₹' + (value / 100000).toFixed(2) + 'L';
+                                    if (value >= 1000) return '₹' + (value / 1000).toFixed(0) + 'K';
+                                    return '₹' + value;
+                                }
+                            }
+                        }
+                    }
                 }
             });
         };
 
-        // ===== ADVANCED OCR LOGIC =====
-        const handleImageUpload = (event) => {
-            const file = event.target.files[0];
-            if (!file) return;
+        
+        const parseOCRDate = (dateStr) => {
+            if(!dateStr) return "";
+            const months = {jan:'01',feb:'02',mar:'03',apr:'04',may:'05',jun:'06',jul:'07',aug:'08',sep:'09',oct:'10',nov:'11',dec:'12'};
+            const parts = dateStr.trim().split(/[\s-]+/);
+            if(parts.length >= 3) {
+                let day = parts[0].padStart(2, '0');
+                let month = months[parts[1].toLowerCase().substring(0,3)];
+                let year = parts[2];
+                if(month && year.length === 4) return `${year}-${month}-${day}`;
+            }
+            return "";
+        };
 
-            const status = document.getElementById('ocrStatus');
-            status.classList.remove('hidden');
-            status.classList.add('flex');
+        const handleMultipleImageUpload = async (event) => {
+            const files = Array.from(event.target.files);
+            if (files.length === 0) return;
 
-            Tesseract.recognize(file, 'eng').then(({ data: { text } }) => {
-                parseExtractedText(text);
-                status.classList.add('hidden');
-                status.classList.remove('flex');
-                event.target.value = ''; 
-            }).catch(err => {
-                console.error(err);
-                alert("OCR extraction failed. Please enter details manually.");
-                status.classList.add('hidden');
-                status.classList.remove('flex');
-            });
+            const statusContainer = document.getElementById('ocrStatusContainer');
+            statusContainer.classList.remove('hidden');
+            statusContainer.classList.add('flex');
+
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                
+                // File Type Check (Negative Testing)
+                if (!file.type.startsWith('image/')) {
+                    showToast(`Skipped ${file.name} - Not a valid image.`, 'error');
+                    continue;
+                }
+
+                // Create Status UI Element
+                const fileStatusId = `status-${Date.now()}-${i}`;
+                const statusEl = document.createElement('div');
+                statusEl.id = fileStatusId;
+                statusEl.className = "flex items-center justify-between p-3 bg-indigo-600 text-white text-xs font-bold rounded-lg shadow-inner";
+                statusEl.innerHTML = `<div class="flex items-center gap-2"><div class="spinner spinner-white"></div> Processing ${file.name}...</div>`;
+                statusContainer.appendChild(statusEl);
+
+                try {
+                    const result = await Tesseract.recognize(file, 'eng');
+                    const text = result.data.text;
+                    
+                    // Core Content Check (Negative Testing - ensuring it's an LIC policy)
+                    if (!text.match(/Life Insured|Sum assured|Premium|Policy details/i)) {
+                        throw new Error("No policy keywords found. Not a valid LIC document.");
+                    }
+                    
+                    const extractedPolicy = parseExtractedText(text);
+                    extractedPolicy.id = Date.now() + i; // Unique ID
+                    
+                    // Directly add to table for batch upload UX
+                    policies.push(extractedPolicy);
+                    updateDashboard();
+                    
+                    // Success UI
+                    const el = document.getElementById(fileStatusId);
+                    el.className = "flex items-center justify-between p-3 bg-emerald-600 text-white text-xs font-bold rounded-lg shadow-inner";
+                    el.innerHTML = `<div class="flex items-center gap-2"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> Added ${extractedPolicy.insured}'s policy.</div>`;
+                    
+                    showToast(`Successfully parsed ${file.name}`);
+
+                } catch (err) {
+                    console.error("OCR Error on file", file.name, err);
+                    const el = document.getElementById(fileStatusId);
+                    el.className = "flex items-center justify-between p-3 bg-red-600 text-white text-xs font-bold rounded-lg shadow-inner";
+                    el.innerHTML = `<div class="flex items-center gap-2"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg> Failed to read ${file.name}</div>`;
+                    
+                    showToast(`Extraction failed for ${file.name}: ${err.message || 'Poor image quality.'}`, 'error');
+                }
+            }
+
+            // Cleanup Status Container after some time
+            setTimeout(() => {
+                statusContainer.innerHTML = '';
+                statusContainer.classList.add('hidden');
+                statusContainer.classList.remove('flex');
+                event.target.value = ''; // Reset input
+            }, 6000);
         };
 
         const parseExtractedText = (text) => {
-            // Normalize: Remove commas to prevent NaN issues on extraction
             const cleanText = text.replace(/,/g, ''); 
+            const policyData = {
+                insured: "Unknown Insured",
+                planType: "Unknown Plan",
+                sumAssured: 0,
+                commencement: "",
+                maturity: "",
+                nextPayout: "",
+                nextPremium: "",
+                vestedBonus: 0,
+                interimBonus: 0,
+                policyTerm: 0,
+                payingTerm: 0,
+                installment: 0,
+                riderPremium: 0,
+                modeValue: 1, // Default Yearly
+                modeName: "Yearly"
+            };
 
-            // 1. Life Insured Name
-            // Handles missing [LA] tag and parses until generic next-line words appear
-            const nameMatch = cleanText.match(/Life Insured.*?\n([A-Z\s]+)(?:\[LA\]|\*|Nominee|Basic|$)/i);
-            if (nameMatch) {
-                document.getElementById('pInsured').value = nameMatch[1].replace(/\[LA\]/gi, '').trim();
+            try {
+                // Identity
+                const nameMatch = cleanText.match(/Life Insured.*?\n([A-Z\s]+)(?:\[LA\]|\*|Nominee|Basic|$)/i);
+                if (nameMatch) policyData.insured = nameMatch[1].replace(/\[LA\]/gi, '').trim();
+
+                const planMatch = cleanText.match(/(Whole Life|Endowment|Money Back)/i);
+                if (planMatch) policyData.planType = planMatch[1];
+
+                // Dates
+                const commMatch = cleanText.match(/Commencement date[\s\S]*?(\d{1,2}\s+[A-Za-z]{3}\s+\d{4})/i);
+                if(commMatch) policyData.commencement = parseOCRDate(commMatch[1]);
+
+                const matMatch = cleanText.match(/Est\.? Maturity date[\s\S]*?(\d{1,2}\s+[A-Za-z]{3}\s+\d{4})/i);
+                if(matMatch) policyData.maturity = parseOCRDate(matMatch[1]);
+
+                const payoutMatch = cleanText.match(/Next Payout date[\s\S]*?(\d{1,2}\s+[A-Za-z]{3}\s+\d{4})/i);
+                if(payoutMatch) policyData.nextPayout = parseOCRDate(payoutMatch[1]);
+
+                const nPremMatch = cleanText.match(/Next premium date[\s\S]*?(\d{1,2}\s+[A-Za-z]{3}\s+\d{4})/i);
+                if(nPremMatch) policyData.nextPremium = parseOCRDate(nPremMatch[1]);
+
+                // Base Amounts
+                const sumMatch = cleanText.match(/Basic Sum assured[\s\S]*?(?:₹|Rs\.?)\s*(\d+)/i);
+                if (sumMatch) policyData.sumAssured = parseFloat(sumMatch[1]) || 0;
+                
+                // Terms
+                const pTermMatch = cleanText.match(/Policy term[\s\S]*?(\d+)\s*years/i);
+                if (pTermMatch) policyData.policyTerm = parseInt(pTermMatch[1]) || 0;
+
+                const ppTermMatch = cleanText.match(/Premium pay(?:ing|ment) term[\s\S]*?(\d+)\s*years/i);
+                if (ppTermMatch) policyData.payingTerm = parseInt(ppTermMatch[1]) || 0;
+
+                // Bonuses
+                const vestedMatch = cleanText.match(/Vested bonus[^\d]*(\d+)/i);
+                if(vestedMatch) policyData.vestedBonus = parseFloat(vestedMatch[1]) || 0;
+
+                const interimMatch = cleanText.match(/Interim bonus[^\d]*(\d+)/i);
+                if(interimMatch) policyData.interimBonus = parseFloat(interimMatch[1]) || 0;
+
+                // Premiums & Modes
+                const instMatch = cleanText.match(/Installment premium[\s\S]*?(?:₹|Rs\.?)\s*(\d+)/i);
+                if (instMatch) policyData.installment = parseFloat(instMatch[1]) || 0;
+
+                const riderMatch = cleanText.match(/Rider premium[^\d]*(\d+)/i);
+                if(riderMatch) policyData.riderPremium = parseFloat(riderMatch[1]) || 0;
+
+                const modeMatch = cleanText.match(/Payment Mode[\s\S]*?(Monthly|Quarterly|Yearly|Half-Yearly)/i);
+                if (modeMatch) {
+                    const modeStr = modeMatch[1].toLowerCase();
+                    if (modeStr.includes('month')) { policyData.modeValue = 12; policyData.modeName = "Monthly"; }
+                    else if (modeStr.includes('quarter')) { policyData.modeValue = 4; policyData.modeName = "Quarterly"; }
+                    else if (modeStr.includes('half')) { policyData.modeValue = 2; policyData.modeName = "Half-Yearly"; }
+                }
+            } catch (e) {
+                console.warn("Regex parsing encountered issues, using strict fallbacks.", e);
             }
 
-            // 2. Sum Assured
-            const sumMatch = cleanText.match(/Basic Sum assured[\s\S]*?(?:₹|Rs\.?)\s*(\d+)/i);
-            if (sumMatch) document.getElementById('pSumAssured').value = sumMatch[1];
-
-            // 3. Plan Type - Explicit checking for known plans (Endowment, Money Back, Whole Life)
-            const planMatch = cleanText.match(/(Whole Life|Endowment|Money Back)/i);
-            if (planMatch) {
-                document.getElementById('pPlanType').value = planMatch[1];
-            } else {
-                const fallbackPlan = cleanText.match(/Plan type\s*\n?([A-Za-z\s]+)/i);
-                if(fallbackPlan) document.getElementById('pPlanType').value = fallbackPlan[1].substring(0,20).trim();
-            }
-
-            // 4. Policy Term
-            const pTermMatch = cleanText.match(/Policy term[\s\S]*?(\d+)\s*years/i);
-            if (pTermMatch) document.getElementById('pPolicyTerm').value = pTermMatch[1];
-
-            // 5. Premium Paying/Payment Term 
-            // Handles both "Premium payment term" and "Premium paying term" variations
-            const ppTermMatch = cleanText.match(/Premium pay(?:ing|ment) term[\s\S]*?(\d+)\s*years/i);
-            if (ppTermMatch) document.getElementById('pPayingTerm').value = ppTermMatch[1];
-
-            // 6. Installment Premium
-            const instMatch = cleanText.match(/Installment premium[\s\S]*?(?:₹|Rs\.?)\s*(\d+)/i);
-            if (instMatch) document.getElementById('pInstallment').value = instMatch[1];
-
-            // 7. Payment Mode
-            const modeMatch = cleanText.match(/Payment Mode[\s\S]*?(Monthly|Quarterly|Yearly|Half-Yearly)/i);
-            if (modeMatch) {
-                const modeStr = modeMatch[1].toLowerCase();
-                const select = document.getElementById('pMode');
-                if (modeStr.includes('month')) select.value = "12";
-                else if (modeStr.includes('quarter')) select.value = "4";
-                else if (modeStr.includes('half')) select.value = "2";
-                else if (modeStr.includes('year')) select.value = "1";
-            }
+            return policyData;
         };
 
         const deletePolicy = (id) => {
             policies = policies.filter(p => p.id !== id);
             updateDashboard();
+            showToast('Policy deleted.', 'success');
         };
 
+        const clearAllData = () => {
+            if (policies.length === 0) return;
+            // Re-implementing a safer UI confirm without alert()
+            policies = [];
+            updateDashboard();
+            showToast('All policies cleared.', 'success');
+        }
+
         const exportToJson = () => {
+            if (policies.length === 0) {
+                showToast('No data available to export.', 'error');
+                return;
+            }
             const dataStr = JSON.stringify(policies, null, 2);
             const a = document.createElement('a');
             a.href = URL.createObjectURL(new Blob([dataStr], { type: "application/json" }));
-            a.download = `lic_portfolio_${new Date().toISOString().split('T')[0]}.json`;
+            a.download = `lic_master_portfolio_${new Date().toISOString().split('T')[0]}.json`;
             a.click();
+            showToast('Data exported successfully!', 'success');
         };
 
+        const importFromJson = (event) => {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const importedData = JSON.parse(e.target.result);
+                    if (Array.isArray(importedData)) {
+                        policies = importedData;
+                        updateDashboard();
+                        showToast(`Successfully imported ${policies.length} policies!`, 'success');
+                    } else {
+                        throw new Error("Invalid JSON structure");
+                    }
+                } catch (err) {
+                    console.error("JSON Import Error", err);
+                    showToast('Failed to import JSON file. Data is corrupted.', 'error');
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = ''; // Reset
+        };
+
+        // Manual form submission handler
         document.getElementById('policyForm').addEventListener('submit', function(e) {
             e.preventDefault();
             const modeSelect = document.getElementById('pMode');
+            
+            // Validate negative numbers explicitly
+            const sum = parseFloat(document.getElementById('pSumAssured').value);
+            if(sum < 0) { showToast("Sum assured cannot be negative.", "error"); return; }
+
             policies.push({
                 id: Date.now(),
                 insured: document.getElementById('pInsured').value,
-                planType: document.getElementById('pPlanType').value,
-                sumAssured: parseFloat(document.getElementById('pSumAssured').value),
-                policyTerm: parseInt(document.getElementById('pPolicyTerm').value),
-                payingTerm: parseInt(document.getElementById('pPayingTerm').value),
-                installment: parseFloat(document.getElementById('pInstallment').value),
+                planType: document.getElementById('pPlanType').value || "Manual Entry",
+                sumAssured: sum || 0,
+                commencement: document.getElementById('pCommencement').value,
+                maturity: document.getElementById('pMaturity').value,
+                nextPayout: document.getElementById('pNextPayout').value,
+                nextPremium: document.getElementById('pNextPremium').value,
+                vestedBonus: Math.max(0, parseFloat(document.getElementById('pVestedBonus').value) || 0),
+                interimBonus: Math.max(0, parseFloat(document.getElementById('pInterimBonus').value) || 0),
+                policyTerm: Math.max(0, parseInt(document.getElementById('pPolicyTerm').value) || 0),
+                payingTerm: Math.max(0, parseInt(document.getElementById('pPayingTerm').value) || 0),
+                installment: Math.max(0, parseFloat(document.getElementById('pInstallment').value) || 0),
+                riderPremium: Math.max(0, parseFloat(document.getElementById('pRiderPremium').value) || 0),
                 modeValue: parseInt(modeSelect.value),
                 modeName: modeSelect.options[modeSelect.selectedIndex].text
             });
             updateDashboard();
             this.reset();
+            
+            // Reset bonus and rider defaults
+            document.getElementById('pVestedBonus').value = "0";
+            document.getElementById('pInterimBonus').value = "0";
+            document.getElementById('pRiderPremium').value = "0";
+            
+            showToast('Manual policy added successfully!', 'success');
         });
 
+        // Initialize empty state
         updateDashboard();
     </script>
 </body>
