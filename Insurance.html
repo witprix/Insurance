@@ -440,6 +440,11 @@ small:empty{display:none}
           <input id="f-maturity" type="date">
           <small id="sm-maturity">Leave empty for renewable policies.</small>
         </div>
+        <div class="field">
+          <label for="f-dob" id="lb-dob">Life assured's date of birth</label>
+          <input id="f-dob" type="date">
+          <small id="sm-dob">Optional. Shows the age at the start, at the last premium and at maturity. For a children's policy, use the child's date of birth.</small>
+        </div>
         <div class="field" id="fld-ppt">
           <label for="f-ppt">Premium paying term (years)</label>
           <input id="f-ppt" type="number" inputmode="numeric" min="0" step="1" placeholder="Same as policy term">
@@ -482,11 +487,6 @@ small:empty{display:none}
           <div class="field full">
             <label for="h-members">Members covered</label>
             <input id="h-members" maxlength="80" placeholder="For example, self, spouse, 2 children" autocomplete="off">
-          </div>
-          <div class="field">
-            <label for="h-dob">Eldest insured person's date of birth</label>
-            <input id="h-dob" type="date">
-            <small>Used for the senior citizen limit (60 and over) and the age-based premium increase.</small>
           </div>
           <div class="field">
             <label for="h-cont">Continuous cover since</label>
@@ -806,10 +806,10 @@ function clean(p){
 }
 function samples(){
   return [
-    {id:'s1',sample:true,name:'LIC Jeevan Anand',type:'life',insurer:'LIC of India',number:'',start:'2018-03-10',maturity:'2043-03-10',ppt:'',premium:36000,freq:'yearly',inc:0,cover:1000000,benefit:''},
+    {id:'s1',sample:true,name:'LIC Jeevan Anand',type:'life',insurer:'LIC of India',number:'',dob:'1988-09-12',start:'2018-03-10',maturity:'2043-03-10',ppt:'',premium:36000,freq:'yearly',inc:0,cover:1000000,benefit:''},
     {id:'s2',sample:true,name:'Family floater health plan',type:'health',insurer:'Health insurer',number:'',start:'2021-07-01',maturity:'',ppt:'',premium:24500,freq:'yearly',inc:8,cover:1000000,benefit:'',plan:'floater',covers:'self',members:'Self, spouse, 2 children',dob:'1985-06-15',contFrom:'',ped:3,incSenior:10,changes:[]},
-    {id:'s3',sample:true,name:'SBI pension scheme',type:'pension',insurer:'SBI',number:'',start:'2020-04-05',maturity:'2045-04-05',ppt:'',premium:5000,freq:'monthly',inc:0,cover:'',benefit:3200000},
-    {id:'s4',sample:true,name:'LIC term plan',type:'life',insurer:'LIC of India',number:'',start:'2022-01-15',maturity:'2052-01-15',ppt:20,premium:3200,freq:'quarterly',inc:0,cover:10000000,benefit:''},
+    {id:'s3',sample:true,name:'SBI pension scheme',type:'pension',insurer:'SBI',number:'',dob:'1980-03-20',start:'2020-04-05',maturity:'2045-04-05',ppt:'',premium:5000,freq:'monthly',inc:0,cover:'',benefit:3200000},
+    {id:'s4',sample:true,name:'LIC term plan',type:'life',insurer:'LIC of India',number:'',dob:'1988-09-12',start:'2022-01-15',maturity:'2052-01-15',ppt:20,premium:3200,freq:'quarterly',inc:0,cover:10000000,benefit:''},
     {id:'s5',sample:true,name:'Parents senior citizen plan',type:'health',insurer:'Health insurer',number:'',start:'2023-08-15',maturity:'',ppt:'',premium:42000,freq:'yearly',inc:10,cover:500000,benefit:'',plan:'senior',covers:'parents',members:'Father, mother',dob:'1958-03-10',contFrom:'',ped:2,incSenior:10,changes:[{date:'2026-08-15',amount:39000}]}
   ];
 }
@@ -1073,7 +1073,8 @@ function renderGantt(list){
     const p=a.p, s=pos(a.start), pe=pos(a.payEnd), e=pos(a.end);
     const frac=clamp((TODAY-a.start)/(a.payEnd-a.start),0,1)*100;
     const open=!a.hasMat;
-    const sub=fmtC(a.total)+' in total, '+fmtDate(a.start)+' to '+(a.hasMat?fmtDate(a.end):(a.ageEnd?'renewable, planned to age '+a.p.untilAge+' ('+a.end.getFullYear()+')':'renewable, projected to '+state.horizon+(a.endAge!=null?' (age '+a.endAge+')':'')));
+    const ag=n=>(n!=null?' (age '+n+')':'');
+    const sub=fmtC(a.total)+' in total, '+fmtDate(a.start)+ag(a.ageStart)+' to '+(a.hasMat?fmtDate(a.end)+ag(a.endAge):(a.ageEnd?'renewable, planned to age '+a.p.untilAge+' ('+a.end.getFullYear()+')':'renewable, projected to '+state.horizon+(a.endAge!=null?' (age '+a.endAge+')':'')));
     const tail=(e-pe>0.3)?'<span class="g-tail" style="left:'+pe+'%;width:'+(e-pe)+'%"></span>':'';
     const mat=a.hasMat?'<span class="g-mat" style="left:'+e+'%"></span>':'';
     return '<div class="g-row" style="--c:'+TYPES[p.type].color+'">'+
@@ -1219,6 +1220,7 @@ function renderCards(list){
     let kv='';
     kv+='<dt>Premium</dt><dd>'+fmt(p.premium)+' '+f.adv+(Number(p.inc)>0?', rising '+p.inc+'% a year':'')+((a.h&&p.incSenior!==''&&p.incSenior!=null)?', '+p.incSenior+'% once 60 or over':'')+'</dd>';
     kv+='<dt>Started</dt><dd>'+fmtDate(a.start)+(a.ageStart!=null?' (age '+a.ageStart+')':'')+'</dd>';
+    if(!a.h&&a.ageNow!=null) kv+='<dt>Life assured\'s age</dt><dd>'+a.ageNow+' now</dd>';
     kv+='<dt>Last premium</dt><dd>'+(a.lastPremium?fmtDate(a.lastPremium)+(a.ageLast!=null?' (age '+a.ageLast+')':''):'None')+'</dd>';
     kv+='<dt>'+(a.h?'Planned until':'Matures')+'</dt><dd>'+(a.hasMat?fmtDate(a.end)+(a.endAge!=null?' (age '+a.endAge+')':''):(a.ageEnd?'Age '+p.untilAge+', on '+fmtDate(a.end):'Renewable, projected to '+state.horizon+(a.endAge!=null?' (age '+a.endAge+')':'')))+'</dd>';
     kv+='<dt>Next payment</dt><dd>'+(a.next?fmtDate(a.next.date)+', '+rel(a.next.date).toLowerCase():'None left')+'</dd>';
@@ -1297,6 +1299,8 @@ function syncFormType(){
   $('#lb-cover').textContent=h?'Sum insured (₹)':'Sum assured or cover (₹)';
   $('#lb-inc').textContent=h?'Expected yearly premium increase (%)':'Yearly premium increase (%)';
   $('#sm-inc').textContent=h?'Insurers revise health premiums at renewal and as members age. Enter the rise you expect.':'Leave empty if the premium is fixed.';
+  $('#lb-dob').textContent=h?"Eldest insured person's date of birth":"Life assured's date of birth";
+  $('#sm-dob').textContent=h?'Used for the senior citizen limit (60 and over), the age-based premium increase and to show ages.':"Optional. Shows the age at the start, at the last premium and at maturity. For a children's policy, use the child's date of birth.";
   $('#sm-premium').textContent=h?'Enter what you actually pay. Individual health policies have had no GST since 22 Sep 2025.':'';
 }
 
@@ -1320,7 +1324,7 @@ function openForm(id){
   $('#h-plan').value=(p&&p.plan)?p.plan:'individual';
   $('#h-covers').value=(p&&p.covers==='parents')?'parents':'self';
   $('#h-members').value=p?(p.members||''):'';
-  $('#h-dob').value=p?(p.dob||''):'';
+  $('#f-dob').value=p?(p.dob||''):'';
   $('#h-cont').value=p?(p.contFrom||''):'';
   $('#h-ped').value=(p&&p.ped!==''&&p.ped!=null)?p.ped:'';
   $('#h-incs').value=(p&&p.incSenior!==''&&p.incSenior!=null)?p.incSenior:'';
@@ -1346,7 +1350,7 @@ function formPolicy(){
     plan:health?$('#h-plan').value:'individual',
     covers:health?$('#h-covers').value:'self',
     members:health?v('h-members'):'',
-    dob:health?v('h-dob'):'',
+    dob:v('f-dob'),
     contFrom:health?v('h-cont'):'',
     ped:(health&&v('h-ped')!=='')?clamp(Math.floor(Number(v('h-ped'))||0),0,4):'',
     incSenior:(health&&v('h-incs')!=='')?Math.max(0,Number(v('h-incs'))||0):'',
@@ -1370,12 +1374,13 @@ function submitForm(e){
   if(!validISO(p.start)) return fail('Choose the policy start date.','f-start');
   if(p.maturity && pd(p.maturity)<=pd(p.start)) return fail(p.type==='health'?'The end date must be after the start date.':'The maturity date must be after the start date.','f-maturity');
   if(p.benefit && !p.maturity) return fail('Add a maturity date to use the maturity benefit.','f-maturity');
+  if(p.dob && pd(p.dob)>TODAY) return fail('The date of birth cannot be in the future.','f-dob');
+  if(p.dob && pd(p.dob)>pd(p.start)) return fail('The date of birth must be before the policy start date.','f-dob');
   if(p.type==='health'){
-    if(p.dob && pd(p.dob)>TODAY) return fail('The date of birth cannot be in the future.','h-dob');
     if(p.contFrom && pd(p.contFrom)>pd(p.start)) return fail('Continuous cover cannot begin after this policy starts.','h-cont');
     if(p.changes.some(c=>pd(c.date)<=pd(p.start))) return fail('A premium change must be after the start date.','chg-add');
     if(p.untilAge!==''){
-      if(!p.dob) return fail('Add the date of birth to plan premiums until an age.','h-dob');
+      if(!p.dob) return fail('Add the date of birth to plan premiums until an age.','f-dob');
       if(!p.maturity && addMonths(pd(p.dob),p.untilAge*12)<=pd(p.start)) return fail('That age is before this policy starts. Choose a higher age.','h-until');
     }
   }
