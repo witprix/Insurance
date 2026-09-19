@@ -8,6 +8,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Figtree:wght@400..700&display=swap" rel="stylesheet">
+<!-- WebRTC PeerJS Library -->
+<script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
 <style>
 :root{
   color-scheme:light;
@@ -45,7 +47,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 .top h1{font-size:clamp(1.6rem,4.5vw,2.3rem);font-weight:700;letter-spacing:-.025em}
 .top p{color:var(--muted);margin-top:2px}
 .actions{display:flex;flex-wrap:wrap;gap:8px}
-.btn{min-height:44px;padding:0 16px;border-radius:10px;border:1px solid var(--line);background:var(--panel);font-weight:600}
+.btn{min-height:44px;padding:0 16px;border-radius:10px;border:1px solid var(--line);background:var(--panel);font-weight:600;display:inline-flex;align-items:center;justify-content:center;}
 .btn.primary{background:var(--btn-bg);color:var(--btn-fg);border-color:transparent}
 .btn.small{min-height:36px;padding:0 12px;font-size:.9rem}
 .btn:disabled{opacity:.45;cursor:not-allowed}
@@ -230,6 +232,13 @@ details.bk-more summary{cursor:pointer;color:var(--muted);font-size:.9rem;min-he
 .snap{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0}
 .snap + .snap{border-top:1px solid var(--line)}
 .snap .fq{color:var(--muted);font-size:.86rem}
+
+/* WebRTC Sync UI Extensions */
+.sync-box { background: var(--tint); border: 1px solid var(--line); border-radius: 12px; padding: 16px; margin-top: 12px; text-align: center; }
+.pin-display { font-family: var(--display); font-size: 2.5rem; font-weight: 700; letter-spacing: 0.1em; color: var(--focus); margin: 8px 0; }
+.pin-input { font-family: var(--display); font-size: 1.5rem; font-weight: 700; text-align: center; letter-spacing: 0.1em; width: 140px; margin: 8px auto; display: block; }
+.spinner { border: 3px solid rgba(0,0,0,0.1); border-left-color: var(--focus); border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; display: inline-block; vertical-align: middle; }
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 </style>
 </head>
 <body>
@@ -241,7 +250,7 @@ details.bk-more summary{cursor:pointer;color:var(--muted);font-size:.9rem;min-he
     </div>
     <div class="actions">
       <button class="btn primary" id="btn-add" type="button">Add policy</button>
-      <button class="btn" id="btn-backup" type="button">Backup<span class="badge" id="bk-badge" hidden><span class="sr">, changes not backed up</span></span></button>
+      <button class="btn" id="btn-backup" type="button">Backup & Sync<span class="badge" id="bk-badge" hidden><span class="sr">, changes not backed up</span></span></button>
       <button class="btn" id="btn-settings" type="button">Settings</button>
     </div>
   </header>
@@ -423,15 +432,39 @@ details.bk-more summary{cursor:pointer;color:var(--muted);font-size:.9rem;min-he
   </div>
 </dialog>
 
-<!-- Backup -->
+<!-- Backup & Sync -->
 <dialog id="dlg-backup" aria-labelledby="db-title">
   <div class="dlg">
     <div class="dlg-head">
-      <h2 id="db-title">Backup and restore</h2>
+      <h2 id="db-title">Backup, Sync & Restore</h2>
       <button type="button" class="btn small" data-close>Close</button>
     </div>
     <div class="dlg-body">
       <div class="bk-status" id="bk-status" role="status"></div>
+
+      <h3 class="bk-h">Wireless Sync</h3>
+      <p class="sub">Securely transfer data between your PC and mobile device locally without downloading files.</p>
+      <div class="bk-actions">
+        <button type="button" class="btn primary" id="sync-host-btn">Send to mobile</button>
+        <button type="button" class="btn" id="sync-recv-btn">Receive data</button>
+      </div>
+
+      <!-- Host UI -->
+      <div id="sync-host-ui" class="sync-box" hidden>
+          <p class="sub" style="font-weight: 600;">Waiting for receiving device...</p>
+          <p class="sub">Enter this PIN on your other device:</p>
+          <div class="pin-display" id="sync-pin-display">----</div>
+          <div class="spinner" id="sync-spinner"></div>
+          <div class="status" id="sync-host-msg" role="status" style="margin-top: 8px;"></div>
+      </div>
+
+      <!-- Receive UI -->
+      <div id="sync-recv-ui" class="sync-box" hidden>
+          <p class="sub" style="font-weight: 600;">Enter the 4-digit PIN from the sending device:</p>
+          <input type="text" id="sync-pin-input" class="pin-input" maxlength="4" placeholder="0000" autocomplete="off" inputmode="numeric">
+          <button type="button" class="btn primary" id="sync-connect-btn" style="margin-top: 12px; width: 100%;">Connect & Sync</button>
+          <div class="status" id="sync-recv-msg" role="status" style="margin-top: 8px;"></div>
+      </div>
 
       <h3 class="bk-h">Save a copy</h3>
       <p class="sub">Your policies live only in this browser. A backup lets you move them to another device, or recover them if this browser's data is cleared.</p>
@@ -1264,6 +1297,7 @@ function openBackup(){
   $('#rs-text').value=''; try{ $('#rs-file').value=''; }catch(e){}
   checkRestore();
   renderBackupStatus(); renderSnaps();
+  cleanupPeer();
   openDlg($('#dlg-backup'));
 }
 
@@ -1273,15 +1307,97 @@ function openSettings(){
   openDlg($('#dlg-settings'));
 }
 
-/* ---------- events ---------- */
-document.addEventListener('click',async e=>{
-  const t=e.target;
-  const close=t.closest('[data-close]');
-  if(close){ const d=close.closest('dialog'); if(d) d.close(); return; }
-  const pill=t.closest('.pill'); if(pill){ ui.filter=pill.dataset.f; ui.sel=null; render(); return; }
-  const seg=t.closest('[data-mode]'); if(seg){
-    ui.mode=seg.dataset.mode;
-    $$('[data-mode]').forEach(b=>b.setAttribute('aria-pressed',String(b===seg)));
+/* ---------- WebRTC PeerJS Sync Logic ---------- */
+let activePeer = null;
+
+function cleanupPeer() {
+    if (activePeer) { activePeer.destroy(); activePeer = null; }
+    $('#sync-host-ui').hidden = true;
+    $('#sync-recv-ui').hidden = true;
+    $('#sync-pin-display').textContent = '----';
+    $('#sync-pin-input').value = '';
+    $('#sync-host-msg').textContent = '';
+    $('#sync-recv-msg').textContent = '';
+}
+
+function doSyncHost() {
+    if(typeof Peer === 'undefined') { bkMsg('WebRTC library failed to load. Check internet connection.'); return; }
+    cleanupPeer();
+    const pol = cleanList();
+    if(!pol.length) { bkMsg('No policies to send. Add data first.'); return; }
+    
+    $('#sync-host-ui').hidden = false;
+    const pin = Math.floor(1000 + Math.random() * 9000).toString();
+    const peerId = `pl-sync-${pin}`;
+    
+    $('#sync-pin-display').textContent = pin;
+    $('#sync-host-msg').textContent = 'Initializing secure host...';
+    $('#sync-spinner').hidden = false;
+    
+    activePeer = new Peer(peerId);
+    
+    activePeer.on('open', () => {
+        $('#sync-host-msg').textContent = 'Ready. Enter PIN on your receiving device.';
+    });
+
+    activePeer.on('connection', (conn) => {
+        $('#sync-spinner').hidden = true;
+        $('#sync-host-msg').textContent = 'Device connected. Transferring data...';
+        conn.on('open', () => {
+            conn.send(backupText());
+            $('#sync-host-msg').textContent = 'Data sent successfully!';
+            setTimeout(cleanupPeer, 3000);
+        });
+    });
+
+    activePeer.on('error', (err) => {
+        $('#sync-spinner').hidden = true;
+        $('#sync-host-msg').textContent = 'Connection error: ' + err.type;
+    });
+}
+
+function doSyncReceive() {
+    if(typeof Peer === 'undefined') { bkMsg('WebRTC library failed to load. Check internet connection.'); return; }
+    cleanupPeer();
+    $('#sync-recv-ui').hidden = false;
+    setTimeout(() => $('#sync-pin-input').focus(), 100);
+}
+
+function doSyncConnect() {
+    const pin = $('#sync-pin-input').value.trim();
+    if (pin.length !== 4) { $('#sync-recv-msg').textContent = 'Please enter a valid 4-digit PIN.'; return; }
+    
+    $('#sync-recv-msg').textContent = 'Connecting to host...';
+    const peerId = `pl-sync-${pin}`;
+    
+    if(activePeer) activePeer.destroy();
+    activePeer = new Peer();
+    
+    activePeer.on('open', () => {
+        const conn = activePeer.connect(peerId);
+        
+        conn.on('open', () => {
+            $('#sync-recv-msg').textContent = 'Connected. Receiving data...';
+        });
+
+        conn.on('data', (data) => {
+            $('#sync-recv-msg').textContent = 'Data received! Validating...';
+            // Inject received data into the existing restore textarea
+            $('#rs-text').value = data;
+            checkRestore();
+            
+            // Scroll user down to the validation summary report
+            $('#rs-report').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            setTimeout(cleanupPeer, 1500);
+        });
+        
+        conn.on('error', () => {
+           $('#sync-recv-msg').textContent = 'Transfer error occurred.'; 
+        });
+    });
+
+    activePeer.on('error', () => {
+        $('#sync-recv-msg').textContent = 'Failed to connect. Check the PIN or ensure the host is ready.';     }); }  /* ---------- events ---------- */ document.addEventListener('click',async e=>{   const t=e.target;   const close=t.closest('[data-close]');   if(close){        const d=close.closest('dialog');        if(d){           if(d.id === 'dlg-backup') cleanupPeer();           d.close();        }       return;    }   const pill=t.closest('.pill'); if(pill){ ui.filter=pill.dataset.f; ui.sel=null; render(); return; }   const seg=t.closest('[data-mode]'); if(seg){     ui.mode=seg.dataset.mode;     $$('[data-mode]').forEach(b=>b.setAttribute('aria-pressed',String(b===seg)));
     renderChart(getList()); return;
   }
   const col=t.closest('.yc-col'); if(col){ setSel(Number(col.dataset.y)); return; }
@@ -1322,6 +1438,12 @@ document.addEventListener('click',async e=>{
   if(t.closest('#bk-sheet')) return doCopySchedule();
   if(t.closest('#bk-csv')) return doDownloadSchedule();
   if(t.closest('#rs-apply')) return applyRestore();
+  
+  // WebRTC Events
+  if(t.closest('#bk-sync-host')) return doSyncHost();
+  if(t.closest('#bk-sync-recv')) return doSyncReceive();
+  if(t.closest('#sync-connect-btn')) return doSyncConnect();
+
   const sn=t.closest('[data-snap]'); if(sn) return restoreSnapshot(Number(sn.dataset.snap));
 });
 document.addEventListener('pointerover',e=>{
