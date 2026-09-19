@@ -8,6 +8,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Figtree:wght@400..700&display=swap" rel="stylesheet">
+<!-- WebRTC PeerJS Library -->
+<script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
 <style>
 :root{
   color-scheme:light;
@@ -45,7 +47,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 .top h1{font-size:clamp(1.6rem,4.5vw,2.3rem);font-weight:700;letter-spacing:-.025em}
 .top p{color:var(--muted);margin-top:2px}
 .actions{display:flex;flex-wrap:wrap;gap:8px}
-.btn{min-height:44px;padding:0 16px;border-radius:10px;border:1px solid var(--line);background:var(--panel);font-weight:600}
+.btn{min-height:44px;padding:0 16px;border-radius:10px;border:1px solid var(--line);background:var(--panel);font-weight:600;display:inline-flex;align-items:center;justify-content:center;}
 .btn.primary{background:var(--btn-bg);color:var(--btn-fg);border-color:transparent}
 .btn.small{min-height:36px;padding:0 12px;font-size:.9rem}
 .btn:disabled{opacity:.45;cursor:not-allowed}
@@ -238,8 +240,6 @@ details.bk-more summary{cursor:pointer;color:var(--muted);font-size:.9rem;min-he
 .spinner { border: 3px solid rgba(0,0,0,0.1); border-left-color: var(--focus); border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; display: inline-block; vertical-align: middle; }
 @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 </style>
-<!-- PeerJS for WebRTC Wireless Sync -->
-<script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
 </head>
 <body>
 <div class="wrap">
@@ -449,21 +449,24 @@ details.bk-more summary{cursor:pointer;color:var(--muted);font-size:.9rem;min-he
         <button type="button" class="btn" id="sync-recv-btn">Receive data</button>
       </div>
 
+      <!-- Visible Error Reporting -->
+      <div id="sync-global-msg" style="color: var(--danger); font-size: 0.95rem; margin-top: 10px; font-weight: 600;"></div>
+
       <!-- Host UI -->
-      <div id="sync-host-ui" class="sync-box" hidden>
+      <div id="sync-host-ui" class="sync-box" style="display: none;">
           <p class="sub" style="font-weight: 600;">Waiting for receiving device...</p>
           <p class="sub">Enter this PIN on your other device:</p>
           <div class="pin-display" id="sync-pin-display">----</div>
-          <div class="spinner" id="sync-spinner"></div>
+          <div class="spinner" id="sync-spinner" style="display: none;"></div>
           <div class="status" id="sync-host-msg" role="status" style="margin-top: 8px;"></div>
       </div>
 
       <!-- Receive UI -->
-      <div id="sync-recv-ui" class="sync-box" hidden>
+      <div id="sync-recv-ui" class="sync-box" style="display: none;">
           <p class="sub" style="font-weight: 600;">Enter the 4-digit PIN from the sending device:</p>
           <input type="text" id="sync-pin-input" class="pin-input" maxlength="4" placeholder="0000" autocomplete="off" inputmode="numeric">
           <button type="button" class="btn primary" id="sync-connect-btn" style="margin-top: 12px; width: 100%;">Connect & Sync</button>
-          <div class="status" id="sync-recv-msg" role="status" style="margin-top: 8px;"></div>
+          <div class="status" id="sync-recv-msg" role="status" style="margin-top: 8px; font-weight: 600;"></div>
       </div>
 
       <h3 class="bk-h">Save a copy</h3>
@@ -1312,92 +1315,136 @@ let activePeer = null;
 
 function cleanupPeer() {
     if (activePeer) { activePeer.destroy(); activePeer = null; }
-    $('#sync-host-ui').hidden = true;
-    $('#sync-recv-ui').hidden = true;
+    $('#sync-host-ui').style.display = 'none';
+    $('#sync-recv-ui').style.display = 'none';
     $('#sync-pin-display').textContent = '----';
     $('#sync-pin-input').value = '';
     $('#sync-host-msg').textContent = '';
     $('#sync-recv-msg').textContent = '';
+    $('#sync-global-msg').textContent = '';
+    $('#sync-spinner').style.display = 'none';
 }
 
 function doSyncHost() {
-    if(typeof Peer === 'undefined') { bkMsg('WebRTC library failed to load. Check internet connection.'); return; }
+    $('#sync-global-msg').textContent = '';
+    
+    // Safety check: Does Peer library exist? If not, adblockers or strict local file policies blocked it.
+    if(typeof Peer === 'undefined') { 
+        $('#sync-global-msg').textContent = 'WebRTC Library blocked. Please pause your adblocker (e.g. uBlock, Brave Shields) or ensure you have internet access.'; 
+        return; 
+    }
+    
     cleanupPeer();
     const pol = cleanList();
-    if(!pol.length) { bkMsg('No policies to send. Add data first.'); return; }
+    if(!pol.length) { 
+        $('#sync-global-msg').textContent = 'No policies to send. Add data first before syncing.'; 
+        return; 
+    }
     
-    $('#sync-host-ui').hidden = false;
+    // Use .style.display to forcefully override CSS [hidden] quirks
+    $('#sync-host-ui').style.display = 'block';
+    
     const pin = Math.floor(1000 + Math.random() * 9000).toString();
     const peerId = `pl-sync-${pin}`;
     
     $('#sync-pin-display').textContent = pin;
-    $('#sync-host-msg').textContent = 'Initializing secure host...';
-    $('#sync-spinner').hidden = false;
+    $('#sync-host-msg').textContent = 'Connecting to signaling server...';
+    $('#sync-host-msg').style.color = 'var(--muted)';
+    $('#sync-spinner').style.display = 'inline-block';
     
-    activePeer = new Peer(peerId);
-    
-    activePeer.on('open', () => {
-        $('#sync-host-msg').textContent = 'Ready. Enter PIN on your receiving device.';
-    });
-
-    activePeer.on('connection', (conn) => {
-        $('#sync-spinner').hidden = true;
-        $('#sync-host-msg').textContent = 'Device connected. Transferring data...';
-        conn.on('open', () => {
-            conn.send(backupText());
-            $('#sync-host-msg').textContent = 'Data sent successfully!';
-            setTimeout(cleanupPeer, 3000);
+    try {
+        activePeer = new Peer(peerId);
+        
+        activePeer.on('open', () => {
+            $('#sync-host-msg').textContent = 'Ready. Enter this PIN on your receiving device.';
+            $('#sync-spinner').style.display = 'none';
         });
-    });
 
-    activePeer.on('error', (err) => {
-        $('#sync-spinner').hidden = true;
-        $('#sync-host-msg').textContent = 'Connection error: ' + err.type;
-    });
+        activePeer.on('connection', (conn) => {
+            $('#sync-host-msg').textContent = 'Device connected! Transferring data...';
+            conn.on('open', () => {
+                conn.send(backupText());
+                $('#sync-host-msg').style.color = 'var(--health)';
+                $('#sync-host-msg').textContent = 'Data sent successfully!';
+                setTimeout(cleanupPeer, 3000);
+            });
+        });
+
+        activePeer.on('error', (err) => {
+            $('#sync-spinner').style.display = 'none';
+            $('#sync-host-msg').style.color = 'var(--danger)';
+            $('#sync-host-msg').textContent = 'Connection error: ' + err.type;
+        });
+    } catch(e) {
+        $('#sync-spinner').style.display = 'none';
+        $('#sync-host-msg').style.color = 'var(--danger)';
+        $('#sync-host-msg').textContent = 'Failed to initialize WebRTC environment.';
+    }
 }
 
 function doSyncReceive() {
-    if(typeof Peer === 'undefined') { bkMsg('WebRTC library failed to load. Check internet connection.'); return; }
+    $('#sync-global-msg').textContent = '';
+    
+    if(typeof Peer === 'undefined') { 
+        $('#sync-global-msg').textContent = 'WebRTC Library blocked. Please pause your adblocker (e.g. uBlock, Brave Shields) or ensure you have internet access.'; 
+        return; 
+    }
+    
     cleanupPeer();
-    $('#sync-recv-ui').hidden = false;
+    $('#sync-recv-ui').style.display = 'block';
     setTimeout(() => $('#sync-pin-input').focus(), 100);
 }
 
 function doSyncConnect() {
     const pin = $('#sync-pin-input').value.trim();
-    if (pin.length !== 4) { $('#sync-recv-msg').textContent = 'Please enter a valid 4-digit PIN.'; return; }
+    if (pin.length !== 4) { 
+        $('#sync-recv-msg').style.color = 'var(--danger)';
+        $('#sync-recv-msg').textContent = 'Please enter a valid 4-digit PIN.'; 
+        return; 
+    }
     
+    $('#sync-recv-msg').style.color = 'var(--muted)';
     $('#sync-recv-msg').textContent = 'Connecting to host...';
+    
     const peerId = `pl-sync-${pin}`;
     
     if(activePeer) activePeer.destroy();
-    activePeer = new Peer();
     
-    activePeer.on('open', () => {
-        const conn = activePeer.connect(peerId);
+    try {
+        activePeer = new Peer();
         
-        conn.on('open', () => {
-            $('#sync-recv-msg').textContent = 'Connected. Receiving data...';
-        });
-
-        conn.on('data', (data) => {
-            $('#sync-recv-msg').textContent = 'Data received! Validating...';
-            // Inject received data into the existing restore textarea
-            $('#rs-text').value = data;
-            checkRestore();
+        activePeer.on('open', () => {
+            const conn = activePeer.connect(peerId);
             
-            // Scroll user down to the validation summary report
-            $('#rs-report').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-            setTimeout(cleanupPeer, 1500);
-        });
-        
-        conn.on('error', () => {
-           $('#sync-recv-msg').textContent = 'Transfer error occurred.'; 
-        });
-    });
+            conn.on('open', () => {
+                $('#sync-recv-msg').textContent = 'Connected! Receiving data...';
+            });
 
-    activePeer.on('error', () => {
-        $('#sync-recv-msg').textContent = 'Failed to connect. Check the PIN or ensure the host is ready.';     }); }  /* ---------- events ---------- */ document.addEventListener('click',async e=>{   const t=e.target;   const close=t.closest('[data-close]');   if(close){        const d=close.closest('dialog');        if(d){           if(d.id === 'dlg-backup') cleanupPeer();           d.close();        }       return;    }   const pill=t.closest('.pill'); if(pill){ ui.filter=pill.dataset.f; ui.sel=null; render(); return; }   const seg=t.closest('[data-mode]'); if(seg){     ui.mode=seg.dataset.mode;     $$('[data-mode]').forEach(b=>b.setAttribute('aria-pressed',String(b===seg)));
+            conn.on('data', (data) => {
+                $('#sync-recv-msg').style.color = 'var(--health)';
+                $('#sync-recv-msg').textContent = 'Data received! Validating...';
+                
+                // Route the incoming data payload directly into the standard restore handler
+                $('#rs-text').value = data;
+                checkRestore();
+                $('#rs-report').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                
+                setTimeout(cleanupPeer, 1500);
+            });
+            
+            conn.on('error', () => {
+               $('#sync-recv-msg').style.color = 'var(--danger)';
+               $('#sync-recv-msg').textContent = 'Transfer connection dropped.'; 
+            });
+        });
+
+        activePeer.on('error', (err) => {
+            $('#sync-recv-msg').style.color = 'var(--danger)';
+            $('#sync-recv-msg').textContent = 'Failed to connect. Check the PIN or ensure the host is still waiting.';
+        });
+    } catch(e) {
+        $('#sync-recv-msg').style.color = 'var(--danger)';
+        $('#sync-recv-msg').textContent = 'WebRTC environment error.';     } }  /* ---------- events ---------- */ document.addEventListener('click',async e=>{   const t=e.target;   const close=t.closest('[data-close]');   if(close){        const d=close.closest('dialog');        if(d){           if(d.id === 'dlg-backup') cleanupPeer();           d.close();        }       return;    }   const pill=t.closest('.pill'); if(pill){ ui.filter=pill.dataset.f; ui.sel=null; render(); return; }   const seg=t.closest('[data-mode]'); if(seg){     ui.mode=seg.dataset.mode;     $$('[data-mode]').forEach(b=>b.setAttribute('aria-pressed',String(b===seg)));
     renderChart(getList()); return;
   }
   const col=t.closest('.yc-col'); if(col){ setSel(Number(col.dataset.y)); return; }
@@ -1439,7 +1486,7 @@ function doSyncConnect() {
   if(t.closest('#bk-csv')) return doDownloadSchedule();
   if(t.closest('#rs-apply')) return applyRestore();
   
-  // WebRTC Events
+  // WebRTC Events explicitly attached
   if(t.closest('#sync-host-btn')) return doSyncHost();
   if(t.closest('#sync-recv-btn')) return doSyncReceive();
   if(t.closest('#sync-connect-btn')) return doSyncConnect();
