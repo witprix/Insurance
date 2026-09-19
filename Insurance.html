@@ -48,6 +48,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 .btn{min-height:44px;padding:0 16px;border-radius:10px;border:1px solid var(--line);background:var(--panel);font-weight:600}
 .btn.primary{background:var(--btn-bg);color:var(--btn-fg);border-color:transparent}
 .btn.small{min-height:36px;padding:0 12px;font-size:.9rem}
+.btn:disabled{opacity:.45;cursor:not-allowed}
 .btn.danger{color:var(--danger)}
 
 .note{border:1px solid var(--line);background:var(--tint);border-radius:12px;padding:10px 14px;display:flex;gap:10px 14px;flex-wrap:wrap;align-items:center;justify-content:space-between;margin-bottom:14px}
@@ -207,6 +208,28 @@ tfoot td{font-weight:700;border-bottom:0}
 .set-row + .set-row{border-top:1px solid var(--line)}
 .set-row .field{flex:1 1 220px}
 .status{color:var(--muted);font-size:.88rem;min-height:1.3em;margin-top:8px}
+.dlg .sub{color:var(--muted);font-size:.92rem;margin-top:2px}
+.badge{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--soon);margin-left:8px;vertical-align:middle}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.bk-h{font-size:1.02rem;font-weight:650;margin:24px 0 6px}
+.bk-status{border:1px solid var(--line);background:var(--tint);border-radius:12px;padding:10px 14px}
+.bk-status.warn{border-color:var(--soon)}
+.bk-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+details.bk-more{margin-top:10px}
+details.bk-more summary{cursor:pointer;color:var(--muted);font-size:.9rem;min-height:32px;display:flex;align-items:center;text-decoration:underline;text-underline-offset:3px}
+#bk-text{min-height:120px;margin-top:8px}
+#rs-text{min-height:110px}
+.rp{border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin-top:12px;font-size:.92rem;display:grid;gap:4px}
+.rp.bad{border-color:var(--danger);color:var(--danger)}
+.rp .warn{color:var(--soon)}
+.rp .ok{color:var(--muted)}
+.choice{display:grid;gap:8px;margin-top:12px}
+.choice label{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--line);border-radius:12px;padding:10px 12px;cursor:pointer}
+.choice input{width:auto;min-height:0;margin-top:5px;flex:none}
+.choice small{display:block;color:var(--muted);font-size:.86rem}
+.snap{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0}
+.snap + .snap{border-top:1px solid var(--line)}
+.snap .fq{color:var(--muted);font-size:.86rem}
 </style>
 </head>
 <body>
@@ -218,7 +241,7 @@ tfoot td{font-weight:700;border-bottom:0}
     </div>
     <div class="actions">
       <button class="btn primary" id="btn-add" type="button">Add policy</button>
-      <button class="btn" id="btn-backup" type="button">Backup</button>
+      <button class="btn" id="btn-backup" type="button">Backup<span class="badge" id="bk-badge" hidden><span class="sr">, changes not backed up</span></span></button>
       <button class="btn" id="btn-settings" type="button">Settings</button>
     </div>
   </header>
@@ -408,14 +431,46 @@ tfoot td{font-weight:700;border-bottom:0}
       <button type="button" class="btn small" data-close>Close</button>
     </div>
     <div class="dlg-body">
-      <p class="sub" style="margin-bottom:12px">Copy this text and keep it somewhere safe, such as a note to yourself. To load it on another device, paste it here and choose Restore.</p>
-      <label for="db-text" class="sub" style="display:block;margin-bottom:6px">Backup text</label>
-      <textarea id="db-text" spellcheck="false"></textarea>
-      <div class="status" id="db-status" role="status"></div>
+      <div class="bk-status" id="bk-status" role="status"></div>
+
+      <h3 class="bk-h">Save a copy</h3>
+      <p class="sub">Your policies live only in this browser. A backup lets you move them to another device, or recover them if this browser's data is cleared.</p>
+      <div class="bk-actions">
+        <button type="button" class="btn primary" id="bk-download">Download backup file</button>
+        <button type="button" class="btn" id="bk-copy">Copy backup text</button>
+      </div>
+      <details class="bk-more" id="bk-details">
+        <summary>Show backup text</summary>
+        <textarea id="bk-text" readonly spellcheck="false" aria-label="Backup text"></textarea>
+      </details>
+      <div class="bk-actions">
+        <button type="button" class="btn" id="bk-sheet">Copy payment schedule for Excel or Sheets</button>
+        <button type="button" class="btn" id="bk-csv">Download schedule (CSV)</button>
+      </div>
+      <div class="status" id="bk-msg" role="status"></div>
+
+      <h3 class="bk-h">Restore</h3>
+      <div class="field">
+        <label for="rs-file">Backup file</label>
+        <input id="rs-file" type="file" accept=".json,.txt,application/json,text/plain">
+      </div>
+      <div class="field" style="margin-top:12px">
+        <label for="rs-text">Or paste backup text</label>
+        <textarea id="rs-text" spellcheck="false" placeholder="Paste the backup text here"></textarea>
+      </div>
+      <div id="rs-report" role="status"></div>
+      <div class="choice" id="rs-choice" hidden>
+        <label><input type="radio" name="rmode" value="merge"><span><b>Add to my ledger</b><small id="rs-merge-note"></small></span></label>
+        <label><input type="radio" name="rmode" value="replace"><span><b>Replace my ledger</b><small id="rs-replace-note"></small></span></label>
+      </div>
+
+      <h3 class="bk-h">Safety copies</h3>
+      <p class="sub">Up to five automatic copies, made before you delete or restore anything. They are kept in this browser too, so they do not replace a backup.</p>
+      <div id="snaps"></div>
     </div>
     <div class="dlg-foot">
-      <button type="button" class="btn" id="db-copy">Copy</button>
-      <button type="button" class="btn primary" id="db-restore">Restore from text</button>
+      <button type="button" class="btn" data-close>Close</button>
+      <button type="button" class="btn primary" id="rs-apply" disabled>Restore from backup</button>
     </div>
   </div>
 </dialog>
@@ -567,12 +622,14 @@ function samples(){
 function loadState(){
   let d=null;
   try{ const raw=localStorage.getItem(KEY); if(raw) d=JSON.parse(raw); }catch(e){ d=null; }
-  const st={policies:null,horizon:THIS_YEAR+20,theme:'auto'};
+  const st={policies:null,horizon:THIS_YEAR+20,theme:'auto',lastBackupAt:null,backedUpSig:null};
   if(d && Array.isArray(d.policies)){
     st.policies=d.policies.map(clean).filter(Boolean);
     const h=Number(d.horizon);
     if(h>=THIS_YEAR && h<=THIS_YEAR+80) st.horizon=Math.floor(h);
     if(d.theme==='light'||d.theme==='dark') st.theme=d.theme;
+    if(typeof d.lastBackupAt==='string') st.lastBackupAt=d.lastBackupAt;
+    if(typeof d.backedUpSig==='string') st.backedUpSig=d.backedUpSig;
   } else {
     st.policies=samples();
   }
@@ -587,6 +644,7 @@ function save(){
   $('#storage-note').textContent = storageOK
     ? 'Your data stays in this browser only. Use Backup to keep a copy.'
     : 'Saving is not available in this browser session, so changes will be lost when you close the page. Use Backup to keep a copy.';
+  updateBackupBadge();
 }
 function applyTheme(){
   const r=document.documentElement;
@@ -972,36 +1030,241 @@ function openSchedule(id){
   openDlg($('#dlg-sched'));
 }
 
-function openBackup(){
-  $('#db-text').value=JSON.stringify({app:'premium-ledger',version:1,horizon:state.horizon,policies:state.policies},null,2);
-  $('#db-status').textContent='';
-  openDlg($('#dlg-backup'));
+/* ---------- backup, restore and safety copies ---------- */
+function hashStr(str){ let h=0x811c9dc5; for(let i=0;i<str.length;i++){ h^=str.charCodeAt(i); h=Math.imul(h,0x01000193)>>>0; } return h.toString(16).padStart(8,'0'); }
+function cleanList(){ return state.policies.map(clean).filter(Boolean); }
+function dataSig(){ return hashStr(JSON.stringify({h:state.horizon,p:cleanList()})); }
+function realPolicies(){ return state.policies.some(p=>!p.sample); }
+function fmtDateTime(iso){
+  const d=new Date(iso); if(isNaN(d.getTime())) return '';
+  return fmtDate(d)+', '+d.toLocaleTimeString('en-IN',{hour:'numeric',minute:'2-digit'});
 }
-function copyBackup(){
-  const ta=$('#db-text'), st=$('#db-status');
-  const fallback=()=>{
-    try{ ta.focus(); ta.select(); const ok=document.execCommand('copy'); st.textContent=ok?'Copied.':'Select all the text and copy it manually.'; }
-    catch(e){ st.textContent='Select all the text and copy it manually.'; }
-  };
-  try{
-    if(navigator.clipboard&&navigator.clipboard.writeText){
-      navigator.clipboard.writeText(ta.value).then(()=>{ st.textContent='Copied.'; },fallback);
-    } else fallback();
-  }catch(e){ fallback(); }
+function updateBackupBadge(){
+  const b=$('#bk-badge'); if(!b) return;
+  b.hidden=!(realPolicies() && dataSig()!==state.backedUpSig);
 }
-function restoreBackup(){
-  const st=$('#db-status');
-  let d;
-  try{ d=JSON.parse($('#db-text').value); }catch(e){ st.textContent='That text is not a valid backup. Paste the full text you copied.'; return; }
-  const arr=Array.isArray(d)?d:d&&d.policies;
-  if(!Array.isArray(arr)){ st.textContent='No policies found in that text.'; return; }
-  const list=arr.map(clean).filter(Boolean);
-  if(!list.length && arr.length){ st.textContent='None of the policies had a valid name, start date and premium.'; return; }
-  state.policies=list;
-  const h=d&&Number(d.horizon);
+
+const SNAP_KEY=KEY+'-snaps';
+let snaps=[];
+try{
+  const r=JSON.parse(localStorage.getItem(SNAP_KEY)||'[]');
+  if(Array.isArray(r)) snaps=r.filter(x=>x&&x.data&&Array.isArray(x.data.policies)).slice(0,5);
+}catch(e){ snaps=[]; }
+function snapshot(label){
+  const pol=cleanList();
+  if(!pol.length||pol.every(p=>p.sample)) return false;
+  const data={horizon:state.horizon,policies:pol};
+  const sig=hashStr(JSON.stringify(data));
+  if(snaps.length&&snaps[0].sig===sig) return true;
+  snaps.unshift({at:new Date().toISOString(),label:label,sig:sig,count:pol.length,data:data});
+  snaps=snaps.slice(0,5);
+  try{ localStorage.setItem(SNAP_KEY,JSON.stringify(snaps)); }catch(e){}
+  return true;
+}
+function renderSnaps(){
+  const el=$('#snaps');
+  if(!snaps.length){ el.innerHTML='<p class="sub" style="padding:8px 0">No safety copies yet. One is made automatically before you delete or restore anything.</p>'; return; }
+  el.innerHTML=snaps.map((x,i)=>
+    '<div class="snap"><div><b>'+esc(fmtDateTime(x.at))+'</b><div class="fq">'+esc(x.label)+', '+x.count+(x.count===1?' policy':' policies')+'</div></div>'+
+    '<button type="button" class="btn small" data-snap="'+i+'">Restore</button></div>'
+  ).join('');
+}
+async function restoreSnapshot(i){
+  const x=snaps[i]; if(!x) return;
+  const ok=await askConfirm('Restore this safety copy?','Your current policies will be replaced by the '+x.count+(x.count===1?' policy':' policies')+' saved on '+fmtDateTime(x.at)+'. Your current data is saved as a new safety copy first.','Restore copy');
+  if(!ok) return;
+  snapshot('Before restoring a safety copy');
+  state.policies=x.data.policies.map(clean).filter(Boolean);
+  const h=Number(x.data.horizon);
   if(h>=THIS_YEAR&&h<=THIS_YEAR+80) state.horizon=Math.floor(h);
+  save(); render(); renderBackupStatus(); renderSnaps();
+  bkMsg('Safety copy restored.');
+}
+
+function buildBackup(){
+  const pol=cleanList();
+  return {app:'premium-ledger',version:2,exportedAt:new Date().toISOString(),horizon:state.horizon,count:pol.length,checksum:hashStr(JSON.stringify(pol)),policies:pol};
+}
+function backupText(){ return JSON.stringify(buildBackup(),null,2); }
+function stamp(){ return toISO(TODAY); }
+function bkMsg(t){ $('#bk-msg').textContent=t; }
+function markBackedUp(){
+  state.lastBackupAt=new Date().toISOString();
+  state.backedUpSig=dataSig();
+  save(); renderBackupStatus();
+}
+function renderBackupStatus(){
+  const el=$('#bk-status'); let msg,warn=false;
+  if(!realPolicies()) msg='You only have sample policies, so there is nothing to back up yet.';
+  else if(!state.lastBackupAt){ msg="You haven't made a backup yet. Save one now so your data survives if this browser is cleared."; warn=true; }
+  else if(dataSig()!==state.backedUpSig){ msg='Last backup: '+fmtDateTime(state.lastBackupAt)+'. You have made changes since, so save a new one.'; warn=true; }
+  else msg='Backed up on '+fmtDateTime(state.lastBackupAt)+'. Nothing has changed since.';
+  el.textContent=msg; el.classList.toggle('warn',warn);
+}
+
+function downloadText(name,text,mime){
+  try{
+    const url=URL.createObjectURL(new Blob([text],{type:mime}));
+    const a=document.createElement('a'); a.href=url; a.download=name;
+    document.body.appendChild(a); a.click();
+    setTimeout(()=>{ document.body.removeChild(a); URL.revokeObjectURL(url); },1000);
+    return true;
+  }catch(e){ return false; }
+}
+function copyText(text){
+  return new Promise(res=>{
+    const fb=()=>{
+      try{
+        const host=document.querySelector('dialog[open]')||document.body;
+        const t=document.createElement('textarea');
+        t.value=text; t.setAttribute('readonly','');
+        t.style.cssText='position:fixed;top:0;left:0;width:1px;height:1px;opacity:0';
+        host.appendChild(t); t.select(); t.setSelectionRange(0,text.length);
+        const ok=document.execCommand('copy'); host.removeChild(t); res(!!ok);
+      }catch(e){ res(false); }
+    };
+    try{
+      if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(()=>res(true),fb);
+      else fb();
+    }catch(e){ fb(); }
+  });
+}
+function doDownloadBackup(){
+  const text=backupText(); $('#bk-text').value=text;
+  const name='premium-ledger-backup-'+stamp()+'.json';
+  if(downloadText(name,text,'application/json')){
+    markBackedUp();
+    bkMsg('Download requested. Look for '+name+' in your downloads. If nothing appears, use Copy backup text instead.');
+  } else bkMsg('Your browser blocked the download. Use Copy backup text instead.');
+}
+function doCopyBackup(){
+  const text=backupText(); $('#bk-text').value=text;
+  copyText(text).then(ok=>{
+    if(ok){ markBackedUp(); bkMsg('Backup copied. Paste it into a note or a message to yourself.'); }
+    else{
+      $('#bk-details').open=true; const ta=$('#bk-text'); ta.focus(); ta.select();
+      bkMsg('Copying is blocked here. The text is selected below, so copy it by hand.');
+    }
+  });
+}
+
+function scheduleTable(){
+  const rows=[];
+  state.policies.map(analyse).forEach(a=>{
+    let cum=0;
+    a.items.forEach(i=>{
+      cum+=i.amount;
+      rows.push({date:i.date,name:a.p.name,type:TYPES[a.p.type].label,insurer:a.p.insurer,amt:i.amount,cum:cum,status:i.date<=TODAY?'Paid':'Upcoming'});
+    });
+  });
+  rows.sort((x,y)=>(x.date-y.date)||x.name.localeCompare(y.name));
+  return [['Due date','Policy','Type','Insurer','Amount (INR)','Running total for policy (INR)','Status']]
+    .concat(rows.map(r=>[toISO(r.date),r.name,r.type,r.insurer,String(r.amt),String(r.cum),r.status]));
+}
+function toTSV(t){ return t.map(r=>r.map(c=>String(c).replace(/[\t\r\n]+/g,' ')).join('\t')).join('\n'); }
+function toCSV(t){ return t.map(r=>r.map(c=>{ c=String(c); return /[",\r\n]/.test(c)?'"'+c.replace(/"/g,'""')+'"':c; }).join(',')).join('\r\n'); }
+function doCopySchedule(){
+  copyText(toTSV(scheduleTable())).then(ok=>bkMsg(ok?'Payment schedule copied. Paste it into Excel or Google Sheets.':'Copying is blocked here. Use Download schedule instead.'));
+}
+function doDownloadSchedule(){
+  const ok=downloadText('premium-schedule-'+stamp()+'.csv','\ufeff'+toCSV(scheduleTable()),'text/csv;charset=utf-8');
+  bkMsg(ok?'Download requested. If nothing appears, use Copy payment schedule instead.':'Your browser blocked the download. Use Copy payment schedule instead.');
+}
+
+let pending=null;
+function inspectBackup(text){
+  let d;
+  try{ d=JSON.parse(text); }catch(e){ return {ok:false,msg:'This is not a valid backup. Paste the full backup text, or choose the backup file.'}; }
+  const raw=Array.isArray(d)?d:(d&&d.policies);
+  if(!Array.isArray(raw)) return {ok:false,msg:'No policies were found in this backup.'};
+  const good=[],skipped=[],seen=new Set();
+  raw.forEach((r,i)=>{
+    const c=clean(r);
+    if(c){ if(seen.has(c.id)) c.id=uid(); seen.add(c.id); good.push(c); }
+    else{
+      let why='it could not be read';
+      if(r&&typeof r==='object'){
+        if(!String(r.name||'').trim()) why='it has no name';
+        else if(!validISO(String(r.start||''))) why='its start date is missing or not valid';
+        else if(!(Number(r.premium)>0)) why='its premium is missing or zero';
+      }
+      skipped.push('Item '+(i+1)+(r&&r.name?' ('+String(r.name).slice(0,40)+')':'')+' was skipped because '+why+'.');
+    }
+  });
+  let sum='none';
+  if(d&&!Array.isArray(d)&&d.checksum) sum=(hashStr(JSON.stringify(raw))===d.checksum)?'ok':'bad';
+  const h=(d&&!Array.isArray(d))?Number(d.horizon):0;
+  return {ok:true,good:good,skipped:skipped,checksum:sum,exportedAt:(d&&!Array.isArray(d)&&d.exportedAt)||'',horizon:(h>=THIS_YEAR&&h<=THIS_YEAR+80)?Math.floor(h):0};
+}
+function dupKey(p){ return [p.name.toLowerCase(),p.start,p.premium,p.freq].join('|'); }
+function mergeSplit(){
+  const ids=new Set(state.policies.map(p=>p.id)), keys=new Set(state.policies.map(dupKey));
+  const add=[],dup=[];
+  pending.good.forEach(p=>{ (ids.has(p.id)||keys.has(dupKey(p))?dup:add).push(p); });
+  return {add:add,dup:dup};
+}
+function currentMode(){ const m=$('input[name="rmode"]:checked'); return m?m.value:'merge'; }
+function updateChoiceNote(){
+  if(!pending) return;
+  const s=mergeSplit();
+  $('#rs-merge-note').textContent=s.add.length+' new '+(s.add.length===1?'policy':'policies')+' will be added'+(s.dup.length?'. '+s.dup.length+' you already have will be skipped':'')+'.';
+  $('#rs-replace-note').textContent='Everything now in the ledger is replaced. A safety copy is kept first.';
+  $('#rs-apply').disabled = currentMode()==='merge' ? s.add.length===0 : pending.good.length===0;
+}
+function checkRestore(){
+  const text=$('#rs-text').value.trim(), rep=$('#rs-report'), choice=$('#rs-choice');
+  const wasHidden=choice.hidden;
+  pending=null; $('#rs-apply').disabled=true; choice.hidden=true;
+  if(!text){ rep.innerHTML=''; return; }
+  const r=inspectBackup(text);
+  if(!r.ok){ rep.innerHTML='<div class="rp bad">'+esc(r.msg)+'</div>'; return; }
+  pending=r;
+  const when=r.exportedAt?fmtDateTime(r.exportedAt):'';
+  let html='<div><b>'+r.good.length+'</b> valid '+(r.good.length===1?'policy':'policies')+' found'+(when?', saved '+esc(when):'')+'.</div>';
+  if(r.good.length){
+    html+='<div class="ok">'+r.good.slice(0,6).map(p=>esc(p.name)).join(', ')+(r.good.length>6?' and '+(r.good.length-6)+' more':'')+'.</div>';
+  }
+  if(r.checksum==='ok') html+='<div class="ok">The checksum matches, so the text is complete and unedited.</div>';
+  else if(r.checksum==='bad') html+='<div class="warn">The checksum does not match. The text was edited or damaged, so check the policies after restoring.</div>';
+  else html+='<div class="ok">This backup has no checksum, so it cannot be verified.</div>';
+  r.skipped.forEach(m=>{ html+='<div class="warn">'+esc(m)+'</div>'; });
+  rep.innerHTML='<div class="rp">'+html+'</div>';
+  if(r.good.length){
+    choice.hidden=false;
+    if(wasHidden){ const v=realPolicies()?'merge':'replace'; const el=$('input[name="rmode"][value="'+v+'"]'); if(el) el.checked=true; }
+    updateChoiceNote();
+  }
+}
+function applyRestore(){
+  if(!pending||!pending.good.length) return;
+  const mode=currentMode();
+  const kept=snapshot('Before restoring a backup');
+  let msg;
+  if(mode==='replace'){
+    state.policies=pending.good.map(p=>Object.assign({},p));
+    if(pending.horizon) state.horizon=pending.horizon;
+    state.backedUpSig=dataSig();
+    state.lastBackupAt=(pending.exportedAt&&!isNaN(new Date(pending.exportedAt).getTime()))?pending.exportedAt:new Date().toISOString();
+    msg='Restored '+state.policies.length+(state.policies.length===1?' policy.':' policies.');
+  } else {
+    const s=mergeSplit();
+    s.add.forEach(p=>state.policies.push(Object.assign({},p)));
+    msg='Added '+s.add.length+(s.add.length===1?' policy':' policies')+(s.dup.length?' and skipped '+s.dup.length+' you already have':'')+'.';
+  }
   save(); render();
-  st.textContent='Restored '+list.length+(list.length===1?' policy.':' policies.');
+  $('#rs-text').value=''; $('#rs-file').value=''; pending=null; checkRestore();
+  $('#rs-report').innerHTML='<div class="rp"><div>'+esc(msg)+(kept?' Your previous data is saved under Safety copies.':'')+'</div></div>';
+  $('#bk-text').value=backupText();
+  renderBackupStatus(); renderSnaps();
+}
+function openBackup(){
+  $('#bk-text').value=backupText();
+  $('#bk-details').open=false;
+  bkMsg('');
+  $('#rs-text').value=''; try{ $('#rs-file').value=''; }catch(e){}
+  checkRestore();
+  renderBackupStatus(); renderSnaps();
+  openDlg($('#dlg-backup'));
 }
 
 function openSettings(){
@@ -1029,7 +1292,8 @@ document.addEventListener('click',async e=>{
     else if(kind==='edit') openForm(id);
     else if(kind==='del'){
       const p=state.policies.find(x=>x.id===id); if(!p) return;
-      if(await askConfirm('Delete this policy?','"'+p.name+'" will be removed from your ledger. This cannot be undone.','Delete policy')){
+      if(await askConfirm('Delete this policy?','"'+p.name+'" will be removed from your ledger. A safety copy is kept under Backup in case you change your mind.','Delete policy')){
+        snapshot('Before deleting "'+p.name+'"');
         state.policies=state.policies.filter(x=>x.id!==id); save(); render();
       }
     }
@@ -1047,13 +1311,18 @@ document.addEventListener('click',async e=>{
     state.policies=state.policies.filter(p=>!p.sample); save(); render(); return;
   }
   if(t.closest('#s-clear')){
-    if(await askConfirm('Delete all policies?','Every policy in this ledger will be removed from this browser.','Delete everything')){
+    if(await askConfirm('Delete all policies?','Every policy in this ledger will be removed from this browser. A safety copy is kept under Backup in case you change your mind.','Delete everything')){
+      snapshot('Before deleting everything');
       state.policies=[]; save(); render(); $('#dlg-settings').close();
     }
     return;
   }
-  if(t.closest('#db-copy')) return copyBackup();
-  if(t.closest('#db-restore')) return restoreBackup();
+  if(t.closest('#bk-download')) return doDownloadBackup();
+  if(t.closest('#bk-copy')) return doCopyBackup();
+  if(t.closest('#bk-sheet')) return doCopySchedule();
+  if(t.closest('#bk-csv')) return doDownloadSchedule();
+  if(t.closest('#rs-apply')) return applyRestore();
+  const sn=t.closest('[data-snap]'); if(sn) return restoreSnapshot(Number(sn.dataset.snap));
 });
 document.addEventListener('pointerover',e=>{
   if(e.pointerType!=='mouse') return;
@@ -1072,6 +1341,18 @@ $('#s-horizon').addEventListener('change',e=>{
   e.target.value=h; state.horizon=h; save(); render();
 });
 $('#s-theme').addEventListener('change',e=>{ state.theme=e.target.value; applyTheme(); save(); });
+
+let rsT=null;
+$('#rs-text').addEventListener('input',()=>{ clearTimeout(rsT); rsT=setTimeout(checkRestore,250); });
+$('#rs-choice').addEventListener('change',updateChoiceNote);
+$('#rs-file').addEventListener('change',e=>{
+  const f=e.target.files&&e.target.files[0]; if(!f) return;
+  if(f.size>5e6){ $('#rs-report').innerHTML='<div class="rp bad">That file is too large to be a backup.</div>'; return; }
+  const fr=new FileReader();
+  fr.onload=()=>{ $('#rs-text').value=String(fr.result||''); checkRestore(); };
+  fr.onerror=()=>{ $('#rs-report').innerHTML='<div class="rp bad">The file could not be read. Paste the backup text instead.</div>'; };
+  fr.readAsText(f);
+});
 
 let lastW=0,tm=null;
 window.addEventListener('resize',()=>{
