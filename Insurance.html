@@ -1,588 +1,1093 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en-IN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LIC Comprehensive Portfolio & Bulk OCR</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <style>
-        body { font-family: 'Inter', sans-serif; }
-        ::-webkit-scrollbar { height: 8px; width: 8px; }
-        ::-webkit-scrollbar-track { background: #f8fafc; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-        .spinner { border: 3px solid rgba(79,70,229,0.3); border-radius: 50%; border-top-color: #4f46e5; width: 20px; height: 20px; animation: spin 1s ease-in-out infinite; }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        input[type="date"]::-webkit-calendar-picker-indicator { cursor: pointer; opacity: 0.6; transition: 0.2s; }
-        input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
-    </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<title>Premium ledger</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Figtree:wght@400..700&display=swap" rel="stylesheet">
+<style>
+:root{
+  color-scheme:light;
+  --bg:#F2F5F4; --panel:#FFFFFF; --ink:#10262B; --muted:#587074; --line:#D8E1E0; --tint:#E7EEED;
+  --btn-bg:#10262B; --btn-fg:#FFFFFF; --focus:#2F6FED; --danger:#B3261E; --soon:#A9480A;
+  --life:#3556C8; --health:#0E8F7E; --pension:#CC7410; --other:#8452B8;
+  --display:"Bricolage Grotesque","Figtree",system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans",sans-serif;
+  --body:"Figtree",system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans",sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0C1A1D; --panel:#132428; --ink:#E7F0EE; --muted:#93A8AB; --line:#25393D; --tint:#1A2F33;
+    --btn-bg:#E7F0EE; --btn-fg:#0C1B1F; --focus:#8FB4FF; --danger:#FF8A80; --soon:#FBBF6A;
+    --life:#8CA3F5; --health:#3CC4AE; --pension:#F0A048; --other:#B98CE8;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0C1A1D; --panel:#132428; --ink:#E7F0EE; --muted:#93A8AB; --line:#25393D; --tint:#1A2F33;
+  --btn-bg:#E7F0EE; --btn-fg:#0C1B1F; --focus:#8FB4FF; --danger:#FF8A80; --soon:#FBBF6A;
+  --life:#8CA3F5; --health:#3CC4AE; --pension:#F0A048; --other:#B98CE8;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.5 var(--body)}
+.wrap{max-width:1200px;margin:0 auto;padding:12px clamp(14px,3vw,32px) 64px}
+h1,h2,h3{font-family:var(--display);margin:0;letter-spacing:-.01em}
+p{margin:0}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+
+.top{display:flex;flex-wrap:wrap;gap:12px 20px;align-items:center;justify-content:space-between;padding:16px 0 14px}
+.top h1{font-size:clamp(1.6rem,4.5vw,2.3rem);font-weight:700;letter-spacing:-.025em}
+.top p{color:var(--muted);margin-top:2px}
+.actions{display:flex;flex-wrap:wrap;gap:8px}
+.btn{min-height:44px;padding:0 16px;border-radius:10px;border:1px solid var(--line);background:var(--panel);font-weight:600}
+.btn.primary{background:var(--btn-bg);color:var(--btn-fg);border-color:transparent}
+.btn.small{min-height:36px;padding:0 12px;font-size:.9rem}
+.btn.danger{color:var(--danger)}
+
+.note{border:1px solid var(--line);background:var(--tint);border-radius:12px;padding:10px 14px;display:flex;gap:10px 14px;flex-wrap:wrap;align-items:center;justify-content:space-between;margin-bottom:14px}
+
+.toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
+.pills{display:flex;flex-wrap:wrap;gap:6px}
+.pill{border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:0 14px;min-height:38px;font-weight:600;font-size:.92rem}
+.pill[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+
+#dash > * + *{margin-top:14px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:clamp(14px,2.4vw,24px)}
+.panel h2{font-size:1.2rem;font-weight:650}
+.panel .sub{color:var(--muted);font-size:.92rem;margin-top:2px}
+
+.hero{display:grid;gap:22px 28px;grid-template-columns:1.25fr 1fr}
+.hero-foot{grid-column:1/-1;border-top:1px solid var(--line);padding-top:16px}
+@media (max-width:820px){.hero{grid-template-columns:1fr}}
+.big-label{color:var(--muted);font-weight:500}
+.big{font-family:var(--display);font-weight:700;font-size:clamp(2.3rem,9vw,4.2rem);line-height:1.02;letter-spacing:-.03em;font-variant-numeric:tabular-nums;overflow-wrap:anywhere;margin:4px 0 8px}
+.lede{color:var(--muted);margin-bottom:16px;max-width:60ch}
+.split{height:14px;border-radius:999px;background:var(--tint);overflow:hidden;display:flex}
+.split i{display:block;height:100%;background:var(--ink)}
+.split-caption{display:flex;justify-content:space-between;gap:4px 12px;flex-wrap:wrap;font-size:.92rem;margin-top:8px}
+.figs{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.fig{border:1px solid var(--line);border-radius:12px;padding:12px 14px;min-width:0}
+.fig .k{color:var(--muted);font-size:.86rem}
+.fig .v{font-family:var(--display);font-weight:650;font-size:clamp(1.2rem,4vw,1.5rem);font-variant-numeric:tabular-nums;line-height:1.2;margin-top:2px;overflow-wrap:anywhere}
+.fig .n{color:var(--muted);font-size:.82rem;margin-top:2px;overflow-wrap:anywhere}
+
+.share{display:flex;height:10px;border-radius:999px;overflow:hidden;background:var(--tint);gap:2px}
+.share i{display:block;height:100%;background:var(--c)}
+.legend{display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:10px;font-size:.9rem}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.dot{width:10px;height:10px;border-radius:3px;background:var(--c);flex:none;display:inline-block}
+.hero-foot h3{font-size:1rem;font-weight:650;margin-bottom:10px}
+
+.gantt{padding:0 18px;margin-top:14px}
+.g-axis{position:relative;height:40px;border-bottom:1px solid var(--line)}
+.g-tick{position:absolute;bottom:0;transform:translateX(-50%);font-size:.78rem;color:var(--muted);padding-bottom:5px;white-space:nowrap}
+.g-tick::after{content:"";position:absolute;left:50%;bottom:-1px;height:4px;border-left:1px solid var(--line)}
+.g-flag{position:absolute;top:0;transform:translateX(-50%);font-size:.72rem;font-weight:700;background:var(--ink);color:var(--bg);border-radius:6px;padding:0 7px;line-height:18px;white-space:nowrap}
+.g-row{padding:10px 0}
+.g-row + .g-row{border-top:1px dashed var(--line)}
+.g-label{display:flex;flex-wrap:wrap;justify-content:space-between;gap:0 12px;margin-bottom:7px}
+.g-label b{font-weight:650;overflow-wrap:anywhere}
+.g-label span{color:var(--muted);font-size:.88rem}
+.g-track{position:relative;height:16px}
+.g-pay{position:absolute;top:0;height:100%;border-radius:6px;overflow:hidden;min-width:8px}
+.g-pay.open{border-radius:6px 0 0 6px;border-right:2px dashed var(--c)}
+.g-pay .rest{position:absolute;inset:0;background:var(--c);opacity:.26}
+.g-pay .done{position:absolute;left:0;top:0;bottom:0;background:var(--c)}
+.g-tail{position:absolute;top:50%;height:0;border-top:2px solid var(--c);opacity:.6}
+.g-mat{position:absolute;top:50%;width:12px;height:12px;background:var(--c);transform:translate(-50%,-50%) rotate(45deg);border-radius:2px}
+.g-today{position:absolute;top:-4px;bottom:-4px;width:2px;background:var(--ink);transform:translateX(-1px);border-radius:1px}
+.key{display:flex;flex-wrap:wrap;gap:6px 18px;margin-top:14px;font-size:.84rem;color:var(--muted)}
+.key span{display:inline-flex;align-items:center;gap:7px}
+.key i{display:inline-block;flex:none}
+.k-solid{width:22px;height:10px;border-radius:4px;background:var(--ink)}
+.k-light{width:22px;height:10px;border-radius:4px;background:var(--ink);opacity:.26}
+.k-line{width:22px;height:0;border-top:2px solid var(--ink);opacity:.6}
+.k-dia{width:9px;height:9px;background:var(--ink);transform:rotate(45deg);border-radius:2px}
+.k-today{width:2px;height:14px;background:var(--ink)}
+
+.cols{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(0,1fr);gap:14px}
+@media (max-width:920px){.cols{grid-template-columns:minmax(0,1fr)}}
+.chart-head{display:flex;flex-wrap:wrap;gap:10px 16px;justify-content:space-between;align-items:flex-start}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.seg button{border:0;background:transparent;padding:0 14px;min-height:38px;font-weight:600;font-size:.9rem}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.readout{display:flex;flex-wrap:wrap;gap:4px 16px;align-items:baseline;margin:14px 0 10px;min-height:3.2em}
+.readout .yr{font-family:var(--display);font-weight:700;font-size:1.35rem}
+.readout .tot{font-weight:700;font-variant-numeric:tabular-nums;font-size:1.1rem}
+.readout .st{color:var(--muted);font-size:.86rem}
+.readout .rt{display:inline-flex;align-items:center;gap:6px;font-size:.88rem;font-variant-numeric:tabular-nums}
+.yc{position:relative;padding-left:48px}
+.yc-plot{position:relative;height:220px;display:flex;align-items:flex-end;gap:2px;border-bottom:1px solid var(--line)}
+.yc-grid{position:absolute;left:-48px;right:0;top:0;bottom:0;pointer-events:none}
+.yc-grid div{position:absolute;left:0;right:0;border-top:1px dashed var(--line)}
+.yc-grid span{position:absolute;left:0;top:-9px;font-size:.72rem;color:var(--muted);background:var(--panel);padding-right:5px;line-height:1.1}
+.yc-col{position:relative;z-index:1;flex:1 1 0;min-width:0;height:100%;display:flex;align-items:flex-end;border:0;background:transparent;padding:0;border-radius:3px 3px 0 0}
+.yc-col:hover,.yc-col.sel{background:var(--tint)}
+.yc-stack{width:100%;display:flex;flex-direction:column-reverse;border-radius:3px 3px 0 0;overflow:hidden}
+.yc-stack i{display:block;width:100%;background:var(--c)}
+.yc-col.future .yc-stack{opacity:.5}
+.yc-col.now::after{content:"";position:absolute;left:0;right:0;bottom:-6px;height:3px;background:var(--ink);border-radius:2px}
+.yc-axis{position:relative;height:26px;margin-top:8px}
+.yc-axis span{position:absolute;transform:translateX(-50%);font-size:.75rem;color:var(--muted);white-space:nowrap}
+.chart-note{color:var(--muted);font-size:.84rem;margin-top:6px}
+
+.due{display:grid;grid-template-columns:54px minmax(0,1fr) auto;gap:12px;align-items:center;padding:10px 0}
+.due + .due{border-top:1px solid var(--line)}
+.date-chip{text-align:center;border:1px solid var(--line);border-radius:10px;padding:5px 0;line-height:1.1}
+.date-chip b{display:block;font-family:var(--display);font-size:1.15rem}
+.date-chip span{font-size:.76rem;color:var(--muted)}
+.due .nm{font-weight:600;overflow-wrap:anywhere}
+.due .fq{color:var(--muted);font-size:.84rem}
+.due .amt{font-weight:700;font-variant-numeric:tabular-nums;text-align:right}
+.due .when{font-size:.82rem;color:var(--muted);text-align:right}
+.due.soon .when{color:var(--soon);font-weight:700}
+#dues{margin-top:8px}
+
+.sec-head{display:flex;flex-wrap:wrap;gap:10px 16px;justify-content:space-between;align-items:center;margin-bottom:12px}
+.sec-head h2{font-size:1.3rem;font-weight:650}
+.sortl{display:inline-flex;align-items:center;gap:8px;font-size:.92rem;color:var(--muted)}
+.sortl select{width:auto;min-height:40px}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,330px),1fr));gap:14px}
+.pcard{background:var(--panel);border:1px solid var(--line);border-top:5px solid var(--c);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.pc-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.pc-head h3{font-size:1.12rem;font-weight:650;line-height:1.25;overflow-wrap:anywhere}
+.pc-meta{color:var(--muted);font-size:.86rem;overflow-wrap:anywhere;display:flex;align-items:center;gap:6px;margin-top:3px}
+.tag{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:999px;padding:1px 10px;font-size:.78rem;font-weight:600;white-space:nowrap;color:var(--muted)}
+.tag.warn{color:var(--soon);border-color:var(--soon)}
+.pc-total{display:flex;align-items:baseline;justify-content:space-between;gap:4px 10px;flex-wrap:wrap}
+.pc-total .n{font-family:var(--display);font-size:1.9rem;font-weight:700;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.pc-total .l{color:var(--muted);font-size:.86rem}
+.bar{height:8px;border-radius:999px;background:var(--tint);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--c)}
+.pc-split{display:flex;justify-content:space-between;gap:4px 10px;font-size:.88rem;flex-wrap:wrap;margin-top:-6px}
+.kv{display:grid;grid-template-columns:auto minmax(0,1fr);gap:5px 14px;font-size:.9rem;margin:0}
+.kv dt{color:var(--muted)}
+.kv dd{margin:0;text-align:right;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.pc-actions{display:flex;gap:8px;margin-top:auto;flex-wrap:wrap}
+
+.empty{text-align:center;padding:clamp(28px,6vw,64px) 20px}
+.empty p{color:var(--muted);max-width:52ch;margin:8px auto 18px}
+.empty .actions{justify-content:center}
+
+.foot{margin-top:28px;color:var(--muted);font-size:.88rem}
+.foot h2{font-size:1rem;color:var(--ink);margin-bottom:6px}
+.foot ul{margin:0;padding-left:1.1rem;display:grid;gap:3px;max-width:80ch}
+
+dialog{border:1px solid var(--line);border-radius:16px;background:var(--panel);color:var(--ink);padding:0;width:min(660px,calc(100vw - 20px));max-height:calc(100vh - 20px);max-height:calc(100dvh - 20px);box-shadow:0 20px 60px rgba(0,0,0,.28)}
+dialog::backdrop{background:rgba(8,20,23,.6)}
+.dlg{display:flex;flex-direction:column;max-height:calc(100vh - 22px);max-height:calc(100dvh - 22px);margin:0}
+.dlg-head{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px 20px;border-bottom:1px solid var(--line)}
+.dlg-head h2{font-size:1.2rem}
+.dlg-body{padding:18px 20px;overflow:auto;-webkit-overflow-scrolling:touch}
+.dlg-foot{display:flex;justify-content:flex-end;gap:8px;padding:12px 20px;border-top:1px solid var(--line);flex-wrap:wrap}
+.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:560px){.fgrid{grid-template-columns:1fr}}
+.field{display:flex;flex-direction:column;gap:5px;min-width:0}
+.field.full{grid-column:1/-1}
+.field label{font-weight:600;font-size:.92rem}
+.field small{color:var(--muted);font-size:.8rem}
+input,select,textarea{font:inherit;font-size:16px;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px;min-height:44px;width:100%}
+textarea{min-height:170px;font-size:14px;resize:vertical}
+.preview{border:1px dashed var(--line);border-radius:12px;padding:12px 14px;margin-top:16px;font-size:.94rem}
+.err{color:var(--danger);font-size:.9rem;min-height:1.3em;margin-top:8px}
+.tbl-wrap{overflow-x:auto;margin-top:12px}
+table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+th,td{padding:8px 10px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+thead th{font-weight:600;color:var(--muted);font-size:.86rem}
+tfoot td{font-weight:700;border-bottom:0}
+.dl-meta{display:flex;flex-wrap:wrap;gap:4px 18px;color:var(--muted);font-size:.9rem}
+.set-row{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:flex-end;justify-content:space-between;padding:14px 0}
+.set-row + .set-row{border-top:1px solid var(--line)}
+.set-row .field{flex:1 1 220px}
+.status{color:var(--muted);font-size:.88rem;min-height:1.3em;margin-top:8px}
+</style>
 </head>
-<body class="bg-slate-100 text-slate-800 p-4 md:p-6 lg:p-8 min-h-screen relative overflow-x-hidden">
+<body>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>Premium ledger</h1>
+      <p>Every policy, from first premium to maturity.</p>
+    </div>
+    <div class="actions">
+      <button class="btn primary" id="btn-add" type="button">Add policy</button>
+      <button class="btn" id="btn-backup" type="button">Backup</button>
+      <button class="btn" id="btn-settings" type="button">Settings</button>
+    </div>
+  </header>
 
-    <!-- Toast Notification Container -->
-    <div id="toastContainer" class="fixed top-5 right-5 z-50 flex flex-col gap-2"></div>
+  <div id="banner"></div>
 
-    <div class="max-w-[1400px] mx-auto space-y-6">
-        
-        <header class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4 bg-white p-6 rounded-2xl shadow-sm border border-slate-200/60">
-            <div>
-                <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">LIC Master Portfolio</h1>
-                <p class="text-slate-500 text-sm mt-1 font-medium">Bulk OCR extraction, data validation, and offline backups.</p>
-            </div>
-            <div class="flex gap-3">
-                <input type="file" id="importFile" accept=".json" class="hidden" onchange="importFromJson(event)">
-                <button onclick="document.getElementById('importFile').click()" class="bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 px-4 py-2.5 rounded-xl text-sm font-bold transition-all shadow-sm">
-                    ↑ Import JSON
-                </button>
-                <button onclick="exportToJson()" class="bg-slate-900 hover:bg-slate-800 text-white px-5 py-2.5 rounded-xl text-sm font-bold transition-all shadow-md flex items-center gap-2">
-                    ↓ Export Backup
-                </button>
-            </div>
-        </header>
+  <section id="empty" class="panel empty" hidden>
+    <h2>Add your first policy</h2>
+    <p>Enter the start date, the premium and how often you pay. The ledger works out what you will have paid by maturity, and when each payment falls due.</p>
+    <div class="actions">
+      <button class="btn primary" id="btn-add2" type="button">Add policy</button>
+      <button class="btn" id="btn-sample" type="button">See it with sample policies</button>
+    </div>
+  </section>
 
-        <!-- Top Summary Metrics -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/60">
-                <p class="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Total Lifetime Spend</p>
-                <p class="text-2xl font-black text-slate-800 mt-1 tracking-tight" id="metricSpend">₹0</p>
-            </div>
-            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/60">
-                <p class="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Base Sum Assured</p>
-                <p class="text-2xl font-black text-emerald-600 mt-1 tracking-tight" id="metricSum">₹0</p>
-            </div>
-            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/60">
-                <p class="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Accrued Bonuses</p>
-                <p class="text-2xl font-black text-blue-600 mt-1 tracking-tight" id="metricBonus">₹0</p>
-            </div>
-            <div class="bg-indigo-600 p-5 rounded-2xl shadow-md border border-indigo-500 relative overflow-hidden">
-                <div class="absolute -right-4 -top-4 opacity-10"><svg class="w-24 h-24 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg></div>
-                <p class="text-[11px] font-bold text-indigo-200 uppercase tracking-widest relative z-10">Est. Total Return Value</p>
-                <p class="text-2xl font-black text-white mt-1 tracking-tight relative z-10" id="metricTotalReturn">₹0</p>
-            </div>
+  <main id="dash" hidden>
+    <div class="toolbar"><div class="pills" id="pills" role="group" aria-label="Filter by policy type"></div></div>
+
+    <section class="panel hero" id="hero" aria-label="Summary"></section>
+
+    <section class="panel" aria-labelledby="tl-h">
+      <h2 id="tl-h">Policy timeline</h2>
+      <p class="sub">Each bar runs from the first premium to the last one. The thin line carries on to maturity.</p>
+      <div class="gantt" id="gantt"></div>
+      <div class="key">
+        <span><i class="k-solid"></i>Premiums paid</span>
+        <span><i class="k-light"></i>Premiums still to pay</span>
+        <span><i class="k-line"></i>No more premiums, policy continues</span>
+        <span><i class="k-dia"></i>Maturity</span>
+        <span><i class="k-today"></i>Today</span>
+      </div>
+    </section>
+
+    <div class="cols">
+      <section class="panel" aria-labelledby="ch-h">
+        <div class="chart-head">
+          <div>
+            <h2 id="ch-h">Money going out</h2>
+            <p class="sub">Select a bar to see that year's payments.</p>
+          </div>
+          <div class="seg" role="group" aria-label="Chart view">
+            <button type="button" data-mode="year" aria-pressed="true">Each year</button>
+            <button type="button" data-mode="cum" aria-pressed="false">Running total</button>
+          </div>
         </div>
+        <div class="readout" id="readout" aria-live="polite"></div>
+        <div id="chart"></div>
+        <div class="legend" id="chart-legend"></div>
+        <p class="chart-note">Paler bars are projections. The underlined year is this year.</p>
+      </section>
 
-        <div class="grid grid-cols-1 xl:grid-cols-12 gap-6">
-            
-            <!-- Left Column: Form & OCR -->
-            <div class="xl:col-span-4 flex flex-col gap-6">
-                
-                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/60 h-fit" id="formContainer">
-                    
-                    <!-- Advanced OCR Bulk Upload Zone -->
-                    <div class="mb-5 p-6 border-2 border-dashed border-indigo-200 rounded-xl bg-indigo-50/30 text-center relative hover:bg-indigo-50 transition-colors cursor-pointer group">
-                        <!-- 'multiple' attribute added for batch processing -->
-                        <input type="file" id="policyImage" accept="image/*" multiple class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" onchange="handleBulkImageUpload(event)">
-                        <div class="flex flex-col items-center gap-3 relative z-0">
-                            <div class="bg-white p-3 rounded-full shadow-sm group-hover:scale-110 group-hover:shadow-md transition-all">
-                                <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 12v9m0-9l-3 3m3-3l3 3"></path></svg>
-                            </div>
-                            <div>
-                                <p class="text-sm font-extrabold text-indigo-900">Upload Policy Screenshots</p>
-                                <p class="text-[11px] text-slate-500 mt-1 font-medium">Select multiple images to batch process</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div id="ocrStatus" class="hidden items-center justify-center gap-3 mb-5 p-3 bg-indigo-50 border border-indigo-100 text-indigo-800 text-xs font-bold rounded-xl">
-                        <div class="spinner"></div> <span id="ocrStatusText">Processing images...</span>
-                    </div>
-
-                    <form id="policyForm" class="space-y-5">
-                        
-                        <!-- Core Details -->
-                        <div class="space-y-3">
-                            <div class="flex justify-between items-end border-b pb-2">
-                                <h3 class="text-xs font-black text-slate-800 uppercase tracking-widest">Manual Entry / Review</h3>
-                                <button type="button" onclick="document.getElementById('policyForm').reset()" class="text-[10px] font-bold text-slate-400 hover:text-red-500">CLEAR FORM</button>
-                            </div>
-                            <div class="grid grid-cols-2 gap-3">
-                                <div class="col-span-2">
-                                    <label class="block text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wider">Life Insured <span class="text-red-500">*</span></label>
-                                    <input type="text" id="pInsured" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm font-semibold text-slate-900">
-                                </div>
-                                <div class="col-span-1">
-                                    <label class="block text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wider">Plan Type</label>
-                                    <input type="text" id="pPlanType" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm font-bold text-indigo-700">
-                                </div>
-                                <div class="col-span-1">
-                                    <label class="block text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wider">Sum Assured <span class="text-red-500">*</span></label>
-                                    <input type="number" id="pSumAssured" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm font-bold text-emerald-600">
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Timeline & Dates -->
-                        <div class="grid grid-cols-2 gap-3">
-                            <div>
-                                <label class="block text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wider">Commencement</label>
-                                <input type="date" id="pCommencement" class="w-full px-2 py-1.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 text-xs font-medium">
-                            </div>
-                            <div>
-                                <label class="block text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wider">Est. Maturity</label>
-                                <input type="date" id="pMaturity" class="w-full px-2 py-1.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 text-xs font-medium">
-                            </div>
-                            <div>
-                                <label class="block text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wider">Next Payout</label>
-                                <input type="date" id="pNextPayout" class="w-full px-2 py-1.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 text-xs font-medium">
-                            </div>
-                            <div>
-                                <label class="block text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wider">Next Premium</label>
-                                <input type="date" id="pNextPremium" class="w-full px-2 py-1.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 text-xs font-medium">
-                            </div>
-                        </div>
-
-                        <!-- Accrued Bonuses -->
-                        <div class="grid grid-cols-2 gap-3 bg-blue-50/50 p-3 rounded-xl border border-blue-100">
-                            <div>
-                                <label class="block text-[10px] font-bold text-blue-900 mb-1 uppercase tracking-wider">Vested Bonus (₹)</label>
-                                <input type="number" id="pVestedBonus" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm font-semibold text-blue-700" value="0">
-                            </div>
-                            <div>
-                                <label class="block text-[10px] font-bold text-blue-900 mb-1 uppercase tracking-wider">Interim Bonus (₹)</label>
-                                <input type="number" id="pInterimBonus" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm font-semibold text-blue-700" value="0">
-                            </div>
-                        </div>
-
-                        <!-- Premium Configurations -->
-                        <div class="grid grid-cols-3 gap-3 bg-slate-50 p-3 rounded-xl border border-slate-200">
-                            <div class="col-span-1">
-                                <label class="block text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wider">Policy Yrs</label>
-                                <input type="number" id="pPolicyTerm" required class="w-full px-2 py-2 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm font-semibold mb-2">
-                            </div>
-                            <div class="col-span-1">
-                                <label class="block text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wider">Pay Yrs <span class="text-red-500">*</span></label>
-                                <input type="number" id="pPayingTerm" required class="w-full px-2 py-2 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm font-semibold">
-                            </div>
-                            <div class="col-span-1">
-                                <label class="block text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wider">Mode <span class="text-red-500">*</span></label>
-                                <select id="pMode" class="w-full px-1 py-2 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 text-xs font-bold">
-                                    <option value="12">Monthly</option><option value="4">Quarterly</option><option value="2">Half-Year</option><option value="1">Yearly</option>
-                                </select>
-                            </div>
-                            <div class="col-span-1">
-                                <label class="block text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wider">Instal. (₹) <span class="text-red-500">*</span></label>
-                                <input type="number" id="pInstallment" required class="w-full px-2 py-2 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm font-bold text-slate-800">
-                            </div>
-                            <div class="col-span-1">
-                                <label class="block text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wider">Rider (₹)</label>
-                                <input type="number" id="pRiderPremium" class="w-full px-2 py-2 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm font-semibold text-slate-600" value="0">
-                            </div>
-                        </div>
-
-                        <button type="submit" class="w-full bg-slate-900 text-white font-black py-3.5 rounded-xl hover:bg-slate-800 transition-all shadow-lg shadow-slate-200">
-                            Calculate & Save to Portfolio
-                        </button>
-                    </form>
-                </div>
-            </div>
-
-            <!-- Right Column: Charts & Tables -->
-            <div class="xl:col-span-8 flex flex-col gap-6">
-                
-                <!-- Chart Section -->
-                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/60 flex flex-col">
-                    <div class="flex justify-between items-center mb-6 border-b border-slate-100 pb-3">
-                        <h2 class="text-xl font-extrabold text-slate-800">Return on Investment Analysis</h2>
-                        <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest bg-slate-100 px-3 py-1.5 rounded-md">Spend vs Returns</span>
-                    </div>
-                    <div class="relative flex-grow min-h-[380px] w-full">
-                        <canvas id="spendChart"></canvas>
-                    </div>
-                </div>
-
-                <!-- Data Table -->
-                <div class="bg-white rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden">
-                    <div class="p-5 border-b border-slate-100 bg-slate-50/50">
-                        <h2 class="text-lg font-bold text-slate-800">Detailed Policy Ledger</h2>
-                    </div>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left border-collapse whitespace-nowrap">
-                            <thead>
-                                <tr class="bg-white text-slate-400 text-[10px] uppercase tracking-widest border-b border-slate-200">
-                                    <th class="px-5 py-4 font-bold">Policy & Insured</th>
-                                    <th class="px-5 py-4 font-bold">Timelines</th>
-                                    <th class="px-5 py-4 font-bold">Returns (Sum+Bonus)</th>
-                                    <th class="px-5 py-4 font-bold text-right text-slate-800">Lifetime Spend</th>
-                                    <th class="px-5 py-4 font-bold text-center">Action</th>
-                                </tr>
-                            </thead>
-                            <tbody id="tableBody" class="text-sm divide-y divide-slate-100 bg-white"></tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
-        </div>
+      <section class="panel" aria-labelledby="du-h">
+        <h2 id="du-h">Coming up</h2>
+        <p class="sub">The next payments across your policies.</p>
+        <div id="dues"></div>
+      </section>
     </div>
 
-    <script>
-        let policies = [];
-        let chartInstance = null;
-        
-        // --- UTILS ---
-        const formatMoney = (amount) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(amount);
-        
-        const formatDate = (dateStr) => {
-            if(!dateStr) return "-";
-            const d = new Date(dateStr);
-            return isNaN(d) ? "-" : d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
-        };
+    <section aria-labelledby="pol-h">
+      <div class="sec-head">
+        <h2 id="pol-h">Your policies</h2>
+        <label class="sortl">Sort by
+          <select id="sort">
+            <option value="next">Next payment</option>
+            <option value="outlay">Lifetime outlay</option>
+            <option value="start">Start date</option>
+            <option value="name">Name</option>
+          </select>
+        </label>
+      </div>
+      <div class="cards" id="cards"></div>
+    </section>
+  </main>
 
-        const showToast = (message, type = 'success') => {
-            const container = document.getElementById('toastContainer');
-            const toast = document.createElement('div');
-            
-            let bg = 'bg-slate-800';
-            if(type === 'error') bg = 'bg-red-600';
-            if(type === 'warning') bg = 'bg-amber-500';
-            if(type === 'success') bg = 'bg-emerald-600';
+  <footer class="foot" id="foot">
+    <h2>How the numbers are worked out</h2>
+    <ul>
+      <li>A premium counts as paid once its due date is today or earlier.</li>
+      <li>Payments fall on the same day of the month as the start date, or the last day of a shorter month.</li>
+      <li>Yearly increases apply from each policy anniversary.</li>
+      <li>Policies with no maturity date, such as health cover, are projected to the year set in Settings.</li>
+      <li>Implied return compares all premiums with the maturity benefit you enter. It ignores the value of cover and tax benefits.</li>
+      <li id="storage-note">Your data stays in this browser only. Use Backup to keep a copy.</li>
+    </ul>
+  </footer>
+</div>
 
-            toast.className = `${bg} text-white px-5 py-3 rounded-xl shadow-xl text-sm font-bold flex items-center gap-3 transform transition-all duration-300 translate-x-20 opacity-0`;
-            toast.innerHTML = `
-                ${type === 'error' ? '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>' : ''}
-                ${type === 'success' ? '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>' : ''}
-                <span>${message}</span>
-            `;
-            container.appendChild(toast);
-            
-            // Animate in
-            requestAnimationFrame(() => {
-                toast.classList.remove('translate-x-20', 'opacity-0');
-            });
+<!-- Policy form -->
+<dialog id="dlg-policy" aria-labelledby="dp-title">
+  <form id="pform" class="dlg" novalidate>
+    <div class="dlg-head">
+      <h2 id="dp-title">Add policy</h2>
+      <button type="button" class="btn small" data-close>Close</button>
+    </div>
+    <div class="dlg-body">
+      <div class="fgrid">
+        <div class="field full">
+          <label for="f-name">Policy name</label>
+          <input id="f-name" maxlength="80" placeholder="For example, LIC Jeevan Anand" autocomplete="off">
+        </div>
+        <div class="field">
+          <label for="f-type">Type</label>
+          <select id="f-type">
+            <option value="life">Life insurance</option>
+            <option value="health">Health insurance</option>
+            <option value="pension">Pension</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="f-insurer">Insurer or scheme</label>
+          <input id="f-insurer" maxlength="80" placeholder="For example, LIC or SBI" autocomplete="off">
+        </div>
+        <div class="field">
+          <label for="f-number">Policy number</label>
+          <input id="f-number" maxlength="40" placeholder="Optional" autocomplete="off">
+        </div>
+        <div class="field">
+          <label for="f-freq">How often you pay</label>
+          <select id="f-freq">
+            <option value="monthly">Monthly</option>
+            <option value="quarterly">Quarterly</option>
+            <option value="half">Half-yearly</option>
+            <option value="yearly" selected>Yearly</option>
+            <option value="single">One time only</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="f-premium">Premium each time (₹)</label>
+          <input id="f-premium" type="number" inputmode="decimal" min="0" step="any" placeholder="0">
+        </div>
+        <div class="field">
+          <label for="f-inc">Yearly premium increase (%)</label>
+          <input id="f-inc" type="number" inputmode="decimal" min="0" step="any" placeholder="0">
+          <small>Health premiums often rise. Leave empty if fixed.</small>
+        </div>
+        <div class="field">
+          <label for="f-start">Start date</label>
+          <input id="f-start" type="date">
+        </div>
+        <div class="field">
+          <label for="f-maturity">Maturity date</label>
+          <input id="f-maturity" type="date">
+          <small>Leave empty for renewable policies.</small>
+        </div>
+        <div class="field">
+          <label for="f-ppt">Premium paying term (years)</label>
+          <input id="f-ppt" type="number" inputmode="numeric" min="0" step="1" placeholder="Same as policy term">
+          <small>Only if you stop paying before maturity.</small>
+        </div>
+        <div class="field">
+          <label for="f-cover">Sum assured or cover (₹)</label>
+          <input id="f-cover" type="number" inputmode="decimal" min="0" step="any" placeholder="Optional">
+        </div>
+        <div class="field full">
+          <label for="f-benefit">Expected maturity benefit (₹)</label>
+          <input id="f-benefit" type="number" inputmode="decimal" min="0" step="any" placeholder="Optional">
+          <small>Adds an implied yearly return to the policy card. Needs a maturity date.</small>
+        </div>
+      </div>
+      <div class="preview" id="f-preview" aria-live="polite"></div>
+      <div class="err" id="f-err" role="alert"></div>
+    </div>
+    <div class="dlg-foot">
+      <button type="button" class="btn" data-close>Cancel</button>
+      <button type="submit" class="btn primary">Save policy</button>
+    </div>
+  </form>
+</dialog>
 
-            // Animate out
-            setTimeout(() => {
-                toast.classList.add('opacity-0', 'translate-x-10');
-                setTimeout(() => toast.remove(), 300);
-            }, 4000);
-        };
+<!-- Schedule -->
+<dialog id="dlg-sched" aria-labelledby="ds-title">
+  <div class="dlg">
+    <div class="dlg-head">
+      <h2 id="ds-title">Payment schedule</h2>
+      <button type="button" class="btn small" data-close>Close</button>
+    </div>
+    <div class="dlg-body" id="ds-body"></div>
+  </div>
+</dialog>
 
-        const calculatePolicyMetrics = (policy) => {
-            const totalMonthlyPremium = policy.installment + policy.riderPremium;
-            const lifetimeSpend = policy.payingTerm * totalMonthlyPremium * policy.modeValue;
-            const totalReturns = policy.sumAssured + policy.vestedBonus + policy.interimBonus;
-            return {
-                lifetimeSpend: Math.max(0, lifetimeSpend),
-                totalReturns: Math.max(0, totalReturns)
-            };
-        };
+<!-- Backup -->
+<dialog id="dlg-backup" aria-labelledby="db-title">
+  <div class="dlg">
+    <div class="dlg-head">
+      <h2 id="db-title">Backup and restore</h2>
+      <button type="button" class="btn small" data-close>Close</button>
+    </div>
+    <div class="dlg-body">
+      <p class="sub" style="margin-bottom:12px">Copy this text and keep it somewhere safe, such as a note to yourself. To load it on another device, paste it here and choose Restore.</p>
+      <label for="db-text" class="sub" style="display:block;margin-bottom:6px">Backup text</label>
+      <textarea id="db-text" spellcheck="false"></textarea>
+      <div class="status" id="db-status" role="status"></div>
+    </div>
+    <div class="dlg-foot">
+      <button type="button" class="btn" id="db-copy">Copy</button>
+      <button type="button" class="btn primary" id="db-restore">Restore from text</button>
+    </div>
+  </div>
+</dialog>
 
-        // --- DASHBOARD UPDATER ---
-        const updateDashboard = () => {
-            const tbody = document.getElementById('tableBody');
-            tbody.innerHTML = '';
+<!-- Settings -->
+<dialog id="dlg-settings" aria-labelledby="dg-title">
+  <div class="dlg">
+    <div class="dlg-head">
+      <h2 id="dg-title">Settings</h2>
+      <button type="button" class="btn small" data-close>Close</button>
+    </div>
+    <div class="dlg-body">
+      <div class="set-row">
+        <div class="field">
+          <label for="s-horizon">Project renewable policies until (year)</label>
+          <input id="s-horizon" type="number" inputmode="numeric" step="1">
+          <small>Used for policies with no maturity date, such as health cover.</small>
+        </div>
+      </div>
+      <div class="set-row">
+        <div class="field">
+          <label for="s-theme">Appearance</label>
+          <select id="s-theme">
+            <option value="auto">Match my device</option>
+            <option value="light">Light</option>
+            <option value="dark">Dark</option>
+          </select>
+        </div>
+      </div>
+      <div class="set-row">
+        <button type="button" class="btn" id="s-sample">Add sample policies</button>
+        <button type="button" class="btn danger" id="s-clear">Delete all policies</button>
+      </div>
+    </div>
+  </div>
+</dialog>
 
-            let grandTotalSpend = 0, grandSumAssured = 0, grandTotalBonus = 0;
-            let chartLabels = [], chartSpendData = [], chartSumAssuredData = [], chartBonusData = [];
+<!-- Confirm -->
+<dialog id="dlg-confirm" aria-labelledby="c-title">
+  <div class="dlg">
+    <div class="dlg-head"><h2 id="c-title">Are you sure?</h2></div>
+    <div class="dlg-body"><p id="c-text"></p></div>
+    <div class="dlg-foot">
+      <button type="button" class="btn" data-close>Cancel</button>
+      <button type="button" class="btn primary" id="c-ok">Confirm</button>
+    </div>
+  </div>
+</dialog>
 
-            policies.forEach((policy) => {
-                const metrics = calculatePolicyMetrics(policy);
-                const policyTotalBonus = policy.vestedBonus + policy.interimBonus;
-                
-                grandTotalSpend += metrics.lifetimeSpend;
-                grandSumAssured += policy.sumAssured;
-                grandTotalBonus += policyTotalBonus;
+<script>
+(function(){
+'use strict';
 
-                chartLabels.push(policy.planType || policy.insured.split(' ')[0]);
-                chartSpendData.push(metrics.lifetimeSpend);
-                chartSumAssuredData.push(policy.sumAssured);
-                chartBonusData.push(policyTotalBonus);
+/* ---------- constants ---------- */
+const TYPES = {
+  life:   {label:'Life insurance',   short:'Life',    color:'var(--life)'},
+  health: {label:'Health insurance', short:'Health',  color:'var(--health)'},
+  pension:{label:'Pension',          short:'Pension', color:'var(--pension)'},
+  other:  {label:'Other',            short:'Other',   color:'var(--other)'}
+};
+const KEYS = ['life','health','pension','other'];
+const FREQ = {
+  monthly:  {label:'Monthly',      months:1,  adv:'monthly'},
+  quarterly:{label:'Quarterly',    months:3,  adv:'every quarter'},
+  half:     {label:'Half-yearly',  months:6,  adv:'every six months'},
+  yearly:   {label:'Yearly',       months:12, adv:'a year'},
+  single:   {label:'One time only',months:0,  adv:'one time'}
+};
+const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const KEY = 'premium-ledger-v1';
+const INR = new Intl.NumberFormat('en-IN',{maximumFractionDigits:0});
 
-                const tr = document.createElement('tr');
-                tr.className = "hover:bg-slate-50/60 transition-colors";
-                tr.innerHTML = `
-                    <td class="px-5 py-4">
-                        <p class="font-bold text-slate-900">${policy.insured}</p>
-                        <p class="text-[11px] font-bold text-indigo-600 mt-0.5">${policy.planType}</p>
-                        <p class="text-[10px] font-semibold text-slate-500 mt-1">Pays: ${formatMoney(policy.installment + policy.riderPremium)} / ${policy.modeName}</p>
-                    </td>
-                    <td class="px-5 py-4">
-                        <div class="flex flex-col gap-1 text-[10px] font-semibold text-slate-500">
-                            <span class="flex justify-between w-36"><span>Start:</span> <span class="font-bold text-slate-800">${formatDate(policy.commencement)}</span></span>
-                            <span class="flex justify-between w-36"><span>Maturity:</span> <span class="font-bold text-slate-800">${formatDate(policy.maturity)}</span></span>
-                        </div>
-                    </td>
-                    <td class="px-5 py-4">
-                        <p class="font-black text-emerald-600 text-[15px]">${formatMoney(metrics.totalReturns)}</p>
-                        <p class="text-[10px] font-bold text-slate-400 mt-0.5 uppercase tracking-wide">Base: ${formatMoney(policy.sumAssured)}</p>
-                        <p class="text-[10px] font-bold text-blue-500 uppercase tracking-wide">Bonus: ${formatMoney(policyTotalBonus)}</p>
-                    </td>
-                    <td class="px-5 py-4 font-black text-right text-slate-800 text-[15px] align-top">${formatMoney(metrics.lifetimeSpend)}</td>
-                    <td class="px-5 py-4 text-center align-top flex justify-center gap-2">
-                        <button onclick="editPolicy(${policy.id})" class="text-indigo-500 hover:text-indigo-700 hover:bg-indigo-50 p-2 rounded-lg transition-colors border border-transparent" title="Edit/Review">
-                            <svg class="w-4 h-4 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
-                        </button>
-                        <button onclick="deletePolicy(${policy.id})" class="text-slate-400 hover:text-red-500 hover:bg-red-50 p-2 rounded-lg transition-colors border border-transparent" title="Delete">
-                            <svg class="w-4 h-4 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                        </button>
-                    </td>
-                `;
-                tbody.appendChild(tr);
-            });
+/* ---------- helpers ---------- */
+const $ = (s,r)=>(r||document).querySelector(s);
+const $$ = (s,r)=>Array.from((r||document).querySelectorAll(s));
+const esc = s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid = ()=>'p'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+const clamp = (v,a,b)=>Math.min(b,Math.max(a,v));
+const fmt = n=>'₹'+INR.format(Math.round(n||0));
+function fmtC(n){
+  const a=Math.abs(n||0);
+  if(a>=1e7) return '₹'+(n/1e7).toFixed(2).replace(/\.?0+$/,'')+' Cr';
+  if(a>=1e5) return '₹'+(n/1e5).toFixed(2).replace(/\.?0+$/,'')+' L';
+  return '₹'+INR.format(Math.round(n||0));
+}
+function pd(s){ const a=String(s).split('-').map(Number); return new Date(a[0],a[1]-1,a[2]); }
+function validISO(s){ if(!/^\d{4}-\d{2}-\d{2}$/.test(String(s||''))) return false; const d=pd(s); return !isNaN(d.getTime()); }
+function toISO(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function fmtDate(d){ return d.getDate()+' '+MON[d.getMonth()]+' '+d.getFullYear(); }
+function addMonths(d,n){
+  const y=d.getFullYear(), m=d.getMonth()+n;
+  const last=new Date(y,m+1,0).getDate();
+  return new Date(y,m,Math.min(d.getDate(),last));
+}
+const NOW=new Date();
+const TODAY=new Date(NOW.getFullYear(),NOW.getMonth(),NOW.getDate());
+const THIS_YEAR=TODAY.getFullYear();
+function rel(d){
+  const n=Math.round((d-TODAY)/864e5);
+  if(n<=0) return 'Today';
+  if(n===1) return 'Tomorrow';
+  if(n<=45) return 'In '+n+' days';
+  const m=Math.round(n/30.44);
+  if(m<24) return 'In '+m+' months';
+  return 'In '+(n/365.25).toFixed(1)+' years';
+}
+function niceCeil(v){
+  if(v<=0) return 1;
+  const e=Math.pow(10,Math.floor(Math.log10(v))), f=v/e;
+  const nf=f<=1?1:f<=2?2:f<=2.5?2.5:f<=5?5:10;
+  return nf*e;
+}
 
-            document.getElementById('metricSpend').innerText = formatMoney(grandTotalSpend);
-            document.getElementById('metricSum').innerText = formatMoney(grandSumAssured);
-            document.getElementById('metricBonus').innerText = formatMoney(grandTotalBonus);
-            document.getElementById('metricTotalReturn').innerText = formatMoney(grandSumAssured + grandTotalBonus);
+/* ---------- state + storage ---------- */
+let storageOK=true;
+try{ localStorage.setItem(KEY+'-t','1'); localStorage.removeItem(KEY+'-t'); }catch(e){ storageOK=false; }
 
-            updateStackedChart(chartLabels, chartSpendData, chartSumAssuredData, chartBonusData);
-        };
+function clean(p){
+  if(!p||typeof p!=='object') return null;
+  const num=v=>(v===''||v==null)?'':(Number(v)||0);
+  const c={
+    id:String(p.id||uid()),
+    name:String(p.name||'').trim().slice(0,80),
+    type:TYPES[p.type]?p.type:'other',
+    insurer:String(p.insurer||'').slice(0,80),
+    number:String(p.number||'').slice(0,40),
+    start:String(p.start||''),
+    maturity:String(p.maturity||''),
+    ppt:(p.ppt===''||p.ppt==null)?'':Math.max(0,Math.floor(Number(p.ppt))||0),
+    premium:Number(p.premium)||0,
+    freq:FREQ[p.freq]?p.freq:'yearly',
+    inc:Math.max(0,Number(p.inc)||0),
+    cover:num(p.cover),
+    benefit:num(p.benefit),
+    sample:!!p.sample
+  };
+  if(!c.name||!validISO(c.start)||c.premium<=0) return null;
+  if(c.maturity && (!validISO(c.maturity) || pd(c.maturity)<=pd(c.start))) c.maturity='';
+  return c;
+}
+function samples(){
+  return [
+    {id:'s1',sample:true,name:'LIC Jeevan Anand',type:'life',insurer:'LIC of India',number:'',start:'2018-03-10',maturity:'2043-03-10',ppt:'',premium:36000,freq:'yearly',inc:0,cover:1000000,benefit:''},
+    {id:'s2',sample:true,name:'Family health cover',type:'health',insurer:'Health insurer',number:'',start:'2021-07-01',maturity:'',ppt:'',premium:24500,freq:'yearly',inc:8,cover:1000000,benefit:''},
+    {id:'s3',sample:true,name:'SBI pension scheme',type:'pension',insurer:'SBI',number:'',start:'2020-04-05',maturity:'2045-04-05',ppt:'',premium:5000,freq:'monthly',inc:0,cover:'',benefit:3200000},
+    {id:'s4',sample:true,name:'LIC term plan',type:'life',insurer:'LIC of India',number:'',start:'2022-01-15',maturity:'2052-01-15',ppt:20,premium:3200,freq:'quarterly',inc:0,cover:10000000,benefit:''}
+  ];
+}
+function loadState(){
+  let d=null;
+  try{ const raw=localStorage.getItem(KEY); if(raw) d=JSON.parse(raw); }catch(e){ d=null; }
+  const st={policies:null,horizon:THIS_YEAR+20,theme:'auto'};
+  if(d && Array.isArray(d.policies)){
+    st.policies=d.policies.map(clean).filter(Boolean);
+    const h=Number(d.horizon);
+    if(h>=THIS_YEAR && h<=THIS_YEAR+80) st.horizon=Math.floor(h);
+    if(d.theme==='light'||d.theme==='dark') st.theme=d.theme;
+  } else {
+    st.policies=samples();
+  }
+  return st;
+}
+const state=loadState();
+const ui={filter:'all',sort:'next',mode:'year',sel:null};
 
-        const updateStackedChart = (labels, spendData, sumData, bonusData) => {
-            const ctx = document.getElementById('spendChart').getContext('2d');
-            if (chartInstance) chartInstance.destroy();
+function save(){
+  try{ localStorage.setItem(KEY,JSON.stringify(state)); }
+  catch(e){ storageOK=false; }
+  $('#storage-note').textContent = storageOK
+    ? 'Your data stays in this browser only. Use Backup to keep a copy.'
+    : 'Saving is not available in this browser session, so changes will be lost when you close the page. Use Backup to keep a copy.';
+}
+function applyTheme(){
+  const r=document.documentElement;
+  if(state.theme==='light'||state.theme==='dark') r.setAttribute('data-theme',state.theme);
+  else r.removeAttribute('data-theme');
+}
 
-            chartInstance = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [
-                        { label: 'Total Lifetime Spend', data: spendData, backgroundColor: '#1e293b', stack: 'Stack 0', maxBarThickness: 50, borderRadius: 4 },
-                        { label: 'Base Sum Assured', data: sumData, backgroundColor: '#10b981', stack: 'Stack 1', maxBarThickness: 50 },
-                        { label: 'Accrued Bonuses', data: bonusData, backgroundColor: '#3b82f6', stack: 'Stack 1', maxBarThickness: 50, borderRadius: { topLeft: 4, topRight: 4, bottomLeft: 0, bottomRight: 0 } }
-                    ]
-                },
-                options: {
-                    responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false },
-                    plugins: { 
-                        tooltip: { backgroundColor: 'rgba(15, 23, 42, 0.95)', titleFont: { size: 13, weight: '700' }, bodyFont: { size: 13, weight: '500' }, padding: 12, callbacks: { label: function(c) { return ' ' + c.dataset.label + ': ' + formatMoney(c.raw); } } },
-                        legend: { labels: { usePointStyle: true, boxWidth: 8, font: { family: "'Inter', sans-serif", weight: '600' } } }
-                    },
-                    scales: {
-                        x: { grid: { display: false }, stacked: true, ticks: { font: { weight: '600' }, color: '#64748b' } },
-                        y: { stacked: true, border: { display: false }, grid: { color: '#f1f5f9' }, ticks: { font: { weight: '600' }, color: '#94a3b8', callback: function(value) { if (value >= 100000) return '₹' + (value / 100000).toFixed(2) + 'L'; if (value >= 1000) return '₹' + (value / 1000).toFixed(0) + 'K'; return '₹' + value; } } }
-                    }
-                }
-            });
-        };
+/* ---------- calculation engine ---------- */
+function xirr(flows){
+  const f=r=>flows.reduce((s,c)=>s+c.v/Math.pow(1+r,c.t),0);
+  let lo=-0.9, hi=1.5, flo=f(lo), fhi=f(hi);
+  if(!isFinite(flo)||!isFinite(fhi)||flo*fhi>0) return null;
+  for(let i=0;i<120;i++){
+    const mid=(lo+hi)/2, fm=f(mid);
+    if(flo*fm<=0){ hi=mid; fhi=fm; } else { lo=mid; flo=fm; }
+  }
+  return (lo+hi)/2;
+}
+function analyse(p){
+  const start=pd(p.start);
+  const hasMat=!!p.maturity && validISO(p.maturity);
+  let end=hasMat?pd(p.maturity):new Date(state.horizon+1,0,1);
+  if(end<=start) end=addMonths(start,1);
+  const ppt=Number(p.ppt)||0;
+  const f=FREQ[p.freq]||FREQ.yearly;
+  let payEnd=end;
+  if(ppt>0){ const pe=addMonths(start,ppt*12); if(pe<payEnd) payEnd=pe; }
+  const prem=Number(p.premium)||0;
+  const inc=(Number(p.inc)||0)/100;
+  const items=[];
+  if(f.months===0){
+    items.push({date:start,amount:prem});
+    payEnd=addMonths(start,1); if(payEnd>end) payEnd=end;
+  } else {
+    for(let k=0;k<1500;k++){
+      const d=addMonths(start,k*f.months);
+      if(d>=payEnd) break;
+      const yrs=Math.floor(k*f.months/12);
+      const amt=inc>0?Math.round(prem*Math.pow(1+inc,yrs)):prem;
+      items.push({date:d,amount:amt});
+    }
+  }
+  let total=0,paid=0,paidN=0,next12=0;
+  const lim=addMonths(TODAY,12);
+  items.forEach(i=>{
+    total+=i.amount;
+    if(i.date<=TODAY){ paid+=i.amount; paidN++; }
+    else if(i.date<=lim){ next12+=i.amount; }
+  });
+  const upcoming=items.filter(i=>i.date>TODAY);
+  const next=upcoming.length?upcoming[0]:null;
+  const lastPremium=items.length?items[items.length-1].date:null;
+  let irr=null;
+  if(hasMat && Number(p.benefit)>0 && items.length){
+    const t0=items[0].date.getTime(), Y=365.25*864e5;
+    const flows=items.map(i=>({t:(i.date.getTime()-t0)/Y,v:-i.amount}));
+    flows.push({t:(end.getTime()-t0)/Y,v:Number(p.benefit)});
+    irr=xirr(flows);
+  }
+  let status='Active';
+  if(hasMat && end<=TODAY) status='Matured';
+  else if(start>TODAY) status='Not started';
+  else if(!next) status='Paid up';
+  return {p,items,total,paid,paidN,remain:total-paid,remainN:items.length-paidN,next,upcoming,lastPremium,
+          start,payEnd,end,hasMat,next12,irr,status};
+}
 
-        // --- OCR & FILE HANDLING ---
-        const parseOCRDate = (dateStr) => {
-            if(!dateStr) return "";
-            const months = {jan:'01',feb:'02',mar:'03',apr:'04',may:'05',jun:'06',jul:'07',aug:'08',sep:'09',oct:'10',nov:'11',dec:'12'};
-            const parts = dateStr.trim().split(/[\s-]+/);
-            if(parts.length >= 3) {
-                let day = parts[0].padStart(2, '0');
-                let month = months[parts[1].toLowerCase().substring(0,3)];
-                let year = parts[2];
-                if(month && year.length === 4) return `${year}-${month}-${day}`;
-            }
-            return "";
-        };
+/* ---------- derived view ---------- */
+function getList(){
+  let list=state.policies.map(analyse);
+  if(ui.filter!=='all') list=list.filter(a=>a.p.type===ui.filter);
+  return list;
+}
+const sorters={
+  next:(x,y)=>(x.next?x.next.date.getTime():9e15)-(y.next?y.next.date.getTime():9e15),
+  outlay:(x,y)=>y.total-x.total,
+  start:(x,y)=>x.start-y.start,
+  name:(x,y)=>x.p.name.localeCompare(y.p.name)
+};
 
-        const handleBulkImageUpload = async (event) => {
-            const files = Array.from(event.target.files);
-            if (!files.length) return;
+/* ---------- rendering ---------- */
+function render(){
+  const has=state.policies.length>0;
+  $('#empty').hidden=has;
+  $('#dash').hidden=!has;
+  renderBanner();
+  if(!has) return;
+  renderPills();
+  const list=getList();
+  if(!list.length){ ui.filter='all'; return render(); }
+  renderHero(list);
+  renderGantt(list);
+  renderChart(list);
+  renderDues(list);
+  renderCards(list);
+}
 
-            const status = document.getElementById('ocrStatus');
-            const statusText = document.getElementById('ocrStatusText');
-            status.classList.remove('hidden');
-            status.classList.add('flex');
+function renderBanner(){
+  const has=state.policies.some(p=>p.sample);
+  $('#banner').innerHTML=has
+    ? '<div class="note"><span>These are sample policies so you can see how the ledger works. Replace them with your own.</span><button class="btn small" type="button" id="btn-rm-sample">Remove samples</button></div>'
+    : '';
+}
 
-            let successCount = 0;
-            let failCount = 0;
+function renderPills(){
+  const present=KEYS.filter(t=>state.policies.some(p=>p.type===t));
+  if(ui.filter!=='all' && present.indexOf(ui.filter)<0) ui.filter='all';
+  const el=$('#pills');
+  if(present.length<2){ el.innerHTML=''; return; }
+  el.innerHTML=['all'].concat(present).map(t=>
+    '<button type="button" class="pill" data-f="'+t+'" aria-pressed="'+(ui.filter===t)+'">'+(t==='all'?'All policies':TYPES[t].short)+'</button>'
+  ).join('');
+}
 
-            for (let i = 0; i < files.length; i++) {
-                const file = files[i];
-                statusText.innerText = `Processing image ${i + 1} of ${files.length}...`;
+function renderHero(list){
+  let total=0,paid=0,paidN=0,remainN=0,next12=0,count=list.length;
+  const byType={life:0,health:0,pension:0,other:0};
+  let minStart=Infinity,maxEnd=0,anyOpen=false,nextItem=null;
+  list.forEach(a=>{
+    total+=a.total; paid+=a.paid; paidN+=a.paidN; remainN+=a.remainN; next12+=a.next12;
+    byType[a.p.type]+=a.total;
+    minStart=Math.min(minStart,a.start.getTime());
+    maxEnd=Math.max(maxEnd,a.end.getTime());
+    if(!a.hasMat) anyOpen=true;
+    if(a.next && (!nextItem || a.next.date<nextItem.date)) nextItem={date:a.next.date,amount:a.next.amount,name:a.p.name};
+  });
+  const remain=total-paid;
+  const pct=total>0?Math.round(paid/total*100):0;
+  const endYear=new Date(maxEnd).getFullYear();
+  const lede='Across '+count+(count===1?' policy':' policies')+', from '+fmtDate(new Date(minStart))+' until '+(anyOpen?'renewals end in '+state.horizon:'the last one matures in '+endYear)+'. You have paid '+pct+'% of it so far.';
+  const legend=KEYS.filter(k=>byType[k]>0).map(k=>
+    '<span><i class="dot" style="--c:'+TYPES[k].color+'"></i>'+TYPES[k].label+', <b>'+fmtC(byType[k])+'</b> ('+Math.round(byType[k]/total*100)+'%)</span>'
+  ).join('');
+  const shareBar=KEYS.filter(k=>byType[k]>0).map(k=>
+    '<i style="--c:'+TYPES[k].color+';width:'+(byType[k]/total*100)+'%"></i>'
+  ).join('');
+  $('#hero').innerHTML=
+    '<div>'+
+      '<div class="big-label">Lifetime outlay</div>'+
+      '<div class="big">'+fmt(total)+'</div>'+
+      '<p class="lede">'+esc(lede)+'</p>'+
+      '<div class="split" role="img" aria-label="'+pct+' percent paid"><i style="width:'+pct+'%"></i></div>'+
+      '<div class="split-caption"><span><b>'+fmt(paid)+'</b> paid</span><span><b>'+fmt(remain)+'</b> still to pay</span></div>'+
+    '</div>'+
+    '<div class="figs">'+
+      '<div class="fig"><div class="k">Paid so far</div><div class="v" title="'+fmt(paid)+'">'+fmtC(paid)+'</div><div class="n">'+paidN+' premiums</div></div>'+
+      '<div class="fig"><div class="k">Still to pay</div><div class="v" title="'+fmt(remain)+'">'+fmtC(remain)+'</div><div class="n">'+remainN+' premiums left</div></div>'+
+      '<div class="fig"><div class="k">Next 12 months</div><div class="v" title="'+fmt(next12)+'">'+fmtC(next12)+'</div><div class="n">about '+fmtC(next12/12)+' a month</div></div>'+
+      '<div class="fig"><div class="k">Next payment</div><div class="v">'+(nextItem?fmtDate(nextItem.date):'None left')+'</div><div class="n">'+(nextItem?esc(fmtC(nextItem.amount)+' for '+nextItem.name):'All premiums paid')+'</div></div>'+
+    '</div>'+
+    '<div class="hero-foot"><h3>Where the money goes</h3><div class="share" role="img" aria-label="Share of lifetime outlay by policy type">'+shareBar+'</div><div class="legend">'+legend+'</div></div>';
+}
 
-                // NEGATIVE TEST 1: Reject non-images immediately
-                if (!file.type.startsWith('image/')) {
-                    showToast(`File rejected: ${file.name} is not an image.`, 'error');
-                    failCount++;
-                    continue;
-                }
+function renderGantt(list){
+  const el=$('#gantt');
+  const rows=list.slice().sort((a,b)=>a.start-b.start);
+  let lo=TODAY.getTime(), hi=TODAY.getTime();
+  rows.forEach(a=>{ lo=Math.min(lo,a.start.getTime()); hi=Math.max(hi,a.end.getTime()); });
+  const y0=new Date(lo).getFullYear(), y1=new Date(hi).getFullYear()+1;
+  const D0=new Date(y0,0,1).getTime(), D1=new Date(y1,0,1).getTime();
+  const pos=t=>((t instanceof Date?t.getTime():t)-D0)/(D1-D0)*100;
+  const width=el.clientWidth||320;
+  const maxTicks=Math.max(3,Math.floor(width/64));
+  const span=y1-y0;
+  const step=[1,2,5,10,20,25,50].find(s=>span/s<=maxTicks)||50;
+  let ticks='';
+  for(let y=Math.ceil(y0/step)*step;y<=y1;y+=step){
+    ticks+='<span class="g-tick" style="left:'+pos(new Date(y,0,1))+'%">'+y+'</span>';
+  }
+  const flag='<span class="g-flag" style="left:'+pos(TODAY)+'%">Today</span>';
+  const body=rows.map(a=>{
+    const p=a.p, s=pos(a.start), pe=pos(a.payEnd), e=pos(a.end);
+    const frac=clamp((TODAY-a.start)/(a.payEnd-a.start),0,1)*100;
+    const open=!a.hasMat;
+    const sub=fmtC(a.total)+' in total, '+fmtDate(a.start)+' to '+(a.hasMat?fmtDate(a.end):'renewable, projected to '+state.horizon);
+    const tail=(e-pe>0.3)?'<span class="g-tail" style="left:'+pe+'%;width:'+(e-pe)+'%"></span>':'';
+    const mat=a.hasMat?'<span class="g-mat" style="left:'+e+'%"></span>':'';
+    return '<div class="g-row" style="--c:'+TYPES[p.type].color+'">'+
+      '<div class="g-label"><b>'+esc(p.name)+'</b><span>'+esc(sub)+'</span></div>'+
+      '<div class="g-track">'+
+        tail+
+        '<span class="g-pay'+(open?' open':'')+'" style="left:'+s+'%;width:'+Math.max(pe-s,0.6)+'%"><span class="rest"></span><span class="done" style="width:'+frac+'%"></span></span>'+
+        mat+
+        '<span class="g-today" style="left:'+pos(TODAY)+'%"></span>'+
+      '</div></div>';
+  }).join('');
+  el.innerHTML='<div class="g-axis">'+ticks+flag+'</div>'+body;
+}
 
-                try {
-                    const { data: { text } } = await Tesseract.recognize(file, 'eng');
-                    const parsedData = extractDataToObject(text);
+function renderChart(list){
+  const yrs={}; let minY=9999,maxY=0;
+  list.forEach(a=>a.items.forEach(i=>{
+    const y=i.date.getFullYear();
+    if(!yrs[y]) yrs[y]={life:0,health:0,pension:0,other:0};
+    yrs[y][a.p.type]+=i.amount;
+    minY=Math.min(minY,y); maxY=Math.max(maxY,y);
+  }));
+  if(maxY===0){ $('#chart').innerHTML='<p class="sub">No payments to show yet.</p>'; $('#readout').innerHTML=''; $('#chart-legend').innerHTML=''; return; }
+  const rows=[]; const cum={life:0,health:0,pension:0,other:0};
+  for(let y=minY;y<=maxY;y++){
+    const r=yrs[y]||{life:0,health:0,pension:0,other:0};
+    const o={year:y};
+    KEYS.forEach(k=>{ if(ui.mode==='cum'){ cum[k]+=r[k]; o[k]=cum[k]; } else o[k]=r[k]; });
+    o.total=KEYS.reduce((s,k)=>s+o[k],0);
+    rows.push(o);
+  }
+  const maxV=Math.max.apply(null,rows.map(r=>r.total));
+  const niceMax=niceCeil(maxV);
+  const cols=rows.map(r=>{
+    const h=r.total/niceMax*100;
+    const segs=KEYS.filter(k=>r[k]>0).map(k=>'<i style="--c:'+TYPES[k].color+';height:'+(r[k]/r.total*100)+'%"></i>').join('');
+    return '<button type="button" class="yc-col'+(r.year>THIS_YEAR?' future':'')+(r.year===THIS_YEAR?' now':'')+'" data-y="'+r.year+'" aria-label="'+r.year+': '+fmt(r.total)+'"><span class="yc-stack" style="height:'+h+'%">'+segs+'</span></button>';
+  }).join('');
+  const grid='<div class="yc-grid"><div style="top:0"><span>'+fmtC(niceMax)+'</span></div><div style="top:50%"><span>'+fmtC(niceMax/2)+'</span></div></div>';
+  $('#chart').innerHTML='<div class="yc"><div class="yc-plot">'+grid+cols+'</div><div class="yc-axis"></div></div>';
+  const plot=$('.yc-plot'), axis=$('.yc-axis');
+  const w=plot.clientWidth||300, n=rows.length, per=w/n;
+  const need=Math.ceil(38/per);
+  const step=[1,2,5,10,20].find(s=>s>=need)||50;
+  axis.innerHTML=rows.map((r,i)=>(step===1||r.year%step===0)
+    ? '<span style="left:'+((i+0.5)/n*100)+'%">'+r.year+'</span>':'').join('');
+  $('#chart-legend').innerHTML=KEYS.filter(k=>list.some(a=>a.p.type===k)).map(k=>
+    '<span><i class="dot" style="--c:'+TYPES[k].color+'"></i>'+TYPES[k].label+'</span>').join('');
+  window.__rows=rows;
+  if(ui.sel==null || ui.sel<minY || ui.sel>maxY) ui.sel=(THIS_YEAR>=minY&&THIS_YEAR<=maxY)?THIS_YEAR:(THIS_YEAR<minY?minY:maxY);
+  setSel(ui.sel);
+}
+function setSel(y){
+  ui.sel=y;
+  const rows=window.__rows||[];
+  const r=rows.find(x=>x.year===y); if(!r) return;
+  $$('.yc-col').forEach(b=>b.classList.toggle('sel',Number(b.dataset.y)===y));
+  let st;
+  if(ui.mode==='cum') st='Total paid or due by the end of the year';
+  else st=y<THIS_YEAR?'Paid':(y===THIS_YEAR?'Part paid, part still due':'Projected');
+  const parts=KEYS.filter(k=>r[k]>0).map(k=>'<span class="rt"><i class="dot" style="--c:'+TYPES[k].color+'"></i>'+TYPES[k].short+' '+fmt(r[k])+'</span>').join('');
+  $('#readout').innerHTML='<span class="yr">'+y+'</span><span class="tot">'+fmt(r.total)+'</span><span class="st">'+st+'</span>'+parts;
+}
 
-                    if (parsedData) {
-                        policies.push(parsedData);
-                        successCount++;
-                    } else {
-                        // NEGATIVE TEST 2: Reject images without policy data
-                        showToast(`File rejected: ${file.name} does not look like a valid LIC policy.`, 'error');
-                        failCount++;
-                    }
-                } catch (err) {
-                    console.error(err);
-                    showToast(`Failed to parse ${file.name}. Image might be corrupt.`, 'error');
-                    failCount++;
-                }
-            }
+function renderDues(list){
+  let all=[];
+  list.forEach(a=>a.upcoming.slice(0,8).forEach(i=>all.push({date:i.date,amount:i.amount,a:a})));
+  all.sort((x,y)=>x.date-y.date);
+  all=all.slice(0,8);
+  const el=$('#dues');
+  if(!all.length){ el.innerHTML='<p class="sub" style="padding:14px 0">No payments left. Every premium is paid.</p>'; return; }
+  el.innerHTML=all.map(d=>{
+    const n=Math.round((d.date-TODAY)/864e5);
+    return '<div class="due'+(n<=30?' soon':'')+'">'+
+      '<div class="date-chip"><b>'+d.date.getDate()+'</b><span>'+MON[d.date.getMonth()]+' '+String(d.date.getFullYear()).slice(2)+'</span></div>'+
+      '<div><div class="nm">'+esc(d.a.p.name)+'</div><div class="fq">'+FREQ[d.a.p.freq].label+'</div></div>'+
+      '<div><div class="amt">'+fmt(d.amount)+'</div><div class="when">'+rel(d.date)+'</div></div>'+
+    '</div>';
+  }).join('');
+}
 
-            updateDashboard();
-            status.classList.add('hidden');
-            status.classList.remove('flex');
-            event.target.value = ''; 
+function renderCards(list){
+  const rows=list.slice().sort(sorters[ui.sort]||sorters.next);
+  $('#cards').innerHTML=rows.map(a=>{
+    const p=a.p, f=FREQ[p.freq];
+    const pct=a.total>0?a.paid/a.total*100:0;
+    const meta2=[p.insurer,p.number?'Policy '+p.number:''].filter(Boolean).join(', ');
+    const tagCls=(a.status==='Active'||a.status==='Matured'||a.status==='Paid up'||a.status==='Not started')?'':'warn';
+    let kv='';
+    kv+='<dt>Premium</dt><dd>'+fmt(p.premium)+' '+f.adv+(Number(p.inc)>0?', rising '+p.inc+'% a year':'')+'</dd>';
+    kv+='<dt>Started</dt><dd>'+fmtDate(a.start)+'</dd>';
+    kv+='<dt>Last premium</dt><dd>'+(a.lastPremium?fmtDate(a.lastPremium):'None')+'</dd>';
+    kv+='<dt>Matures</dt><dd>'+(a.hasMat?fmtDate(a.end):'Renewable, projected to '+state.horizon)+'</dd>';
+    kv+='<dt>Next payment</dt><dd>'+(a.next?fmtDate(a.next.date)+', '+rel(a.next.date).toLowerCase():'None left')+'</dd>';
+    if(Number(p.cover)>0) kv+='<dt>Cover</dt><dd>'+fmt(p.cover)+'</dd>';
+    if(a.hasMat && Number(p.benefit)>0){
+      kv+='<dt>Maturity benefit</dt><dd>'+fmt(p.benefit)+'</dd>';
+      kv+='<dt>Benefit less premiums</dt><dd>'+(p.benefit-a.total>=0?'':'-')+fmt(Math.abs(p.benefit-a.total))+'</dd>';
+      if(a.irr!=null) kv+='<dt>Implied return</dt><dd>'+(a.irr*100).toFixed(1)+'% a year</dd>';
+    }
+    return '<article class="pcard" style="--c:'+TYPES[p.type].color+'">'+
+      '<div class="pc-head"><div><h3>'+esc(p.name)+'</h3>'+
+        '<div class="pc-meta"><i class="dot"></i>'+TYPES[p.type].label+'</div>'+
+        (meta2?'<div class="pc-meta">'+esc(meta2)+'</div>':'')+
+      '</div><span class="tag '+tagCls+'">'+a.status+'</span></div>'+
+      '<div class="pc-total"><span class="n">'+fmt(a.total)+'</span><span class="l">'+(a.hasMat?'total till maturity':'total till '+state.horizon)+'</span></div>'+
+      '<div class="bar" role="img" aria-label="'+Math.round(pct)+' percent paid"><i style="width:'+pct+'%"></i></div>'+
+      '<div class="pc-split"><span><b>'+fmt(a.paid)+'</b> paid, '+a.paidN+' of '+a.items.length+'</span><span><b>'+fmt(a.remain)+'</b> to go</span></div>'+
+      '<dl class="kv">'+kv+'</dl>'+
+      '<div class="pc-actions" data-id="'+esc(p.id)+'">'+
+        '<button type="button" class="btn small" data-act="sched">Schedule</button>'+
+        '<button type="button" class="btn small" data-act="edit">Edit</button>'+
+        '<button type="button" class="btn small danger" data-act="del">Delete</button>'+
+      '</div>'+
+    '</article>';
+  }).join('');
+}
 
-            if (successCount > 0) showToast(`Successfully processed ${successCount} policies.`, 'success');
-        };
+/* ---------- dialogs ---------- */
+function openDlg(d){ if(!d.open){ if(d.showModal) d.showModal(); else d.setAttribute('open',''); } }
+function askConfirm(title,text,ok){
+  return new Promise(res=>{
+    const d=$('#dlg-confirm'); let result=false;
+    $('#c-title').textContent=title; $('#c-text').textContent=text;
+    const b=$('#c-ok'); b.textContent=ok;
+    b.onclick=()=>{ result=true; d.close(); };
+    d.onclose=()=>res(result);
+    openDlg(d);
+  });
+}
 
-        const extractDataToObject = (text) => {
-            const cleanText = text.replace(/,/g, ''); 
+let editingId=null;
+function openForm(id){
+  editingId=id||null;
+  const p=id?state.policies.find(x=>x.id===id):null;
+  $('#dp-title').textContent=p?'Edit policy':'Add policy';
+  $('#f-name').value=p?p.name:'';
+  $('#f-type').value=p?p.type:'life';
+  $('#f-insurer').value=p?p.insurer:'';
+  $('#f-number').value=p?p.number:'';
+  $('#f-freq').value=p?p.freq:'yearly';
+  $('#f-premium').value=p?p.premium:'';
+  $('#f-inc').value=p&&p.inc?p.inc:'';
+  $('#f-start').value=p?p.start:'';
+  $('#f-maturity').value=p?p.maturity:'';
+  $('#f-ppt').value=p&&p.ppt!==''?p.ppt:'';
+  $('#f-cover').value=p&&p.cover!==''?p.cover:'';
+  $('#f-benefit').value=p&&p.benefit!==''?p.benefit:'';
+  $('#f-err').textContent='';
+  updatePreview();
+  openDlg($('#dlg-policy'));
+  setTimeout(()=>{ try{ $('#f-name').focus(); }catch(e){} },30);
+}
+function formPolicy(){
+  const v=id=>$('#'+id).value.trim();
+  const opt=id=>v(id)===''?'':(Number(v(id))||0);
+  return {
+    id:editingId||uid(), name:v('f-name'), type:$('#f-type').value, insurer:v('f-insurer'), number:v('f-number'),
+    start:v('f-start'), maturity:v('f-maturity'),
+    ppt:v('f-ppt')===''?'':Math.max(0,Math.floor(Number(v('f-ppt'))||0)),
+    premium:Number(v('f-premium'))||0, freq:$('#f-freq').value, inc:Math.max(0,Number(v('f-inc'))||0),
+    cover:opt('f-cover'), benefit:opt('f-benefit')
+  };
+}
+function updatePreview(){
+  const p=formPolicy(), box=$('#f-preview');
+  if(!validISO(p.start)||p.premium<=0){ box.textContent='Enter a start date and premium to see the total.'; return; }
+  if(p.maturity && pd(p.maturity)<=pd(p.start)){ box.textContent='The maturity date must be after the start date.'; return; }
+  const a=analyse(p);
+  box.innerHTML='<b>'+a.items.length+'</b> premiums, <b>'+fmt(a.total)+'</b> in total'+(p.maturity?'':' (projected to '+state.horizon+')')+'. Paid so far: <b>'+fmt(a.paid)+'</b>. Still to pay: <b>'+fmt(a.remain)+'</b>.';
+}
+function submitForm(e){
+  e.preventDefault();
+  const p=formPolicy(), err=$('#f-err');
+  const fail=(msg,id)=>{ err.textContent=msg; try{ $('#'+id).focus(); }catch(x){} };
+  if(!p.name) return fail('Give the policy a name.','f-name');
+  if(p.premium<=0) return fail('Enter the premium amount you pay each time.','f-premium');
+  if(!validISO(p.start)) return fail('Choose the policy start date.','f-start');
+  if(p.maturity && pd(p.maturity)<=pd(p.start)) return fail('The maturity date must be after the start date.','f-maturity');
+  if(p.benefit && !p.maturity) return fail('Add a maturity date to use the maturity benefit.','f-maturity');
+  if(editingId){
+    const i=state.policies.findIndex(x=>x.id===editingId);
+    if(i>=0) state.policies[i]=p; else state.policies.push(p);
+  } else state.policies.push(p);
+  save(); $('#dlg-policy').close(); render();
+}
 
-            // NEGATIVE TESTING CONTENT VALIDATION: Ensure critical keywords exist
-            if (!cleanText.match(/Sum assured/i) && !cleanText.match(/Life Insured/i) && !cleanText.match(/Policy/i)) {
-                return null; // Stop processing junk images
-            }
+function openSchedule(id){
+  const p=state.policies.find(x=>x.id===id); if(!p) return;
+  const a=analyse(p);
+  const by={};
+  a.items.forEach(i=>{
+    const y=i.date.getFullYear();
+    if(!by[y]) by[y]={year:y,n:0,amt:0,first:i.date,last:i.date};
+    by[y].n++; by[y].amt+=i.amount; by[y].last=i.date;
+  });
+  let cum=0;
+  const rows=Object.keys(by).map(Number).sort((x,y)=>x-y).map(y=>{
+    const r=by[y]; cum+=r.amt;
+    const st=r.last<=TODAY?'Paid':(r.first>TODAY?'Upcoming':'Part paid');
+    return '<tr><td>'+y+'</td><td>'+r.n+'</td><td>'+fmt(r.amt)+'</td><td>'+fmt(cum)+'</td><td>'+st+'</td></tr>';
+  }).join('');
+  $('#ds-title').textContent=p.name;
+  $('#ds-body').innerHTML=
+    '<div class="dl-meta"><span>Started '+fmtDate(a.start)+'</span><span>'+(a.lastPremium?'Last premium '+fmtDate(a.lastPremium):'')+'</span><span>'+(a.hasMat?'Matures '+fmtDate(a.end):'Projected to '+state.horizon)+'</span></div>'+
+    '<div class="tbl-wrap"><table><thead><tr><th>Year</th><th>Premiums</th><th>Amount</th><th>Running total</th><th>Status</th></tr></thead><tbody>'+rows+'</tbody>'+
+    '<tfoot><tr><td>Total</td><td>'+a.items.length+'</td><td>'+fmt(a.total)+'</td><td></td><td></td></tr></tfoot></table></div>';
+  openDlg($('#dlg-sched'));
+}
 
-            const pol = {
-                id: Date.now() + Math.random(), insured: 'Unknown', planType: 'LIC Plan',
-                sumAssured: 0, policyTerm: 0, payingTerm: 0, installment: 0, riderPremium: 0,
-                vestedBonus: 0, interimBonus: 0, modeValue: 1, modeName: 'Yearly',
-                commencement: '', maturity: '', nextPayout: '', nextPremium: ''
-            };
+function openBackup(){
+  $('#db-text').value=JSON.stringify({app:'premium-ledger',version:1,horizon:state.horizon,policies:state.policies},null,2);
+  $('#db-status').textContent='';
+  openDlg($('#dlg-backup'));
+}
+function copyBackup(){
+  const ta=$('#db-text'), st=$('#db-status');
+  const fallback=()=>{
+    try{ ta.focus(); ta.select(); const ok=document.execCommand('copy'); st.textContent=ok?'Copied.':'Select all the text and copy it manually.'; }
+    catch(e){ st.textContent='Select all the text and copy it manually.'; }
+  };
+  try{
+    if(navigator.clipboard&&navigator.clipboard.writeText){
+      navigator.clipboard.writeText(ta.value).then(()=>{ st.textContent='Copied.'; },fallback);
+    } else fallback();
+  }catch(e){ fallback(); }
+}
+function restoreBackup(){
+  const st=$('#db-status');
+  let d;
+  try{ d=JSON.parse($('#db-text').value); }catch(e){ st.textContent='That text is not a valid backup. Paste the full text you copied.'; return; }
+  const arr=Array.isArray(d)?d:d&&d.policies;
+  if(!Array.isArray(arr)){ st.textContent='No policies found in that text.'; return; }
+  const list=arr.map(clean).filter(Boolean);
+  if(!list.length && arr.length){ st.textContent='None of the policies had a valid name, start date and premium.'; return; }
+  state.policies=list;
+  const h=d&&Number(d.horizon);
+  if(h>=THIS_YEAR&&h<=THIS_YEAR+80) state.horizon=Math.floor(h);
+  save(); render();
+  st.textContent='Restored '+list.length+(list.length===1?' policy.':' policies.');
+}
 
-            const nMatch = cleanText.match(/Life Insured.*?\n([A-Z\s]+)(?:\[LA\]|\*|Nominee|Basic|$)/i);
-            if (nMatch) pol.insured = nMatch[1].replace(/\[LA\]/gi, '').trim();
+function openSettings(){
+  $('#s-horizon').value=state.horizon;
+  $('#s-theme').value=state.theme;
+  openDlg($('#dlg-settings'));
+}
 
-            const pMatch = cleanText.match(/(Whole Life|Endowment|Money Back)/i);
-            if (pMatch) pol.planType = pMatch[1];
-            else {
-                const fb = cleanText.match(/Plan type\s*\n?([A-Za-z\s]+)/i);
-                if(fb) pol.planType = fb[1].substring(0,20).trim();
-            }
+/* ---------- events ---------- */
+document.addEventListener('click',async e=>{
+  const t=e.target;
+  const close=t.closest('[data-close]');
+  if(close){ const d=close.closest('dialog'); if(d) d.close(); return; }
+  const pill=t.closest('.pill'); if(pill){ ui.filter=pill.dataset.f; ui.sel=null; render(); return; }
+  const seg=t.closest('[data-mode]'); if(seg){
+    ui.mode=seg.dataset.mode;
+    $$('[data-mode]').forEach(b=>b.setAttribute('aria-pressed',String(b===seg)));
+    renderChart(getList()); return;
+  }
+  const col=t.closest('.yc-col'); if(col){ setSel(Number(col.dataset.y)); return; }
+  const act=t.closest('[data-act]');
+  if(act){
+    const id=act.parentElement.dataset.id, kind=act.dataset.act;
+    if(kind==='sched') openSchedule(id);
+    else if(kind==='edit') openForm(id);
+    else if(kind==='del'){
+      const p=state.policies.find(x=>x.id===id); if(!p) return;
+      if(await askConfirm('Delete this policy?','"'+p.name+'" will be removed from your ledger. This cannot be undone.','Delete policy')){
+        state.policies=state.policies.filter(x=>x.id!==id); save(); render();
+      }
+    }
+    return;
+  }
+  if(t.closest('#btn-add')||t.closest('#btn-add2')) return openForm();
+  if(t.closest('#btn-backup')) return openBackup();
+  if(t.closest('#btn-settings')) return openSettings();
+  if(t.closest('#btn-sample')||t.closest('#s-sample')){
+    const have=new Set(state.policies.filter(p=>p.sample).map(p=>p.id));
+    samples().forEach(s=>{ if(!have.has(s.id)) state.policies.push(s); });
+    save(); render(); const d=$('#dlg-settings'); if(d.open) d.close(); return;
+  }
+  if(t.closest('#btn-rm-sample')){
+    state.policies=state.policies.filter(p=>!p.sample); save(); render(); return;
+  }
+  if(t.closest('#s-clear')){
+    if(await askConfirm('Delete all policies?','Every policy in this ledger will be removed from this browser.','Delete everything')){
+      state.policies=[]; save(); render(); $('#dlg-settings').close();
+    }
+    return;
+  }
+  if(t.closest('#db-copy')) return copyBackup();
+  if(t.closest('#db-restore')) return restoreBackup();
+});
+document.addEventListener('pointerover',e=>{
+  if(e.pointerType!=='mouse') return;
+  const col=e.target.closest&&e.target.closest('.yc-col'); if(col) setSel(Number(col.dataset.y));
+});
+document.addEventListener('focusin',e=>{
+  const col=e.target.closest&&e.target.closest('.yc-col'); if(col) setSel(Number(col.dataset.y));
+});
+$('#pform').addEventListener('submit',submitForm);
+$('#pform').addEventListener('input',updatePreview);
+$('#pform').addEventListener('change',updatePreview);
+$('#sort').addEventListener('change',e=>{ ui.sort=e.target.value; render(); });
+$('#s-horizon').addEventListener('change',e=>{
+  let h=Math.floor(Number(e.target.value)||0);
+  h=clamp(h,THIS_YEAR,THIS_YEAR+80);
+  e.target.value=h; state.horizon=h; save(); render();
+});
+$('#s-theme').addEventListener('change',e=>{ state.theme=e.target.value; applyTheme(); save(); });
 
-            const sum = cleanText.match(/Basic Sum assured[\s\S]*?(?:₹|Rs\.?)\s*(\d+)/i);
-            if (sum) pol.sumAssured = parseFloat(sum[1]) || 0;
+let lastW=0,tm=null;
+window.addEventListener('resize',()=>{
+  clearTimeout(tm);
+  tm=setTimeout(()=>{
+    const w=document.documentElement.clientWidth;
+    if(Math.abs(w-lastW)>8){ lastW=w; if(state.policies.length) render(); }
+  },150);
+});
 
-            const inst = cleanText.match(/Installment premium[\s\S]*?(?:₹|Rs\.?)\s*(\d+)/i);
-            if (inst) pol.installment = parseFloat(inst[1]) || 0;
-            
-            const pt = cleanText.match(/Policy term[\s\S]*?(\d+)\s*years/i);
-            if (pt) pol.policyTerm = parseInt(pt[1]) || 0;
-
-            const ppt = cleanText.match(/Premium pay(?:ing|ment) term[\s\S]*?(\d+)\s*years/i);
-            if (ppt) pol.payingTerm = parseInt(ppt[1]) || 0;
-
-            const vb = cleanText.match(/Vested bonus[^\d]*(\d+)/i);
-            if(vb) pol.vestedBonus = parseFloat(vb[1]) || 0;
-
-            const ib = cleanText.match(/Interim bonus[^\d]*(\d+)/i);
-            if(ib) pol.interimBonus = parseFloat(ib[1]) || 0;
-
-            const rp = cleanText.match(/Rider premium[^\d]*(\d+)/i);
-            if(rp) pol.riderPremium = parseFloat(rp[1]) || 0;
-
-            const modeMatch = cleanText.match(/Payment Mode[\s\S]*?(Monthly|Quarterly|Yearly|Half-Yearly)/i);
-            if (modeMatch) {
-                const modeStr = modeMatch[1].toLowerCase();
-                if (modeStr.includes('month')) { pol.modeValue = 12; pol.modeName = 'Monthly'; }
-                else if (modeStr.includes('quarter')) { pol.modeValue = 4; pol.modeName = 'Quarterly'; }
-                else if (modeStr.includes('half')) { pol.modeValue = 2; pol.modeName = 'Half-Yearly'; }
-            }
-
-            const cd = cleanText.match(/Commencement date[\s\S]*?(\d{1,2}\s+[A-Za-z]{3}\s+\d{4})/i);
-            if(cd) pol.commencement = parseOCRDate(cd[1]);
-            const md = cleanText.match(/Est\.? Maturity date[\s\S]*?(\d{1,2}\s+[A-Za-z]{3}\s+\d{4})/i);
-            if(md) pol.maturity = parseOCRDate(md[1]);
-            const pd = cleanText.match(/Next Payout date[\s\S]*?(\d{1,2}\s+[A-Za-z]{3}\s+\d{4})/i);
-            if(pd) pol.nextPayout = parseOCRDate(pd[1]);
-            const np = cleanText.match(/Next premium date[\s\S]*?(\d{1,2}\s+[A-Za-z]{3}\s+\d{4})/i);
-            if(np) pol.nextPremium = parseOCRDate(np[1]);
-
-            return pol;
-        };
-
-        // --- REVIEW / EDIT FLOW ---
-        const editPolicy = (id) => {
-            const pol = policies.find(p => p.id === id);
-            if(!pol) return;
-
-            // Map data back to form for review
-            document.getElementById('pInsured').value = pol.insured;
-            document.getElementById('pPlanType').value = pol.planType;
-            document.getElementById('pSumAssured').value = pol.sumAssured;
-            document.getElementById('pPolicyTerm').value = pol.policyTerm;
-            document.getElementById('pPayingTerm').value = pol.payingTerm;
-            document.getElementById('pInstallment').value = pol.installment;
-            document.getElementById('pRiderPremium').value = pol.riderPremium;
-            document.getElementById('pVestedBonus').value = pol.vestedBonus;
-            document.getElementById('pInterimBonus').value = pol.interimBonus;
-            document.getElementById('pMode').value = pol.modeValue;
-            document.getElementById('pCommencement').value = pol.commencement;
-            document.getElementById('pMaturity').value = pol.maturity;
-            document.getElementById('pNextPayout').value = pol.nextPayout;
-            document.getElementById('pNextPremium').value = pol.nextPremium;
-
-            // Remove from array so it can be re-saved
-            policies = policies.filter(p => p.id !== id);
-            updateDashboard();
-            
-            showToast('Policy loaded into the form for review.', 'warning');
-            document.getElementById('formContainer').scrollIntoView({ behavior: 'smooth' });
-        };
-
-        const deletePolicy = (id) => {
-            policies = policies.filter(p => p.id !== id);
-            updateDashboard();
-            showToast('Policy removed.', 'error');
-        };
-
-        // --- IMPORT / EXPORT ---
-        const exportToJson = () => {
-            if(policies.length === 0) return showToast("No data to export.", 'warning');
-            const dataStr = JSON.stringify(policies, null, 2);
-            const a = document.createElement('a');
-            a.href = URL.createObjectURL(new Blob([dataStr], { type: "application/json" }));
-            a.download = `lic_master_portfolio_${new Date().toISOString().split('T')[0]}.json`;
-            a.click();
-            showToast('Backup downloaded successfully.', 'success');
-        };
-
-        const importFromJson = (event) => {
-            const file = event.target.files[0];
-            if(!file) return;
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                try {
-                    const imported = JSON.parse(e.target.result);
-                    if(Array.isArray(imported)) {
-                        policies = [...policies, ...imported];
-                        updateDashboard();
-                        showToast(`Imported ${imported.length} policies from backup.`, 'success');
-                    } else throw new Error();
-                } catch(err) {
-                    showToast('Invalid JSON backup file.', 'error');
-                }
-            };
-            reader.readAsText(file);
-            event.target.value = '';
-        };
-
-        // --- FORM SUBMISSION ---
-        document.getElementById('policyForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            const modeSelect = document.getElementById('pMode');
-            policies.push({
-                id: Date.now(),
-                insured: document.getElementById('pInsured').value,
-                planType: document.getElementById('pPlanType').value,
-                sumAssured: parseFloat(document.getElementById('pSumAssured').value) || 0,
-                commencement: document.getElementById('pCommencement').value,
-                maturity: document.getElementById('pMaturity').value,
-                nextPayout: document.getElementById('pNextPayout').value,
-                nextPremium: document.getElementById('pNextPremium').value,
-                vestedBonus: parseFloat(document.getElementById('pVestedBonus').value) || 0,
-                interimBonus: parseFloat(document.getElementById('pInterimBonus').value) || 0,
-                policyTerm: parseInt(document.getElementById('pPolicyTerm').value) || 0,
-                payingTerm: parseInt(document.getElementById('pPayingTerm').value) || 0,
-                installment: parseFloat(document.getElementById('pInstallment').value) || 0,
-                riderPremium: parseFloat(document.getElementById('pRiderPremium').value) || 0,
-                modeValue: parseInt(modeSelect.value),
-                modeName: modeSelect.options[modeSelect.selectedIndex].text
-            });
-            updateDashboard();
-            this.reset();
-            showToast('Policy added manually.', 'success');
-        });
-
-        updateDashboard();
-    </script>
+/* ---------- start ---------- */
+applyTheme();
+save();
+render();
+lastW=document.documentElement.clientWidth;
+})();
+</script>
 </body>
 </html>
