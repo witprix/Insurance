@@ -10,7 +10,8 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%93%92%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Figtree:wght@400..700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Figtree:wght@400..700&display=swap" media="print" onload="this.media='all'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Figtree:wght@400..700&display=swap"></noscript>
 <style>
 :root{
   color-scheme:light;
@@ -261,7 +262,12 @@ small:empty{display:none}
 .sy-status.bad{color:var(--danger)}
 .sy-sub{color:var(--muted);font-size:.86rem;min-height:1.2em;margin:4px 0 0}
 .pin-display{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:clamp(1.5rem,7.5vw,2.4rem);font-weight:800;letter-spacing:.14em;color:var(--focus);margin:12px 0 4px;white-space:nowrap}
-.pin-input{display:block;width:min(100%,290px);margin:10px auto 0;text-align:center;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:1.5rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase}
+.pin-input{display:block;width:min(100%,200px);margin:10px auto 0;text-align:center;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:1.9rem;font-weight:800;letter-spacing:.3em;padding-left:calc(.3em + 12px)}
+.pin-display.sy-check{color:var(--ink);font-size:clamp(2.2rem,11vw,3.2rem);margin:6px 0 4px}
+.sy-test{list-style:none;padding:0;margin:12px 0 0;display:grid;gap:4px;font-size:.92rem}
+.sy-test .ok{color:var(--muted)}
+.sy-test .bad{color:var(--danger)}
+.sy-relay{display:grid;gap:10px;margin-top:8px}
 .spinner{border:3px solid rgba(128,128,128,.28);border-left-color:var(--focus);border-radius:50%;width:24px;height:24px;animation:spin 1s linear infinite;display:inline-block;margin-top:10px}
 @keyframes spin{to{transform:rotate(360deg)}}
 @media (prefers-reduced-motion:reduce){.spinner{animation-duration:4s}}
@@ -591,35 +597,54 @@ small:empty{display:none}
       <div class="status" id="bk-msg" role="status"></div>
 
       <h3 class="bk-h">Sync with another device</h3>
-      <p class="sub">Send your ledger from this device to your phone or PC. Open this same web address on both devices, then choose Send on one and Receive on the other. The data goes directly between the two devices and is encrypted on the way. A free public service (PeerJS) only helps the devices find each other. Both devices need internet.</p>
+      <p class="sub">Send your ledger from this device to your phone or PC. Open this same web address on both devices, choose Send on one and Receive on the other, then type the 4-digit code. The data goes directly between the two devices and is encrypted on the way. A free public service (PeerJS) only helps the devices find each other. Both devices need internet, and it works best when both are on the same Wi-Fi.</p>
       <div class="bk-actions">
         <button type="button" class="btn" id="sy-send">Send to another device</button>
         <button type="button" class="btn" id="sy-recv">Receive from another device</button>
       </div>
+      <div class="bk-actions">
+        <button type="button" class="btn small" id="sy-test">Test sync connection</button>
+        <button type="button" class="btn small" id="sy-share" hidden>Share backup instead</button>
+      </div>
+      <p class="sy-sub" id="sy-build"></p>
+      <ul class="sy-test" id="sy-test-out" hidden></ul>
 
       <div class="sync-box" id="sy-host" hidden>
         <p class="sy-status" id="sy-host-status" aria-live="polite">Getting a code…</p>
         <div class="pin-display" id="sy-code-show" aria-label="Sync code">----</div>
         <p class="sy-sub" id="sy-timer"></p>
-        <p class="sy-sub" id="sy-host-hint">On the other device, open this same page, choose Receive from another device and type the code.</p>
+        <p class="sy-sub" id="sy-host-hint">On the other device, open this same page, choose Receive from another device and type the 4-digit code.</p>
+        <div class="pin-display sy-check" id="sy-check" aria-label="Check number" hidden>---</div>
         <div class="spinner" id="sy-host-spin" role="presentation"></div>
         <div class="bk-actions" id="sy-confirm" hidden>
-          <button type="button" class="btn primary" id="sy-send-now">Send now</button>
+          <button type="button" class="btn primary" id="sy-send-now">Yes, send now</button>
         </div>
         <div class="bk-actions"><button type="button" class="btn small" id="sy-host-cancel">Cancel</button></div>
       </div>
 
       <div class="sync-box" id="sy-recv-box" hidden>
-        <label for="sy-code-in">Code shown on the other device</label>
-        <input id="sy-code-in" class="pin-input" maxlength="9" placeholder="XXXX-XXXX" autocomplete="off" autocapitalize="characters" autocorrect="off" spellcheck="false">
+        <label for="sy-code-in">4-digit code shown on the other device</label>
+        <input id="sy-code-in" class="pin-input" inputmode="numeric" pattern="[0-9]*" placeholder="0000" autocomplete="off" spellcheck="false">
         <div class="bk-actions">
           <button type="button" class="btn primary" id="sy-connect">Connect</button>
           <button type="button" class="btn small" id="sy-recv-cancel">Cancel</button>
         </div>
+        <div class="pin-display sy-check" id="sy-recv-check" aria-label="Check number" hidden>---</div>
         <p class="sy-status" id="sy-recv-status" aria-live="polite" style="margin-top:12px"></p>
         <div class="spinner" id="sy-recv-spin" role="presentation" hidden></div>
       </div>
       <div class="status" id="sy-msg" role="status"></div>
+
+      <details class="bk-more">
+        <summary>Advanced: relay server for different networks</summary>
+        <div class="sy-relay">
+          <p class="sub">Only needed when the two devices cannot connect directly, for example one on mobile data and one on Wi-Fi. A relay is a TURN server. Providers such as Metered offer a free plan that needs a free account. Your details stay on this device and are not included in backups.</p>
+          <div class="field"><label for="sy-r-url">Relay address</label><input id="sy-r-url" placeholder="turn:your-relay.example.com:443" autocomplete="off" spellcheck="false"></div>
+          <div class="field"><label for="sy-r-user">User name</label><input id="sy-r-user" autocomplete="off" spellcheck="false"></div>
+          <div class="field"><label for="sy-r-pass">Password</label><input id="sy-r-pass" type="password" autocomplete="off"></div>
+          <div class="bk-actions" style="margin-top:0"><button type="button" class="btn small" id="sy-r-save">Save relay</button><button type="button" class="btn small" id="sy-r-clear">Remove relay</button></div>
+        </div>
+      </details>
 
       <h3 class="bk-h">Restore</h3>
       <div class="field">
@@ -1335,7 +1360,7 @@ function openForm(id){
   $('#f-err').textContent='';
   updatePreview();
   openDlg($('#dlg-policy'));
-  setTimeout(()=>{ try{ $('#f-name').focus(); }catch(e){} },30);
+  setTimeout(()=>{ const a=document.activeElement; if(a&&/^(INPUT|SELECT|TEXTAREA)$/.test(a.tagName)) return; try{ $('#f-name').focus(); }catch(e){} },30);
 }
 function formPolicy(){
   const v=id=>$('#'+id).value.trim();
@@ -1643,14 +1668,27 @@ function applyRestore(){
   renderBackupStatus(); renderSnaps();
 }
 /* ---------- wireless sync between devices (PeerJS) ---------- */
-const SYNC_CHARS='23456789ABCDEFGHJKMNPQRSTUVWXYZ';
+const APP_BUILD='2026-09-20a';
 const SYNC_TTL=180000;
 const SYNC_LIBS=['https://cdn.jsdelivr.net/npm/peerjs@1.5.2/dist/peerjs.min.js','https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js'];
+const STUN_SERVERS=[{urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun1.l.google.com:19302'},{urls:'stun:stun.cloudflare.com:3478'},{urls:'stun:global.stun.twilio.com:3478'}];
+const RELAY_KEY=KEY+'-relay';
 const SERVICE_MSG='Could not reach the sync service. Check your internet connection. Wireless sync does not run inside the Claude preview, so open the ledger from its own web address (for example on GitHub Pages) on both devices.';
 const LIB_MSG='The sync tool could not be loaded. Check your internet connection and try again.';
-const sync={token:0,mode:null,peer:null,conn:null,timers:{},tick:null,tries:0,busy:false,sent:false,got:false,sentCount:0};
+const sync={token:0,mode:null,peer:null,conn:null,timers:{},tick:null,tries:0,busy:false,sent:false,got:false,sentCount:0,hello:false,chk:''};
 let peerLibPromise=null;
 
+function getRelay(){ try{ const r=JSON.parse(localStorage.getItem(RELAY_KEY)||'null'); return (r&&r.url)?r:null; }catch(e){ return null; } }
+function iceConfig(){
+  const list=STUN_SERVERS.slice();
+  const r=getRelay();
+  if(r){
+    const urls=String(r.url).split(/[\s,]+/).filter(Boolean);
+    if(urls.length){ const e={urls:urls}; if(r.user) e.username=r.user; if(r.pass) e.credential=r.pass; list.push(e); }
+  }
+  return {iceServers:list,sdpSemantics:'unified-plan'};
+}
+function peerOpts(){ return {config:iceConfig(),debug:0}; }
 function peerCtor(){ return window.Peer||(window.peerjs&&window.peerjs.Peer)||null; }
 function loadPeerLib(){
   if(peerCtor()) return Promise.resolve();
@@ -1671,14 +1709,16 @@ function loadPeerLib(){
   return peerLibPromise;
 }
 function syncSupported(){ return typeof RTCPeerConnection!=='undefined'||typeof webkitRTCPeerConnection!=='undefined'; }
-function makeCode(){
-  const a=new Uint32Array(8);
-  if(window.crypto&&crypto.getRandomValues) crypto.getRandomValues(a); else for(let i=0;i<8;i++) a[i]=Math.floor(Math.random()*4294967296);
-  return Array.from(a,x=>SYNC_CHARS[x%SYNC_CHARS.length]).join('');
+function randInt(n){
+  const a=new Uint32Array(1);
+  if(window.crypto&&crypto.getRandomValues) crypto.getRandomValues(a); else a[0]=Math.floor(Math.random()*4294967296);
+  return a[0]%n;
 }
-function normCode(v){ return String(v||'').toUpperCase().replace(/[^A-Z0-9]/g,''); }
-function validCode(c){ return c.length===8&&c.split('').every(ch=>SYNC_CHARS.indexOf(ch)>=0); }
-function peerIdFor(code){ return 'pledger-'+code; }
+function makeCode(){ return String(randInt(10000)).padStart(4,'0'); }
+function makeCheck(){ return String(100+randInt(900)); }
+function normCode(v){ return String(v||'').replace(/\D/g,'').slice(0,4); }
+function validCode(c){ return /^\d{4}$/.test(c); }
+function peerIdFor(code){ return 'pledger-pin-'+code; }
 function syMsg(t,bad){ const el=$('#sy-msg'); el.textContent=t||''; el.classList.toggle('bad',!!bad); }
 function setRecv(t,bad,spin){
   const el=$('#sy-recv-status'); el.textContent=t||''; el.classList.toggle('bad',!!bad);
@@ -1699,31 +1739,32 @@ function parseMsg(d){
 }
 function peerErrMsg(err){
   const t=err&&err.type;
-  if(t==='peer-unavailable') return 'No device is waiting with that code. Check the code, and that the other device is still showing it.';
+  if(t==='peer-unavailable') return 'No device is waiting with that code. Check the code, that the other device is still showing it, and that both devices show the same page version.';
   if(t==='network'||t==='server-error'||t==='socket-error'||t==='socket-closed') return SERVICE_MSG;
   if(t==='webrtc') return 'The two devices could not connect directly. A VPN or a strict network may be blocking it. Try again on the same Wi-Fi, or turn the VPN off.';
   if(t==='browser-incompatible') return 'This browser does not support wireless sync.';
   return 'Sync failed ('+(t||'unknown error')+'). Try again.';
 }
+const NO_DIRECT_MSG='The two devices could not open a direct connection. This usually means they are on different networks, such as mobile data and Wi-Fi. Put both devices on the same Wi-Fi and try again, or use Share backup instead.';
 function syncStop(){
   sync.token++;
   Object.keys(sync.timers).forEach(k=>clearTimeout(sync.timers[k])); sync.timers={};
   if(sync.tick){ clearInterval(sync.tick); sync.tick=null; }
   const c=sync.conn, p=sync.peer;
-  sync.conn=null; sync.peer=null; sync.busy=false; sync.sent=false; sync.got=false; sync.tries=0;
+  sync.conn=null; sync.peer=null; sync.busy=false; sync.sent=false; sync.got=false; sync.tries=0; sync.hello=false; sync.chk='';
   try{ if(c) c.close(); }catch(e){}
   try{ if(p) p.destroy(); }catch(e){}
 }
 function syncCleanup(){
   syncStop(); sync.mode=null;
   $('#sy-host').hidden=true; $('#sy-recv-box').hidden=true; $('#sy-confirm').hidden=true;
-  $('#sy-code-show').textContent='----'; $('#sy-timer').textContent='';
-  $('#sy-code-show').hidden=false; $('#sy-host-hint').hidden=false;
+  $('#sy-code-show').textContent='----'; $('#sy-code-show').hidden=false; $('#sy-timer').textContent='';
+  $('#sy-host-hint').hidden=false; $('#sy-check').hidden=true; $('#sy-recv-check').hidden=true;
   $('#sy-host-spin').hidden=false; setRecv('');
 }
 function syncEnd(msg,bad){ syncCleanup(); syMsg(msg,bad); }
 function syncFail(msg){
-  if(sync.mode==='recv'){ syncStop(); sync.mode='recv'; setRecv(msg,true,false); }
+  if(sync.mode==='recv'){ syncStop(); sync.mode='recv'; $('#sy-recv-check').hidden=true; setRecv(msg,true,false); }
   else syncEnd(msg,true);
 }
 
@@ -1737,13 +1778,14 @@ function syncHost(){
 }
 function hostStart(){
   const tok=sync.token, code=makeCode();
-  $('#sy-recv-box').hidden=true; $('#sy-host').hidden=false; $('#sy-confirm').hidden=true;
+  $('#sy-recv-box').hidden=true; $('#sy-host').hidden=false; $('#sy-confirm').hidden=true; $('#sy-check').hidden=true;
   $('#sy-host-status').textContent='Getting a code…';
-  $('#sy-code-show').textContent='----'; $('#sy-timer').textContent=''; $('#sy-host-spin').hidden=false;
+  $('#sy-code-show').textContent='----'; $('#sy-code-show').hidden=false; $('#sy-host-hint').hidden=false;
+  $('#sy-timer').textContent=''; $('#sy-host-spin').hidden=false;
   loadPeerLib().then(()=>{
     if(tok!==sync.token) return;
     const P=peerCtor(); let peer;
-    try{ peer=new P(peerIdFor(code)); }catch(e){ syncFail(SERVICE_MSG); return; }
+    try{ peer=new P(peerIdFor(code),peerOpts()); }catch(e){ syncFail(SERVICE_MSG); return; }
     sync.peer=peer;
     const alive=()=>tok===sync.token&&sync.peer===peer;
     setTimer('signal',15000,()=>{ if(alive()) syncFail(SERVICE_MSG); });
@@ -1752,7 +1794,7 @@ function hostStart(){
     peer.on('disconnected',()=>{ if(alive()&&!peer.destroyed){ try{ peer.reconnect(); }catch(e){} } });
     peer.on('error',err=>{
       if(!alive()) return;
-      if(err&&err.type==='unavailable-id'&&sync.tries<3){
+      if(err&&err.type==='unavailable-id'&&sync.tries<6){
         sync.tries++; clearTimer('signal'); sync.peer=null;
         try{ peer.destroy(); }catch(e){}
         hostStart(); return;
@@ -1763,7 +1805,7 @@ function hostStart(){
 }
 function showHostCode(code,tok){
   $('#sy-host-status').textContent='Waiting for the other device…';
-  $('#sy-code-show').textContent=code.slice(0,4)+' '+code.slice(4);
+  $('#sy-code-show').textContent=code;
   const end=Date.now()+SYNC_TTL;
   const upd=()=>{ const s=Math.max(0,Math.round((end-Date.now())/1000)); $('#sy-timer').textContent='Code expires in '+Math.floor(s/60)+':'+String(s%60).padStart(2,'0'); };
   upd();
@@ -1777,18 +1819,25 @@ function onHostConn(conn,tok,peer){
   conn.on('open',()=>{
     if(!alive()) return;
     clearTimer('expire'); if(sync.tick){ clearInterval(sync.tick); sync.tick=null; }
-    $('#sy-timer').textContent=''; $('#sy-host-spin').hidden=true;
-    $('#sy-code-show').hidden=true; $('#sy-host-hint').hidden=true;
-    const n=state.policies.length;
-    $('#sy-host-status').textContent='A device connected. Send '+n+(n===1?' policy':' policies')+' to it?';
-    $('#sy-confirm').hidden=false;
-    try{ $('#sy-send-now').focus(); }catch(e){}
-    setTimer('confirm',120000,()=>{ if(alive()) syncEnd('No answer, so nothing was sent.'); });
+    $('#sy-timer').textContent=''; $('#sy-code-show').hidden=true; $('#sy-host-hint').hidden=true;
+    $('#sy-host-status').textContent='A device connected. Checking it…';
+    setTimer('hello',10000,()=>{ if(alive()) syncEnd('The other device did not identify itself. Reload the page on both devices so they run the same version (this one is '+APP_BUILD+').',true); });
   });
   conn.on('data',d=>{
     if(!alive()) return;
-    const m=parseMsg(d);
-    if(m&&m.t==='ack'){
+    const m=parseMsg(d); if(!m) return;
+    if(m.t==='hello'&&!sync.hello&&!sync.sent){
+      sync.hello=true; clearTimer('hello');
+      const chk=String(m.chk||'').replace(/\D/g,'').slice(0,3);
+      if(chk.length!==3){ syncEnd('The other device sent an unexpected message. Reload both devices and try again.',true); return; }
+      const n=state.policies.length;
+      $('#sy-host-spin').hidden=true;
+      $('#sy-check').textContent=chk; $('#sy-check').hidden=false;
+      $('#sy-host-status').textContent='A device connected and shows the number below. Does the other device show the same number? Send '+n+(n===1?' policy':' policies')+' only if it does.';
+      $('#sy-confirm').hidden=false;
+      try{ $('#sy-send-now').focus(); }catch(e){}
+      setTimer('confirm',120000,()=>{ if(alive()) syncEnd('No answer, so nothing was sent.'); });
+    } else if(m.t==='ack'){
       clearTimer('ack');
       if(Number(m.count)>0) syncEnd('Sent '+sync.sentCount+(sync.sentCount===1?' policy':' policies')+'. Finish on the other device by choosing Add or Replace under Restore.');
       else syncEnd('The other device could not read the data. Nothing was changed there.',true);
@@ -1798,12 +1847,12 @@ function onHostConn(conn,tok,peer){
   conn.on('error',()=>{ if(alive()) syncEnd('The connection failed. Try again.',true); });
 }
 function hostSendNow(){
-  const conn=sync.conn; if(!conn||sync.sent) return;
+  const conn=sync.conn; if(!conn||sync.sent||!sync.hello) return;
   const tok=sync.token, bk=buildBackup();
   try{ conn.send(JSON.stringify({t:'ledger',payload:bk})); }
   catch(e){ syncEnd('Sending failed. Try again.',true); return; }
   sync.sent=true; sync.sentCount=bk.count; clearTimer('confirm');
-  $('#sy-confirm').hidden=true; $('#sy-host-status').textContent='Sending…'; $('#sy-host-spin').hidden=false;
+  $('#sy-confirm').hidden=true; $('#sy-check').hidden=true; $('#sy-host-status').textContent='Sending…'; $('#sy-host-spin').hidden=false;
   setTimer('ack',15000,()=>{ if(tok===sync.token) syncEnd('The other device did not confirm it received the data. Check that device before trying again.',true); });
 }
 function hostCancel(){
@@ -1821,19 +1870,20 @@ function syncReceiveOpen(){
   syncCleanup(); syMsg('');
   sync.mode='recv';
   $('#sy-recv-box').hidden=false; setRecv('');
-  setTimeout(()=>{ try{ $('#sy-code-in').focus(); }catch(e){} },50);
+  setTimeout(()=>{ const a=document.activeElement; if(a&&/^(INPUT|SELECT|TEXTAREA)$/.test(a.tagName)) return; try{ $('#sy-code-in').focus(); }catch(e){} },50);
 }
 function syncConnect(){
   if(sync.mode!=='recv'||sync.busy||sync.peer) return;
   const code=normCode($('#sy-code-in').value);
-  if(!validCode(code)){ setRecv('That code does not look right. It has 8 characters, for example K7M4-9QXA.',true,false); return; }
+  if(!validCode(code)){ setRecv('Enter the 4-digit code shown on the other device.',true,false); return; }
   sync.busy=true; sync.got=false;
   const tok=sync.token;
+  $('#sy-recv-check').hidden=true;
   setRecv('Connecting…',false,true);
   loadPeerLib().then(()=>{
     if(tok!==sync.token) return;
     const P=peerCtor(); let peer;
-    try{ peer=new P(); }catch(e){ syncFail(SERVICE_MSG); return; }
+    try{ peer=new P(peerOpts()); }catch(e){ syncFail(SERVICE_MSG); return; }
     sync.peer=peer;
     const alive=()=>tok===sync.token&&sync.peer===peer;
     setTimer('signal',15000,()=>{ if(alive()) syncFail(SERVICE_MSG); });
@@ -1843,10 +1893,14 @@ function syncConnect(){
       let conn;
       try{ conn=peer.connect(peerIdFor(code),{reliable:true}); }catch(e){ syncFail(SERVICE_MSG); return; }
       sync.conn=conn;
-      setTimer('conn',20000,()=>{ if(alive()) syncFail('Could not connect. Check the code, and that the other device is still showing it.'); });
+      setTimer('conn',25000,()=>{ if(alive()) syncFail(NO_DIRECT_MSG); });
       conn.on('open',()=>{
         if(!alive()) return;
-        clearTimer('conn'); setRecv('Connected. Waiting for the other device to confirm…',false,true);
+        clearTimer('conn');
+        sync.chk=makeCheck();
+        try{ conn.send(JSON.stringify({t:'hello',chk:sync.chk,build:APP_BUILD})); }catch(e){ syncFail('The connection failed. Try again.'); return; }
+        $('#sy-recv-check').textContent=sync.chk; $('#sy-recv-check').hidden=false;
+        setRecv('Connected. Make sure the other device shows this same number, then tap Yes, send now there.',false,true);
         setTimer('data',150000,()=>{ if(alive()) syncFail('The other device did not send anything in time.'); });
       });
       conn.on('data',d=>{ if(alive()) onRecvData(d); });
@@ -1865,6 +1919,7 @@ function onRecvData(d){
   checkRestore();
   const n=pending?pending.good.length:0;
   try{ sync.conn.send(JSON.stringify({t:'ack',count:n})); }catch(e){}
+  $('#sy-recv-check').hidden=true;
   setRecv('Received. Checking it…',false,true);
   const tok=sync.token;
   setTimeout(()=>{
@@ -1875,6 +1930,71 @@ function onRecvData(d){
       try{ $('#rs-report').scrollIntoView({block:'center'}); }catch(e){}
     } else syMsg('The other device sent data that could not be read.',true);
   },700);
+}
+
+/* --- diagnostics, relay settings and sharing --- */
+function gatherTypes(ms){
+  return new Promise(res=>{
+    const types={}; let pc, done=false;
+    const finish=()=>{ if(done) return; done=true; try{ pc.close(); }catch(e){} res(types); };
+    try{ pc=new RTCPeerConnection(iceConfig()); }catch(e){ res(null); return; }
+    try{ pc.createDataChannel('t'); }catch(e){}
+    pc.onicecandidate=e=>{
+      if(e.candidate){ const m=/ typ (\w+)/.exec(e.candidate.candidate||''); if(m) types[m[1]]=true; }
+      else finish();
+    };
+    pc.createOffer().then(o=>pc.setLocalDescription(o)).catch(finish);
+    setTimeout(finish,ms||6000);
+  });
+}
+function testService(){
+  return new Promise(res=>{
+    let peer, done=false;
+    const end=r=>{ if(done) return; done=true; clearTimeout(t); try{ if(peer) peer.destroy(); }catch(e){} res(r); };
+    const t=setTimeout(()=>end({ok:false,err:{type:'network'}}),12000);
+    try{ const P=peerCtor(); peer=new P(peerOpts()); }catch(e){ end({ok:false,err:{type:'network'}}); return; }
+    peer.on('open',()=>end({ok:true}));
+    peer.on('error',err=>end({ok:false,err:err}));
+  });
+}
+async function runSyncTest(){
+  const out=$('#sy-test-out'); out.hidden=false;
+  const lines=[];
+  const push=(ok,msg)=>{ lines.push('<li class="'+(ok?'ok':'bad')+'">'+(ok?'Passed: ':'Problem: ')+esc(msg)+'</li>'); out.innerHTML=lines.join(''); };
+  out.innerHTML='<li class="ok">Testing, this takes up to 15 seconds…</li>';
+  if(!syncSupported()){ push(false,'This browser does not support wireless sync.'); return; }
+  push(true,'This browser supports wireless sync. Page version '+APP_BUILD+'. Both devices should show the same version.');
+  try{ await loadPeerLib(); push(true,'The sync tool loaded.'); }
+  catch(e){ push(false,LIB_MSG); return; }
+  const svc=await testService();
+  if(svc.ok) push(true,'The sync service is reachable.'); else { push(false,peerErrMsg(svc.err)); }
+  const t=await gatherTypes(6000);
+  if(!t){ push(false,'This browser could not check the network.'); return; }
+  push(!!t.host,t.host?'This device can connect over your local network.':'No local network address was found. A VPN or privacy setting may be blocking it.');
+  push(!!t.srflx,t.srflx?'This device can find its public internet address, which helps two different networks connect.':'The public address could not be found. Connecting between different networks will probably fail. Use the same Wi-Fi on both devices, or Share backup.');
+  if(getRelay()) push(!!t.relay,t.relay?'Your relay server works.':'Your relay server did not respond. Check its address, user name and password.');
+  lines.push('<li class="ok">Run this test on both devices. If every check passes on both and pairing still fails, the two networks cannot reach each other directly. Use the same Wi-Fi, add a relay under Advanced, or use Share backup.</li>');
+  out.innerHTML=lines.join('');
+}
+function loadRelayFields(){
+  const r=getRelay()||{};
+  $('#sy-r-url').value=r.url||''; $('#sy-r-user').value=r.user||''; $('#sy-r-pass').value=r.pass||'';
+}
+function saveRelay(){
+  const url=$('#sy-r-url').value.trim();
+  if(!url){ syMsg('Enter the relay address, or choose Remove relay.',true); return; }
+  if(!/^(turns?|stuns?):/i.test(url)){ syMsg('The relay address should start with turn: or turns:',true); return; }
+  try{ localStorage.setItem(RELAY_KEY,JSON.stringify({url:url,user:$('#sy-r-user').value.trim(),pass:$('#sy-r-pass').value})); syMsg('Relay saved on this device. Run Test sync connection to check it.'); }
+  catch(e){ syMsg('This browser would not save the relay.',true); }
+}
+function clearRelay(){
+  try{ localStorage.removeItem(RELAY_KEY); }catch(e){}
+  loadRelayFields(); syMsg('Relay removed.');
+}
+function shareBackup(){
+  const text=backupText();
+  if(!navigator.share){ syMsg('Sharing is not available in this browser. Use Copy backup text instead.',true); return; }
+  navigator.share({title:'Premium ledger backup',text:text}).then(()=>{ markBackedUp(); syMsg('Shared. On the other device, paste it under Restore.'); }).catch(()=>{});
 }
 
 function openBackup(){
@@ -1942,6 +2062,10 @@ document.addEventListener('click',async e=>{
   if(t.closest('#tx-info')) return openDlg($('#dlg-hinfo'));
   if(t.closest('#chg-add')){ addChangeRow('',''); updatePreview(); return; }
   const cd=t.closest('.chg-del'); if(cd){ cd.parentElement.remove(); updatePreview(); return; }
+  if(t.closest('#sy-test')) return runSyncTest();
+  if(t.closest('#sy-share')) return shareBackup();
+  if(t.closest('#sy-r-save')) return saveRelay();
+  if(t.closest('#sy-r-clear')) return clearRelay();
   if(t.closest('#sy-send-now')) return hostSendNow();
   if(t.closest('#sy-host-cancel')) return hostCancel();
   if(t.closest('#sy-send')) return syncHost();
@@ -1975,10 +2099,10 @@ $('#s-theme').addEventListener('change',e=>{ state.theme=e.target.value; applyTh
 
 $('#dlg-backup').addEventListener('close',()=>{ syncCleanup(); syMsg(''); });
 window.addEventListener('pagehide',()=>{ syncStop(); });
-$('#sy-code-in').addEventListener('input',e=>{
-  const v=normCode(e.target.value).slice(0,8);
-  e.target.value=v.length>4?v.slice(0,4)+'-'+v.slice(4):v;
-});
+$('#sy-code-in').addEventListener('input',e=>{ e.target.value=normCode(e.target.value); });
+$('#sy-build').textContent='Page version '+APP_BUILD+'. Both devices should show the same version.';
+if(navigator.share) $('#sy-share').hidden=false;
+loadRelayFields();
 $('#sy-code-in').addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); syncConnect(); } });
 $('#f-type').addEventListener('change',syncFormType);
 $('#fy-sel').addEventListener('change',e=>{ ui.fy=Number(e.target.value); renderTax(getList()); });
