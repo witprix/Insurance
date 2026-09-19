@@ -8,8 +8,6 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Figtree:wght@400..700&display=swap" rel="stylesheet">
-<!-- WebRTC PeerJS Library -->
-<script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
 <style>
 :root{
   color-scheme:light;
@@ -47,7 +45,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 .top h1{font-size:clamp(1.6rem,4.5vw,2.3rem);font-weight:700;letter-spacing:-.025em}
 .top p{color:var(--muted);margin-top:2px}
 .actions{display:flex;flex-wrap:wrap;gap:8px}
-.btn{min-height:44px;padding:0 16px;border-radius:10px;border:1px solid var(--line);background:var(--panel);font-weight:600;display:inline-flex;align-items:center;justify-content:center;}
+.btn{min-height:44px;padding:0 16px;border-radius:10px;border:1px solid var(--line);background:var(--panel);font-weight:600}
 .btn.primary{background:var(--btn-bg);color:var(--btn-fg);border-color:transparent}
 .btn.small{min-height:36px;padding:0 12px;font-size:.9rem}
 .btn:disabled{opacity:.45;cursor:not-allowed}
@@ -240,6 +238,8 @@ details.bk-more summary{cursor:pointer;color:var(--muted);font-size:.9rem;min-he
 .spinner { border: 3px solid rgba(0,0,0,0.1); border-left-color: var(--focus); border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; display: inline-block; vertical-align: middle; }
 @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 </style>
+<!-- PeerJS for WebRTC Wireless Sync -->
+<script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
 </head>
 <body>
 <div class="wrap">
@@ -1440,8 +1440,8 @@ function doSyncConnect() {
   if(t.closest('#rs-apply')) return applyRestore();
   
   // WebRTC Events
-  if(t.closest('#bk-sync-host')) return doSyncHost();
-  if(t.closest('#bk-sync-recv')) return doSyncReceive();
+  if(t.closest('#sync-host-btn')) return doSyncHost();
+  if(t.closest('#sync-recv-btn')) return doSyncReceive();
   if(t.closest('#sync-connect-btn')) return doSyncConnect();
 
   const sn=t.closest('[data-snap]'); if(sn) return restoreSnapshot(Number(sn.dataset.snap));
