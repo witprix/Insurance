@@ -1,0 +1,2156 @@
+<!DOCTYPE html>
+<html lang="en-IN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<title>Premium ledger</title>
+<meta name="description" content="Track LIC, health insurance and pension premiums from start date to maturity.">
+<meta name="robots" content="noindex,nofollow">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%93%92%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Figtree:wght@400..700&display=swap" media="print" onload="this.media='all'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Figtree:wght@400..700&display=swap"></noscript>
+<style>
+:root{
+  color-scheme:light;
+  --bg:#F2F5F4; --panel:#FFFFFF; --ink:#10262B; --muted:#587074; --line:#D8E1E0; --tint:#E7EEED;
+  --btn-bg:#10262B; --btn-fg:#FFFFFF; --focus:#2F6FED; --danger:#B3261E; --soon:#A9480A;
+  --life:#3556C8; --health:#0E8F7E; --pension:#CC7410; --other:#8452B8;
+  --display:"Bricolage Grotesque","Figtree",system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans",sans-serif;
+  --body:"Figtree",system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans",sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0C1A1D; --panel:#132428; --ink:#E7F0EE; --muted:#93A8AB; --line:#25393D; --tint:#1A2F33;
+    --btn-bg:#E7F0EE; --btn-fg:#0C1B1F; --focus:#8FB4FF; --danger:#FF8A80; --soon:#FBBF6A;
+    --life:#8CA3F5; --health:#3CC4AE; --pension:#F0A048; --other:#B98CE8;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0C1A1D; --panel:#132428; --ink:#E7F0EE; --muted:#93A8AB; --line:#25393D; --tint:#1A2F33;
+  --btn-bg:#E7F0EE; --btn-fg:#0C1B1F; --focus:#8FB4FF; --danger:#FF8A80; --soon:#FBBF6A;
+  --life:#8CA3F5; --health:#3CC4AE; --pension:#F0A048; --other:#B98CE8;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.5 var(--body)}
+.wrap{max-width:1200px;margin:0 auto;padding:12px clamp(14px,3vw,32px) 64px}
+h1,h2,h3{font-family:var(--display);margin:0;letter-spacing:-.01em}
+p{margin:0}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+
+.top{display:flex;flex-wrap:wrap;gap:12px 20px;align-items:center;justify-content:space-between;padding:16px 0 14px}
+.top h1{font-size:clamp(1.6rem,4.5vw,2.3rem);font-weight:700;letter-spacing:-.025em}
+.top p{color:var(--muted);margin-top:2px}
+.actions{display:flex;flex-wrap:wrap;gap:8px}
+.btn{min-height:44px;padding:0 16px;border-radius:10px;border:1px solid var(--line);background:var(--panel);font-weight:600}
+.btn.primary{background:var(--btn-bg);color:var(--btn-fg);border-color:transparent}
+.btn.small{min-height:36px;padding:0 12px;font-size:.9rem}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.danger{color:var(--danger)}
+
+.note{border:1px solid var(--line);background:var(--tint);border-radius:12px;padding:10px 14px;display:flex;gap:10px 14px;flex-wrap:wrap;align-items:center;justify-content:space-between;margin-bottom:14px}
+
+.toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
+.pills{display:flex;flex-wrap:wrap;gap:6px}
+.pill{border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:0 14px;min-height:38px;font-weight:600;font-size:.92rem}
+.pill[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+
+#dash > * + *{margin-top:14px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:clamp(14px,2.4vw,24px)}
+.panel h2{font-size:1.2rem;font-weight:650}
+.panel .sub{color:var(--muted);font-size:.92rem;margin-top:2px}
+
+.hero{display:grid;gap:22px 28px;grid-template-columns:1.25fr 1fr}
+.hero-foot{grid-column:1/-1;border-top:1px solid var(--line);padding-top:16px}
+@media (max-width:820px){.hero{grid-template-columns:1fr}}
+.big-label{color:var(--muted);font-weight:500}
+.big{font-family:var(--display);font-weight:700;font-size:clamp(2.3rem,9vw,4.2rem);line-height:1.02;letter-spacing:-.03em;font-variant-numeric:tabular-nums;overflow-wrap:anywhere;margin:4px 0 8px}
+.lede{color:var(--muted);margin-bottom:16px;max-width:60ch}
+.split{height:14px;border-radius:999px;background:var(--tint);overflow:hidden;display:flex}
+.split i{display:block;height:100%;background:var(--ink)}
+.split-caption{display:flex;justify-content:space-between;gap:4px 12px;flex-wrap:wrap;font-size:.92rem;margin-top:8px}
+.figs{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.fig{border:1px solid var(--line);border-radius:12px;padding:12px 14px;min-width:0}
+.fig .k{color:var(--muted);font-size:.86rem}
+.fig .v{font-family:var(--display);font-weight:650;font-size:clamp(1.2rem,4vw,1.5rem);font-variant-numeric:tabular-nums;line-height:1.2;margin-top:2px;overflow-wrap:anywhere}
+.fig .n{color:var(--muted);font-size:.82rem;margin-top:2px;overflow-wrap:anywhere}
+
+.share{display:flex;height:10px;border-radius:999px;overflow:hidden;background:var(--tint);gap:2px}
+.share i{display:block;height:100%;background:var(--c)}
+.legend{display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:10px;font-size:.9rem}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.dot{width:10px;height:10px;border-radius:3px;background:var(--c);flex:none;display:inline-block}
+.hero-foot h3{font-size:1rem;font-weight:650;margin-bottom:10px}
+
+.gantt{padding:0 18px;margin-top:14px}
+.g-axis{position:relative;height:40px;border-bottom:1px solid var(--line)}
+.g-tick{position:absolute;bottom:0;transform:translateX(-50%);font-size:.78rem;color:var(--muted);padding-bottom:5px;white-space:nowrap}
+.g-tick::after{content:"";position:absolute;left:50%;bottom:-1px;height:4px;border-left:1px solid var(--line)}
+.g-flag{position:absolute;top:0;transform:translateX(-50%);font-size:.72rem;font-weight:700;background:var(--ink);color:var(--bg);border-radius:6px;padding:0 7px;line-height:18px;white-space:nowrap}
+.g-row{padding:10px 0}
+.g-row + .g-row{border-top:1px dashed var(--line)}
+.g-label{display:flex;flex-wrap:wrap;justify-content:space-between;gap:0 12px;margin-bottom:7px}
+.g-label b{font-weight:650;overflow-wrap:anywhere}
+.g-label span{color:var(--muted);font-size:.88rem}
+.g-track{position:relative;height:16px}
+.g-pay{position:absolute;top:0;height:100%;border-radius:6px;overflow:hidden;min-width:8px}
+.g-pay.open{border-radius:6px 0 0 6px;border-right:2px dashed var(--c)}
+.g-pay .rest{position:absolute;inset:0;background:var(--c);opacity:.26}
+.g-pay .done{position:absolute;left:0;top:0;bottom:0;background:var(--c)}
+.g-tail{position:absolute;top:50%;height:0;border-top:2px solid var(--c);opacity:.6}
+.g-mat{position:absolute;top:50%;width:12px;height:12px;background:var(--c);transform:translate(-50%,-50%) rotate(45deg);border-radius:2px}
+.g-today{position:absolute;top:-4px;bottom:-4px;width:2px;background:var(--ink);transform:translateX(-1px);border-radius:1px}
+.key{display:flex;flex-wrap:wrap;gap:6px 18px;margin-top:14px;font-size:.84rem;color:var(--muted)}
+.key span{display:inline-flex;align-items:center;gap:7px}
+.key i{display:inline-block;flex:none}
+.k-solid{width:22px;height:10px;border-radius:4px;background:var(--ink)}
+.k-light{width:22px;height:10px;border-radius:4px;background:var(--ink);opacity:.26}
+.k-line{width:22px;height:0;border-top:2px solid var(--ink);opacity:.6}
+.k-dia{width:9px;height:9px;background:var(--ink);transform:rotate(45deg);border-radius:2px}
+.k-today{width:2px;height:14px;background:var(--ink)}
+
+.cols{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(0,1fr);gap:14px}
+@media (max-width:920px){.cols{grid-template-columns:minmax(0,1fr)}}
+.chart-head{display:flex;flex-wrap:wrap;gap:10px 16px;justify-content:space-between;align-items:flex-start}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.seg button{border:0;background:transparent;padding:0 14px;min-height:38px;font-weight:600;font-size:.9rem}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.readout{display:flex;flex-wrap:wrap;gap:4px 16px;align-items:baseline;margin:14px 0 10px;min-height:3.2em}
+.readout .yr{font-family:var(--display);font-weight:700;font-size:1.35rem}
+.readout .tot{font-weight:700;font-variant-numeric:tabular-nums;font-size:1.1rem}
+.readout .st{color:var(--muted);font-size:.86rem}
+.readout .rt{display:inline-flex;align-items:center;gap:6px;font-size:.88rem;font-variant-numeric:tabular-nums}
+.yc{position:relative;padding-left:48px}
+.yc-plot{position:relative;height:220px;display:flex;align-items:flex-end;gap:2px;border-bottom:1px solid var(--line)}
+.yc-grid{position:absolute;left:-48px;right:0;top:0;bottom:0;pointer-events:none}
+.yc-grid div{position:absolute;left:0;right:0;border-top:1px dashed var(--line)}
+.yc-grid span{position:absolute;left:0;top:-9px;font-size:.72rem;color:var(--muted);background:var(--panel);padding-right:5px;line-height:1.1}
+.yc-col{position:relative;z-index:1;flex:1 1 0;min-width:0;height:100%;display:flex;align-items:flex-end;border:0;background:transparent;padding:0;border-radius:3px 3px 0 0}
+.yc-col:hover,.yc-col.sel{background:var(--tint)}
+.yc-stack{width:100%;display:flex;flex-direction:column-reverse;border-radius:3px 3px 0 0;overflow:hidden}
+.yc-stack i{display:block;width:100%;background:var(--c)}
+.yc-col.future .yc-stack{opacity:.5}
+.yc-col.now::after{content:"";position:absolute;left:0;right:0;bottom:-6px;height:3px;background:var(--ink);border-radius:2px}
+.yc-axis{position:relative;height:26px;margin-top:8px}
+.yc-axis span{position:absolute;transform:translateX(-50%);font-size:.75rem;color:var(--muted);white-space:nowrap}
+.chart-note{color:var(--muted);font-size:.84rem;margin-top:6px}
+
+.due{display:grid;grid-template-columns:54px minmax(0,1fr) auto;gap:12px;align-items:center;padding:10px 0}
+.due + .due{border-top:1px solid var(--line)}
+.date-chip{text-align:center;border:1px solid var(--line);border-radius:10px;padding:5px 0;line-height:1.1}
+.date-chip b{display:block;font-family:var(--display);font-size:1.15rem}
+.date-chip span{font-size:.76rem;color:var(--muted)}
+.due .nm{font-weight:600;overflow-wrap:anywhere}
+.due .fq{color:var(--muted);font-size:.84rem}
+.due .amt{font-weight:700;font-variant-numeric:tabular-nums;text-align:right}
+.due .when{font-size:.82rem;color:var(--muted);text-align:right}
+.due.soon .when{color:var(--soon);font-weight:700}
+#dues{margin-top:8px}
+
+.sec-head{display:flex;flex-wrap:wrap;gap:10px 16px;justify-content:space-between;align-items:center;margin-bottom:12px}
+.sec-head h2{font-size:1.3rem;font-weight:650}
+.sortl{display:inline-flex;align-items:center;gap:8px;font-size:.92rem;color:var(--muted)}
+.sortl select{width:auto;min-height:40px}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,330px),1fr));gap:14px}
+.pcard{background:var(--panel);border:1px solid var(--line);border-top:5px solid var(--c);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.pc-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.pc-head h3{font-size:1.12rem;font-weight:650;line-height:1.25;overflow-wrap:anywhere}
+.pc-meta{color:var(--muted);font-size:.86rem;overflow-wrap:anywhere;display:flex;align-items:center;gap:6px;margin-top:3px}
+.tag{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:999px;padding:1px 10px;font-size:.78rem;font-weight:600;white-space:nowrap;color:var(--muted)}
+.tag.warn{color:var(--soon);border-color:var(--soon)}
+.pc-total{display:flex;align-items:baseline;justify-content:space-between;gap:4px 10px;flex-wrap:wrap}
+.pc-total .n{font-family:var(--display);font-size:1.9rem;font-weight:700;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.pc-total .l{color:var(--muted);font-size:.86rem}
+.bar{height:8px;border-radius:999px;background:var(--tint);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--c)}
+.pc-split{display:flex;justify-content:space-between;gap:4px 10px;font-size:.88rem;flex-wrap:wrap;margin-top:-6px}
+.kv{display:grid;grid-template-columns:auto minmax(0,1fr);gap:5px 14px;font-size:.9rem;margin:0}
+.kv dt{color:var(--muted)}
+.kv dd{margin:0;text-align:right;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.pc-actions{display:flex;gap:8px;margin-top:auto;flex-wrap:wrap}
+
+.empty{text-align:center;padding:clamp(28px,6vw,64px) 20px}
+.empty p{color:var(--muted);max-width:52ch;margin:8px auto 18px}
+.empty .actions{justify-content:center}
+
+.foot{margin-top:28px;color:var(--muted);font-size:.88rem}
+.foot h2{font-size:1rem;color:var(--ink);margin-bottom:6px}
+.foot ul{margin:0;padding-left:1.1rem;display:grid;gap:3px;max-width:80ch}
+
+dialog{border:1px solid var(--line);border-radius:16px;background:var(--panel);color:var(--ink);padding:0;width:min(660px,calc(100vw - 20px));max-height:calc(100vh - 20px);max-height:calc(100dvh - 20px);box-shadow:0 20px 60px rgba(0,0,0,.28)}
+dialog::backdrop{background:rgba(8,20,23,.6)}
+.dlg{display:flex;flex-direction:column;max-height:calc(100vh - 22px);max-height:calc(100dvh - 22px);margin:0}
+.dlg-head{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px 20px;border-bottom:1px solid var(--line)}
+.dlg-head h2{font-size:1.2rem}
+.dlg-body{padding:18px 20px;overflow:auto;-webkit-overflow-scrolling:touch}
+.dlg-foot{display:flex;justify-content:flex-end;gap:8px;padding:12px 20px;border-top:1px solid var(--line);flex-wrap:wrap}
+.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:560px){.fgrid{grid-template-columns:1fr}}
+.field{display:flex;flex-direction:column;gap:5px;min-width:0}
+.field.full{grid-column:1/-1}
+.field label{font-weight:600;font-size:.92rem}
+.field small{color:var(--muted);font-size:.8rem}
+input,select,textarea{font:inherit;font-size:16px;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px;min-height:44px;width:100%}
+textarea{min-height:170px;font-size:14px;resize:vertical}
+.preview{border:1px dashed var(--line);border-radius:12px;padding:12px 14px;margin-top:16px;font-size:.94rem}
+.err{color:var(--danger);font-size:.9rem;min-height:1.3em;margin-top:8px}
+.tbl-wrap{overflow-x:auto;margin-top:12px}
+table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+th,td{padding:8px 10px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+thead th{font-weight:600;color:var(--muted);font-size:.86rem}
+tfoot td{font-weight:700;border-bottom:0}
+.dl-meta{display:flex;flex-wrap:wrap;gap:4px 18px;color:var(--muted);font-size:.9rem}
+.set-row{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:flex-end;justify-content:space-between;padding:14px 0}
+.set-row + .set-row{border-top:1px solid var(--line)}
+.set-row .field{flex:1 1 220px}
+.status{color:var(--muted);font-size:.88rem;min-height:1.3em;margin-top:8px}
+.dlg .sub{color:var(--muted);font-size:.92rem;margin-top:2px}
+.badge{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--soon);margin-left:8px;vertical-align:middle}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.bk-h{font-size:1.02rem;font-weight:650;margin:24px 0 6px}
+.bk-status{border:1px solid var(--line);background:var(--tint);border-radius:12px;padding:10px 14px}
+.bk-status.warn{border-color:var(--soon)}
+.bk-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+details.bk-more{margin-top:10px}
+details.bk-more summary{cursor:pointer;color:var(--muted);font-size:.9rem;min-height:32px;display:flex;align-items:center;text-decoration:underline;text-underline-offset:3px}
+#bk-text{min-height:120px;margin-top:8px}
+#rs-text{min-height:110px}
+.rp{border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin-top:12px;font-size:.92rem;display:grid;gap:4px}
+.rp.bad{border-color:var(--danger);color:var(--danger)}
+.rp .warn{color:var(--soon)}
+.rp .ok{color:var(--muted)}
+.choice{display:grid;gap:8px;margin-top:12px}
+.choice label{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--line);border-radius:12px;padding:10px 12px;cursor:pointer}
+.choice input{width:auto;min-height:0;margin-top:5px;flex:none}
+.choice small{display:block;color:var(--muted);font-size:.86rem}
+.snap{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0}
+.snap + .snap{border-top:1px solid var(--line)}
+.snap .fq{color:var(--muted);font-size:.86rem}
+.status.bad{color:var(--danger)}
+small:empty{display:none}
+.hsec{border:1px solid var(--line);border-radius:12px;padding:14px;margin:16px 0 0;min-width:0}
+.hsec legend{font-weight:650;padding:0 6px}
+.chg-row{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;margin-top:8px}
+@media (max-width:560px){.chg-row{grid-template-columns:1fr 1fr}.chg-row .chg-del{grid-column:1/-1}}
+.hk{border-top:1px solid var(--line);padding-top:12px;display:grid;gap:10px}
+.hk-title{font-size:.9rem;font-weight:650}
+.hinfo h3{font-size:1rem;margin:18px 0 4px}
+.hinfo h3:first-of-type{margin-top:14px}
+.hinfo p{color:var(--muted);font-size:.94rem}
+.sync-box{background:var(--tint);border:1px solid var(--line);border-radius:12px;padding:18px;text-align:center;margin-top:14px}
+.sync-box label{display:block;font-weight:600;font-size:.92rem}
+.sync-box .bk-actions{justify-content:center}
+.sy-status{font-weight:600;color:var(--muted);overflow-wrap:anywhere;margin:0}
+.sy-status.bad{color:var(--danger)}
+.sy-sub{color:var(--muted);font-size:.86rem;min-height:1.2em;margin:4px 0 0}
+.pin-display{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:clamp(1.5rem,7.5vw,2.4rem);font-weight:800;letter-spacing:.14em;color:var(--focus);margin:12px 0 4px;white-space:nowrap}
+.pin-input{display:block;width:min(100%,200px);margin:10px auto 0;text-align:center;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:1.9rem;font-weight:800;letter-spacing:.3em;padding-left:calc(.3em + 12px)}
+.pin-display.sy-check{color:var(--ink);font-size:clamp(2.2rem,11vw,3.2rem);margin:6px 0 4px}
+.sy-test{list-style:none;padding:0;margin:12px 0 0;display:grid;gap:4px;font-size:.92rem}
+.sy-test .ok{color:var(--muted)}
+.sy-test .bad{color:var(--danger)}
+.sy-relay{display:grid;gap:10px;margin-top:8px}
+.spinner{border:3px solid rgba(128,128,128,.28);border-left-color:var(--focus);border-radius:50%;width:24px;height:24px;animation:spin 1s linear infinite;display:inline-block;margin-top:10px}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.spinner{animation-duration:4s}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>Premium ledger</h1>
+      <p>Every policy, from first premium to maturity.</p>
+    </div>
+    <div class="actions">
+      <button class="btn primary" id="btn-add" type="button">Add policy</button>
+      <button class="btn" id="btn-backup" type="button">Backup &amp; sync<span class="badge" id="bk-badge" hidden><span class="sr">, changes not backed up</span></span></button>
+      <button class="btn" id="btn-settings" type="button">Settings</button>
+    </div>
+  </header>
+
+  <div id="banner"></div>
+
+  <section id="empty" class="panel empty" hidden>
+    <h2>Add your first policy</h2>
+    <p>Enter the start date, the premium and how often you pay. The ledger works out what you will have paid by maturity, and when each payment falls due.</p>
+    <div class="actions">
+      <button class="btn primary" id="btn-add2" type="button">Add policy</button>
+      <button class="btn" id="btn-sample" type="button">See it with sample policies</button>
+    </div>
+  </section>
+
+  <main id="dash" hidden>
+    <div class="toolbar"><div class="pills" id="pills" role="group" aria-label="Filter by policy type"></div></div>
+
+    <section class="panel hero" id="hero" aria-label="Summary"></section>
+
+    <section class="panel" aria-labelledby="tl-h">
+      <h2 id="tl-h">Policy timeline</h2>
+      <p class="sub">Each bar runs from the first premium to the last one. The thin line carries on to maturity.</p>
+      <div class="gantt" id="gantt"></div>
+      <div class="key">
+        <span><i class="k-solid"></i>Premiums paid</span>
+        <span><i class="k-light"></i>Premiums still to pay</span>
+        <span><i class="k-line"></i>No more premiums, policy continues</span>
+        <span><i class="k-dia"></i>Maturity</span>
+        <span><i class="k-today"></i>Today</span>
+      </div>
+    </section>
+
+    <div class="cols">
+      <section class="panel" aria-labelledby="ch-h">
+        <div class="chart-head">
+          <div>
+            <h2 id="ch-h">Money going out</h2>
+            <p class="sub">Select a bar to see that year's payments.</p>
+          </div>
+          <div class="seg" role="group" aria-label="Chart view">
+            <button type="button" data-mode="year" aria-pressed="true">Each year</button>
+            <button type="button" data-mode="cum" aria-pressed="false">Running total</button>
+          </div>
+        </div>
+        <div class="readout" id="readout" aria-live="polite"></div>
+        <div id="chart"></div>
+        <div class="legend" id="chart-legend"></div>
+        <p class="chart-note">Paler bars are projections. The underlined year is this year.</p>
+        
+        <div id="recent-wrap" style="margin-top:24px;border-top:1px solid var(--line);padding-top:16px" hidden>
+          <h3 style="font-size:1.1rem;font-weight:650;margin-bottom:8px">Recently paid</h3>
+          <div id="recent-payments"></div>
+        </div>
+      </section>
+
+      <section class="panel" aria-labelledby="du-h">
+        <h2 id="du-h">Coming up</h2>
+        <p class="sub">The next payments across your policies.</p>
+        <div id="dues"></div>
+      </section>
+    </div>
+
+    <section aria-labelledby="pol-h">
+      <div class="sec-head">
+        <h2 id="pol-h">Your policies</h2>
+        <label class="sortl">Sort by
+          <select id="sort">
+            <option value="next">Next payment</option>
+            <option value="outlay">Lifetime outlay</option>
+            <option value="start">Start date</option>
+            <option value="name">Name</option>
+          </select>
+        </label>
+      </div>
+      <div class="cards" id="cards"></div>
+    </section>
+  </main>
+
+  <footer class="foot" id="foot">
+    <h2>How the numbers are worked out</h2>
+    <ul>
+      <li>A premium counts as paid once its due date is today or earlier.</li>
+      <li>Payments fall on the same day of the month as the start date, or the last day of a shorter month.</li>
+      <li>Yearly increases apply from each policy anniversary.</li>
+      <li>Policies with no maturity date, such as health cover, are projected to the year set in Settings.</li>
+      <li>Implied return compares all premiums with the maturity benefit you enter. It ignores the value of cover and tax benefits.</li>
+      <li>Health details follow IRDAI, GST and income tax rules checked in September 2026. Open Health rules on a health policy for a summary.</li>
+      <li id="storage-note">Your data stays in this browser only. Use Backup to keep a copy.</li>
+    </ul>
+  </footer>
+</div>
+
+<!-- Policy form -->
+<dialog id="dlg-policy" aria-labelledby="dp-title">
+  <form id="pform" class="dlg" novalidate>
+    <div class="dlg-head">
+      <h2 id="dp-title">Add policy</h2>
+      <button type="button" class="btn small" data-close>Close</button>
+    </div>
+    <div class="dlg-body">
+      <div class="fgrid">
+        <div class="field full">
+          <label for="f-name">Policy name</label>
+          <input id="f-name" maxlength="80" placeholder="For example, LIC Jeevan Anand" autocomplete="off">
+        </div>
+        <div class="field">
+          <label for="f-type">Type</label>
+          <select id="f-type">
+            <option value="life">Life insurance</option>
+            <option value="health">Health insurance</option>
+            <option value="pension">Pension</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="f-insurer">Insurer or scheme</label>
+          <input id="f-insurer" maxlength="80" placeholder="For example, LIC or SBI" autocomplete="off">
+        </div>
+        <div class="field">
+          <label for="f-number">Policy number</label>
+          <input id="f-number" maxlength="40" placeholder="Optional" autocomplete="off">
+        </div>
+        <div class="field">
+          <label for="f-freq">How often you pay</label>
+          <select id="f-freq">
+            <option value="monthly">Monthly</option>
+            <option value="quarterly">Quarterly</option>
+            <option value="half">Half-yearly</option>
+            <option value="yearly" selected>Yearly</option>
+            <option value="twoyear">Every 2 years</option>
+            <option value="threeyear">Every 3 years</option>
+            <option value="single">One time only</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="f-premium">Premium each time (₹)</label>
+          <input id="f-premium" type="number" inputmode="decimal" min="0" step="any" placeholder="0">
+          <small id="sm-premium"></small>
+        </div>
+        <div class="field">
+          <label for="f-inc" id="lb-inc">Expected yearly premium increase (%)</label>
+          <input id="f-inc" type="number" inputmode="decimal" min="0" step="any" placeholder="0">
+          
+          <div style="margin-top:6px; padding:10px; border:1px solid var(--line); border-radius:10px; background:var(--bg);">
+            <label style="font-size:.84rem; color:var(--muted); font-weight:600; margin-bottom:6px; display:block;">Or calculate from a future renewal:</label>
+            <div style="display:grid; grid-template-columns: 1fr 110px; gap:8px;">
+              <input id="calc-amt" type="number" inputmode="decimal" min="0" step="any" placeholder="Renewal (₹)" style="min-height:36px; font-size:14px;">
+              <input id="calc-yr" type="number" inputmode="numeric" min="2" step="1" placeholder="Year (e.g. 2)" style="min-height:36px; font-size:14px;">
+            </div>
+            <div id="calc-res" style="font-size:.84rem; color:var(--focus); margin-top:6px; min-height:1.2em; font-weight:600;"></div>
+          </div>
+          
+          <small id="sm-inc">Leave empty if the premium is fixed.</small>
+        </div>
+        <div class="field">
+          <label for="f-start">Start date</label>
+          <input id="f-start" type="date">
+        </div>
+        <div class="field">
+          <label for="f-maturity" id="lb-maturity">Maturity date</label>
+          <input id="f-maturity" type="date">
+          <small id="sm-maturity">Leave empty for renewable policies.</small>
+        </div>
+        <div class="field">
+          <label for="f-dob" id="lb-dob">Life assured's date of birth</label>
+          <input id="f-dob" type="date">
+          <small id="sm-dob">Optional. Shows the age at the start, at the last premium and at maturity. For a children's policy, use the child's date of birth.</small>
+        </div>
+        <div class="field" id="fld-ppt">
+          <label for="f-ppt">Premium paying term (years)</label>
+          <input id="f-ppt" type="number" inputmode="numeric" min="0" step="1" placeholder="Same as policy term">
+          <small>Only if you stop paying before maturity.</small>
+        </div>
+        <div class="field">
+          <label for="f-cover" id="lb-cover">Sum assured or cover (₹)</label>
+          <input id="f-cover" type="number" inputmode="decimal" min="0" step="any" placeholder="Optional">
+        </div>
+        <div class="field full" id="fld-benefit">
+          <label for="f-benefit">Expected maturity benefit (₹)</label>
+          <input id="f-benefit" type="number" inputmode="decimal" min="0" step="any" placeholder="Optional">
+          <small>Adds an implied yearly return to the policy card. Needs a maturity date.</small>
+        </div>
+        <div class="field full">
+          <label for="f-notes">Notes & Document Links</label>
+          <textarea id="f-notes" placeholder="Add policy notes or paste links to Google Drive / iCloud for your PDFs and images..."></textarea>
+        </div>
+      </div>
+      <fieldset class="hsec" id="health-fields" hidden>
+        <legend>Health cover details</legend>
+        <div class="fgrid">
+          <div class="field">
+            <label for="h-plan">Type of plan</label>
+            <select id="h-plan">
+              <option value="individual">Individual</option>
+              <option value="floater">Family floater</option>
+              <option value="senior">Senior citizen plan</option>
+              <option value="topup">Top-up or super top-up</option>
+              <option value="critical">Critical illness</option>
+              <option value="group">Group or employer cover</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="h-covers">Who is covered</label>
+            <select id="h-covers">
+              <option value="self">Me, spouse and children</option>
+              <option value="parents">Parents</option>
+            </select>
+          </div>
+          <div class="field full">
+            <label for="h-members">Members covered</label>
+            <input id="h-members" maxlength="80" placeholder="For example, self, spouse, 2 children" autocomplete="off">
+          </div>
+          <div class="field">
+            <label for="h-cont">Continuous cover since</label>
+            <input id="h-cont" type="date">
+            <small>If you ported from another insurer, use the date your first policy began. Empty means the start date above.</small>
+          </div>
+          <div class="field">
+            <label for="h-ped">Pre-existing disease waiting period (years)</label>
+            <input id="h-ped" type="number" inputmode="numeric" min="0" max="4" step="1" placeholder="Optional">
+            <small>Check your policy schedule. IRDAI allows at most 3 years.</small>
+          </div>
+          <div class="field">
+            <label for="h-incs">Yearly increase once 60 or over (%)</label>
+            <input id="h-incs" type="number" inputmode="decimal" min="0" step="any" placeholder="Same as above">
+            <small>Insurers may not raise senior citizen premiums by more than 10% a year without IRDAI's approval.</small>
+          </div>
+          <div class="field">
+            <label for="h-until">Plan premiums until age</label>
+            <input id="h-until" type="number" inputmode="numeric" min="1" max="120" step="1" placeholder="For example, 85">
+            <small>Needs the date of birth. Works out the last renewal for you. Leave empty to use the year set in Settings.</small>
+          </div>
+          <div class="field full">
+            <label>Known premium changes</label>
+            <small>Use this when your insurer has already told you a new premium, for example after a sum insured increase or an age band change. Later increases build on it.</small>
+            <div id="chg-list"></div>
+            <div><button type="button" class="btn small" id="chg-add" style="margin-top:8px">Add a premium change</button></div>
+          </div>
+        </div>
+      </fieldset>
+      <div class="preview" id="f-preview" aria-live="polite"></div>
+      <div class="err" id="f-err" role="alert"></div>
+    </div>
+    <div class="dlg-foot">
+      <button type="button" class="btn" data-close>Cancel</button>
+      <button type="submit" class="btn primary">Save policy</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- Health rules -->
+<dialog id="dlg-hinfo" aria-labelledby="hi-title">
+  <div class="dlg">
+    <div class="dlg-head">
+      <h2 id="hi-title">Health insurance rules in India</h2>
+      <button type="button" class="btn small" data-close>Close</button>
+    </div>
+    <div class="dlg-body hinfo">
+      <p>Checked in September 2026 against IRDAI, GST Council and income tax sources. Rules change, and your policy wording always comes first.</p>
+      <h3>Waiting periods</h3>
+      <p>Pre-existing conditions can have a waiting period of at most 36 months. Many policies also have a 30-day initial wait for illnesses, while accidents are covered from day one. Waiting periods carry over when you port to another insurer with no break in cover.</p>
+      <h3>Five-year moratorium</h3>
+      <p>After 60 months of continuous cover, an insurer cannot reject a claim for non-disclosure or misrepresentation, except for proven fraud. A lapse can reset it, so port to a new insurer instead of buying a fresh policy.</p>
+      <h3>Grace period</h3>
+      <p>30 days after the due date for yearly, half-yearly and quarterly premiums, and 15 days for monthly instalments. Pay within it and your benefits continue.</p>
+      <h3>Switching insurer</h3>
+      <p>IRDAI's 2024 master circular lets you apply to port between 60 and 30 days before renewal. The new insurer must credit the waiting periods you have already served.</p>
+      <h3>Senior citizens</h3>
+      <p>Since January 2025, insurers cannot raise premiums for people aged 60 and over by more than 10% a year without IRDAI's approval.</p>
+      <h3>GST</h3>
+      <p>No GST on individual health policies, including family floater and senior citizen plans, for premiums paid on or after 22 September 2025. Group and employer policies still carry 18%.</p>
+    </div>
+  </div>
+</dialog>
+
+<!-- Schedule -->
+<dialog id="dlg-sched" aria-labelledby="ds-title">
+  <div class="dlg">
+    <div class="dlg-head">
+      <h2 id="ds-title">Payment schedule</h2>
+      <button type="button" class="btn small" data-close>Close</button>
+    </div>
+    <div class="dlg-body" id="ds-body"></div>
+  </div>
+</dialog>
+
+<!-- Backup -->
+<dialog id="dlg-backup" aria-labelledby="db-title">
+  <div class="dlg">
+    <div class="dlg-head">
+      <h2 id="db-title">Backup and sync</h2>
+      <button type="button" class="btn small" data-close>Close</button>
+    </div>
+    <div class="dlg-body">
+      <div class="bk-status" id="bk-status" role="status"></div>
+
+      <h3 class="bk-h">Save a copy</h3>
+      <p class="sub">Your policies live only in this browser. A backup lets you move them to another device, or recover them if this browser's data is cleared.</p>
+      <div class="bk-actions">
+        <button type="button" class="btn primary" id="bk-download">Download backup file</button>
+        <button type="button" class="btn" id="bk-copy">Copy backup text</button>
+      </div>
+      <details class="bk-more" id="bk-details">
+        <summary>Show backup text</summary>
+        <textarea id="bk-text" readonly spellcheck="false" aria-label="Backup text"></textarea>
+      </details>
+      <div class="bk-actions">
+        <button type="button" class="btn" id="bk-sheet">Copy payment schedule for Excel or Sheets</button>
+        <button type="button" class="btn" id="bk-csv">Download schedule (CSV)</button>
+      </div>
+      <div class="status" id="bk-msg" role="status"></div>
+
+      <h3 class="bk-h">Sync with another device</h3>
+      <p class="sub">Send your ledger from this device to your phone or PC. Open this same web address on both devices, choose Send on one and Receive on the other, then type the 4-digit code. The data goes directly between the two devices and is encrypted on the way. A free public service (PeerJS) only helps the devices find each other. Both devices need internet, and it works best when both are on the same Wi-Fi.</p>
+      <div class="bk-actions">
+        <button type="button" class="btn" id="sy-send">Send to another device</button>
+        <button type="button" class="btn" id="sy-recv">Receive from another device</button>
+      </div>
+      <div class="bk-actions">
+        <button type="button" class="btn small" id="sy-test">Test sync connection</button>
+        <button type="button" class="btn small" id="sy-share" hidden>Share backup instead</button>
+      </div>
+      <p class="sy-sub" id="sy-build"></p>
+      <ul class="sy-test" id="sy-test-out" hidden></ul>
+
+      <div class="sync-box" id="sy-host" hidden>
+        <p class="sy-status" id="sy-host-status" aria-live="polite">Getting a code…</p>
+        <div class="pin-display" id="sy-code-show" aria-label="Sync code">----</div>
+        <p class="sy-sub" id="sy-timer"></p>
+        <p class="sy-sub" id="sy-host-hint">On the other device, open this same page, choose Receive from another device and type the 4-digit code.</p>
+        <div class="pin-display sy-check" id="sy-check" aria-label="Check number" hidden>---</div>
+        <div class="spinner" id="sy-host-spin" role="presentation"></div>
+        <div class="bk-actions" id="sy-confirm" hidden>
+          <button type="button" class="btn primary" id="sy-send-now">Yes, send now</button>
+        </div>
+        <div class="bk-actions"><button type="button" class="btn small" id="sy-host-cancel">Cancel</button></div>
+      </div>
+
+      <div class="sync-box" id="sy-recv-box" hidden>
+        <label for="sy-code-in">4-digit code shown on the other device</label>
+        <input id="sy-code-in" class="pin-input" inputmode="numeric" pattern="[0-9]*" placeholder="0000" autocomplete="off" spellcheck="false">
+        <div class="bk-actions">
+          <button type="button" class="btn primary" id="sy-connect">Connect</button>
+          <button type="button" class="btn small" id="sy-recv-cancel">Cancel</button>
+        </div>
+        <div class="pin-display sy-check" id="sy-recv-check" aria-label="Check number" hidden>---</div>
+        <p class="sy-status" id="sy-recv-status" aria-live="polite" style="margin-top:12px"></p>
+        <div class="spinner" id="sy-recv-spin" role="presentation" hidden></div>
+      </div>
+      <div class="status" id="sy-msg" role="status"></div>
+
+      <details class="bk-more">
+        <summary>Advanced: relay server for different networks</summary>
+        <div class="sy-relay">
+          <p class="sub">Only needed when the two devices cannot connect directly, for example one on mobile data and one on Wi-Fi. A relay is a TURN server. Providers such as Metered offer a free plan that needs a free account. Your details stay on this device and are not included in backups.</p>
+          <div class="field"><label for="sy-r-url">Relay address</label><input id="sy-r-url" placeholder="turn:your-relay.example.com:443" autocomplete="off" spellcheck="false"></div>
+          <div class="field"><label for="sy-r-user">User name</label><input id="sy-r-user" autocomplete="off" spellcheck="false"></div>
+          <div class="field"><label for="sy-r-pass">Password</label><input id="sy-r-pass" type="password" autocomplete="off"></div>
+          <div class="bk-actions" style="margin-top:0"><button type="button" class="btn small" id="sy-r-save">Save relay</button><button type="button" class="btn small" id="sy-r-clear">Remove relay</button></div>
+        </div>
+      </details>
+
+      <h3 class="bk-h">Restore</h3>
+      <div class="field">
+        <label for="rs-file">Backup file</label>
+        <input id="rs-file" type="file" accept=".json,.txt,application/json,text/plain">
+      </div>
+      <div class="field" style="margin-top:12px">
+        <label for="rs-text">Or paste backup text</label>
+        <textarea id="rs-text" spellcheck="false" placeholder="Paste the backup text here"></textarea>
+      </div>
+      <div id="rs-report" role="status"></div>
+      <div class="choice" id="rs-choice" hidden>
+        <label><input type="radio" name="rmode" value="merge"><span><b>Add to my ledger</b><small id="rs-merge-note"></small></span></label>
+        <label><input type="radio" name="rmode" value="replace"><span><b>Replace my ledger</b><small id="rs-replace-note"></small></span></label>
+      </div>
+
+      <h3 class="bk-h">Safety copies</h3>
+      <p class="sub">Up to five automatic copies, made before you delete or restore anything. They are kept in this browser too, so they do not replace a backup.</p>
+      <div id="snaps"></div>
+    </div>
+    <div class="dlg-foot">
+      <button type="button" class="btn" data-close>Close</button>
+      <button type="button" class="btn primary" id="rs-apply" disabled>Restore from backup</button>
+    </div>
+  </div>
+</dialog>
+
+<!-- Settings -->
+<dialog id="dlg-settings" aria-labelledby="dg-title">
+  <div class="dlg">
+    <div class="dlg-head">
+      <h2 id="dg-title">Settings</h2>
+      <button type="button" class="btn small" data-close>Close</button>
+    </div>
+    <div class="dlg-body">
+      <div class="set-row">
+        <div class="field">
+          <label for="s-horizon">Project renewable policies until (year)</label>
+          <input id="s-horizon" type="number" inputmode="numeric" step="1">
+          <small>Used for policies with no maturity date, such as health cover.</small>
+        </div>
+      </div>
+      <div class="set-row">
+        <div class="field">
+          <label for="s-theme">Appearance</label>
+          <select id="s-theme">
+            <option value="auto">Match my device</option>
+            <option value="light">Light</option>
+            <option value="dark">Dark</option>
+          </select>
+        </div>
+      </div>
+      <div class="set-row">
+        <button type="button" class="btn" id="s-sample">Add sample policies</button>
+        <button type="button" class="btn danger" id="s-clear">Delete all policies</button>
+      </div>
+    </div>
+  </div>
+</dialog>
+
+<!-- Confirm -->
+<dialog id="dlg-confirm" aria-labelledby="c-title">
+  <div class="dlg">
+    <div class="dlg-head"><h2 id="c-title">Are you sure?</h2></div>
+    <div class="dlg-body"><p id="c-text"></p></div>
+    <div class="dlg-foot">
+      <button type="button" class="btn" data-close>Cancel</button>
+      <button type="button" class="btn primary" id="c-ok">Confirm</button>
+    </div>
+  </div>
+</dialog>
+
+<script>
+(function(){
+'use strict';
+
+/* ---------- constants ---------- */
+const TYPES = {
+  life:   {label:'Life insurance',   short:'Life',    color:'var(--life)'},
+  health: {label:'Health insurance', short:'Health',  color:'var(--health)'},
+  pension:{label:'Pension',          short:'Pension', color:'var(--pension)'},
+  other:  {label:'Other',            short:'Other',   color:'var(--other)'}
+};
+const KEYS = ['life','health','pension','other'];
+const FREQ = {
+  monthly:  {label:'Monthly',      months:1,  adv:'monthly'},
+  quarterly:{label:'Quarterly',    months:3,  adv:'every quarter'},
+  half:     {label:'Half-yearly',  months:6,  adv:'every six months'},
+  yearly:   {label:'Yearly',       months:12, adv:'a year'},
+  twoyear:  {label:'Every 2 years',months:24, adv:'every 2 years'},
+  threeyear:{label:'Every 3 years',months:36, adv:'every 3 years'},
+  single:   {label:'One time only',months:0,  adv:'one time'}
+};
+const PLANS = {
+  individual:'Individual', floater:'Family floater', senior:'Senior citizen plan',
+  topup:'Top-up or super top-up', critical:'Critical illness', group:'Group or employer cover', other:'Other'
+};
+const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const KEY = 'premium-ledger-v1';
+const INR = new Intl.NumberFormat('en-IN',{maximumFractionDigits:0});
+
+/* ---------- helpers ---------- */
+const $ = (s,r)=>(r||document).querySelector(s);
+const $$ = (s,r)=>Array.from((r||document).querySelectorAll(s));
+const esc = s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid = ()=>'p'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+const clamp = (v,a,b)=>Math.min(b,Math.max(a,v));
+const fmt = n=>'₹'+INR.format(Math.round(n||0));
+function fmtC(n){
+  const a=Math.abs(n||0);
+  if(a>=1e7) return '₹'+(n/1e7).toFixed(2).replace(/\.?0+$/,'')+' Cr';
+  if(a>=1e5) return '₹'+(n/1e5).toFixed(2).replace(/\.?0+$/,'')+' L';
+  return '₹'+INR.format(Math.round(n||0));
+}
+function pd(s){ const a=String(s).split('-').map(Number); return new Date(a[0],a[1]-1,a[2]); }
+function validISO(s){ if(!/^\d{4}-\d{2}-\d{2}$/.test(String(s||''))) return false; const d=pd(s); return !isNaN(d.getTime()); }
+function toISO(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function fmtDate(d){ return d.getDate()+' '+MON[d.getMonth()]+' '+d.getFullYear(); }
+function addMonths(d,n){
+  const y=d.getFullYear(), m=d.getMonth()+n;
+  const last=new Date(y,m+1,0).getDate();
+  return new Date(y,m,Math.min(d.getDate(),last));
+}
+const NOW=new Date();
+const TODAY=new Date(NOW.getFullYear(),NOW.getMonth(),NOW.getDate());
+const THIS_YEAR=TODAY.getFullYear();
+function rel(d){
+  const n=Math.round((d-TODAY)/864e5);
+  if(n<=0) return 'Today';
+  if(n===1) return 'Tomorrow';
+  if(n<=45) return 'In '+n+' days';
+  const m=Math.round(n/30.44);
+  if(m<24) return 'In '+m+' months';
+  return 'In '+(n/365.25).toFixed(1)+' years';
+}
+function niceCeil(v){
+  if(v<=0) return 1;
+  const e=Math.pow(10,Math.floor(Math.log10(v))), f=v/e;
+  const nf=f<=1?1:f<=2?2:f<=2.5?2.5:f<=5?5:10;
+  return nf*e;
+}
+
+/* ---------- state + storage ---------- */
+let storageOK=true;
+try{ localStorage.setItem(KEY+'-t','1'); localStorage.removeItem(KEY+'-t'); }catch(e){ storageOK=false; }
+
+function cleanChanges(a){
+  if(!Array.isArray(a)) return [];
+  return a.map(c=>({date:String((c&&c.date)||''),amount:Number(c&&c.amount)||0}))
+    .filter(c=>validISO(c.date)&&c.amount>0)
+    .sort((x,y)=>x.date<y.date?-1:(x.date>y.date?1:0)).slice(0,20);
+}
+function clean(p){
+  if(!p||typeof p!=='object') return null;
+  const num=v=>(v===''||v==null)?'':(Number(v)||0);
+  const c={
+    id:String(p.id||uid()),
+    name:String(p.name||'').trim().slice(0,80),
+    type:TYPES[p.type]?p.type:'other',
+    insurer:String(p.insurer||'').slice(0,80),
+    number:String(p.number||'').slice(0,40),
+    start:String(p.start||''),
+    maturity:String(p.maturity||''),
+    ppt:(p.ppt===''||p.ppt==null)?'':Math.max(0,Math.floor(Number(p.ppt))||0),
+    premium:Number(p.premium)||0,
+    freq:FREQ[p.freq]?p.freq:'yearly',
+    inc:Math.max(0,Number(p.inc)||0),
+    calcAmt:num(p.calcAmt),
+    calcYr:(Math.floor(Number(p.calcYr))>=2)?Math.floor(Number(p.calcYr)):'',
+    cover:num(p.cover),
+    benefit:num(p.benefit),
+    plan:PLANS[p.plan]?p.plan:'individual',
+    covers:p.covers==='parents'?'parents':'self',
+    members:String(p.members||'').slice(0,80),
+    dob:validISO(p.dob)?String(p.dob):'',
+    contFrom:validISO(p.contFrom)?String(p.contFrom):'',
+    ped:(p.ped===''||p.ped==null)?'':clamp(Math.floor(Number(p.ped))||0,0,4),
+    incSenior:(p.incSenior===''||p.incSenior==null)?'':Math.max(0,Number(p.incSenior)||0),
+    untilAge:(Math.floor(Number(p.untilAge))>=1)?clamp(Math.floor(Number(p.untilAge)),1,120):'',
+    changes:cleanChanges(p.changes),
+    sample:!!p.sample,
+    notes:String(p.notes||'').slice(0,3000)
+  };
+  if(!c.name||!validISO(c.start)||c.premium<=0) return null;
+  if(c.maturity && (!validISO(c.maturity) || pd(c.maturity)<=pd(c.start))) c.maturity='';
+  return c;
+}
+function samples(){
+  return [
+    {id:'s1',sample:true,name:'LIC Jeevan Anand',type:'life',insurer:'LIC of India',number:'',dob:'1988-09-12',start:'2018-03-10',maturity:'2043-03-10',ppt:'',premium:36000,freq:'yearly',inc:0,calcAmt:0,calcYr:'',cover:1000000,benefit:''},
+    {id:'s2',sample:true,name:'Family floater health plan',type:'health',insurer:'Health insurer',number:'',start:'2021-07-01',maturity:'',ppt:'',premium:24500,freq:'yearly',inc:8,calcAmt:0,calcYr:'',cover:1000000,benefit:'',plan:'floater',covers:'self',members:'Self, spouse, 2 children',dob:'1985-06-15',contFrom:'',ped:3,incSenior:10,changes:[]},
+    {id:'s3',sample:true,name:'SBI pension scheme',type:'pension',insurer:'SBI',number:'',dob:'1980-03-20',start:'2020-04-05',maturity:'2045-04-05',ppt:'',premium:5000,freq:'monthly',inc:0,calcAmt:0,calcYr:'',cover:'',benefit:3200000},
+    {id:'s4',sample:true,name:'LIC term plan',type:'life',insurer:'LIC of India',number:'',dob:'1988-09-12',start:'2022-01-15',maturity:'2052-01-15',ppt:20,premium:3200,freq:'quarterly',inc:0,calcAmt:0,calcYr:'',cover:10000000,benefit:''},
+    {id:'s5',sample:true,name:'Parents senior citizen plan',type:'health',insurer:'Health insurer',number:'',start:'2023-08-15',maturity:'',ppt:'',premium:42000,freq:'yearly',inc:10,calcAmt:0,calcYr:'',cover:500000,benefit:'',plan:'senior',covers:'parents',members:'Father, mother',dob:'1958-03-10',contFrom:'',ped:2,incSenior:10,changes:[{date:'2026-08-15',amount:39000}]}
+  ];
+}
+function loadState(){
+  let d=null;
+  try{ const raw=localStorage.getItem(KEY); if(raw) d=JSON.parse(raw); }catch(e){ d=null; }
+  const st={policies:null,horizon:THIS_YEAR+20,theme:'auto',lastBackupAt:null,backedUpSig:null};
+  if(d && Array.isArray(d.policies)){
+    st.policies=d.policies.map(clean).filter(Boolean);
+    const h=Number(d.horizon);
+    if(h>=THIS_YEAR && h<=THIS_YEAR+80) st.horizon=Math.floor(h);
+    if(d.theme==='light'||d.theme==='dark') st.theme=d.theme;
+    if(typeof d.lastBackupAt==='string') st.lastBackupAt=d.lastBackupAt;
+    if(typeof d.backedUpSig==='string') st.backedUpSig=d.backedUpSig;
+  } else {
+    st.policies=samples();
+  }
+  return st;
+}
+const state=loadState();
+const ui={filter:'all',sort:'next',mode:'year',sel:null};
+
+function save(){
+  try{ localStorage.setItem(KEY,JSON.stringify(state)); }
+  catch(e){ storageOK=false; }
+  $('#storage-note').textContent = storageOK
+    ? 'Your data stays in this browser only. Use Backup to keep a copy.'
+    : 'Saving is not available in this browser session, so changes will be lost when you close the page. Use Backup to keep a copy.';
+  updateBackupBadge();
+}
+function applyTheme(){
+  const r=document.documentElement;
+  if(state.theme==='light'||state.theme==='dark') r.setAttribute('data-theme',state.theme);
+  else r.removeAttribute('data-theme');
+}
+
+/* ---------- calculation engine ---------- */
+function xirr(flows){
+  const f=r=>flows.reduce((s,c)=>s+c.v/Math.pow(1+r,c.t),0);
+  let lo=-0.9, hi=1.5, flo=f(lo), fhi=f(hi);
+  if(!isFinite(flo)||!isFinite(fhi)||flo*fhi>0) return null;
+  for(let i=0;i<120;i++){
+    const mid=(lo+hi)/2, fm=f(mid);
+    if(flo*fm<=0){ hi=mid; fhi=fm; } else { lo=mid; flo=fm; }
+  }
+  return (lo+hi)/2;
+}
+function ageOn(dob,d){
+  let a=d.getFullYear()-dob.getFullYear();
+  const m=d.getMonth()-dob.getMonth();
+  if(m<0||(m===0&&d.getDate()<dob.getDate())) a--;
+  return a;
+}
+function addDays(d,n){ return new Date(d.getFullYear(),d.getMonth(),d.getDate()+n); }
+function isSeniorOn(p,date){
+  if(!p.dob||!validISO(p.dob)) return false;
+  return addMonths(pd(p.dob),720)<=date;
+}
+function makeAmountFn(p,start){
+  const base=Number(p.premium)||0;
+  const inc=(Number(p.inc)||0)/100;
+  const incS=(p.incSenior===''||p.incSenior==null)?null:(Number(p.incSenior)||0)/100;
+  const segs=[{from:start,amt:base}];
+  (p.changes||[]).forEach(c=>{
+    if(c&&validISO(c.date)&&Number(c.amount)>0){ const d=pd(c.date); if(d>start) segs.push({from:d,amt:Number(c.amount)}); }
+  });
+  segs.sort((a,b)=>a.from-b.from);
+  const growth=inc>0||(incS!=null&&incS>0);
+  return function(d){
+    let seg=segs[0];
+    for(let i=1;i<segs.length;i++){ if(segs[i].from<=d) seg=segs[i]; }
+    let amt=seg.amt;
+    if(!growth) return amt;
+    for(let y=1;y<200;y++){
+      const a=addMonths(seg.from,12*y);
+      if(a>d) break;
+      const r=(incS!=null&&isSeniorOn(p,a))?incS:inc;
+      amt*=1+r;
+    }
+    return Math.round(amt);
+  };
+}
+function analyse(p){
+  const start=pd(p.start);
+  const hasMat=!!p.maturity && validISO(p.maturity);
+  const dobD=(p.dob&&validISO(p.dob))?pd(p.dob):null;
+  const ageEnd=!hasMat&&!!dobD&&Number(p.untilAge)>=1;
+  let end=hasMat?pd(p.maturity):(ageEnd?addMonths(dobD,Number(p.untilAge)*12):new Date(state.horizon+1,0,1));
+  if(end<=start) end=addMonths(start,1);
+  const ppt=Number(p.ppt)||0;
+  const f=FREQ[p.freq]||FREQ.yearly;
+  let payEnd=end;
+  if(ppt>0){ const pe=addMonths(start,ppt*12); if(pe<payEnd) payEnd=pe; }
+  const prem=Number(p.premium)||0;
+  const amtFn=makeAmountFn(p,start);
+  const items=[];
+  if(f.months===0){
+    items.push({date:start,amount:prem});
+    payEnd=addMonths(start,1); if(payEnd>end) payEnd=end;
+  } else {
+    for(let k=0;k<1500;k++){
+      const d=addMonths(start,k*f.months);
+      if(d>=payEnd) break;
+      items.push({date:d,amount:amtFn(d)});
+    }
+  }
+  let total=0,paid=0,paidN=0,next12=0;
+  const lim=addMonths(TODAY,12);
+  items.forEach(i=>{
+    total+=i.amount;
+    if(i.date<=TODAY){ paid+=i.amount; paidN++; }
+    else if(i.date<=lim){ next12+=i.amount; }
+  });
+  const upcoming=items.filter(i=>i.date>TODAY);
+  const next=upcoming.length?upcoming[0]:null;
+  const lastPremium=items.length?items[items.length-1].date:null;
+  let irr=null;
+  if(hasMat && Number(p.benefit)>0 && items.length){
+    const t0=items[0].date.getTime(), Y=365.25*864e5;
+    const flows=items.map(i=>({t:(i.date.getTime()-t0)/Y,v:-i.amount}));
+    flows.push({t:(end.getTime()-t0)/Y,v:Number(p.benefit)});
+    irr=xirr(flows);
+  }
+  let status='Active';
+  if(hasMat && end<=TODAY) status='Matured';
+  else if(start>TODAY) status='Not started';
+  else if(!next) status='Paid up';
+  let h=null;
+  if(p.type==='health'){
+    const cont=(p.contFrom&&validISO(p.contFrom))?pd(p.contFrom):start;
+    const dob=(p.dob&&validISO(p.dob))?pd(p.dob):null;
+    const graceDays=(p.freq==='monthly')?15:30;
+    let renewal=null;
+    if(f.months>=12){ renewal=next?next.date:null; }
+    else if(f.months>0){
+      let y=1, d=addMonths(start,12);
+      while(d<=TODAY&&y<200){ y++; d=addMonths(start,12*y); }
+      renewal=d<end?d:null;
+    }
+    h={cont,dob,graceDays,renewal,
+       graceEnd:next?addDays(next.date,graceDays):null,
+       pedEnd:(p.ped===''||p.ped==null)?null:addMonths(cont,Number(p.ped)*12),
+       moratorium:addMonths(cont,60),
+       seniorFrom:dob?addMonths(dob,720):null,
+       portFrom:renewal?addDays(renewal,-60):null,
+       portTo:renewal?addDays(renewal,-30):null};
+  }
+  const ageStart=dobD?ageOn(dobD,start):null;
+  const ageNow=dobD?ageOn(dobD,TODAY):null;
+  const ageLast=(dobD&&lastPremium)?ageOn(dobD,lastPremium):null;
+  const endAge=dobD?(ageEnd?Number(p.untilAge):ageOn(dobD,hasMat?end:new Date(state.horizon,11,31))):null;
+  return {p,items,total,paid,paidN,remain:total-paid,remainN:items.length-paidN,next,upcoming,lastPremium,
+          start,payEnd,end,hasMat,ageEnd,next12,irr,status,h,ageStart,ageNow,ageLast,endAge};
+}
+
+/* ---------- derived view ---------- */
+function getList(){
+  let list=state.policies.map(analyse);
+  if(ui.filter!=='all') list=list.filter(a=>a.p.type===ui.filter);
+  return list;
+}
+const sorters={
+  next:(x,y)=>(x.next?x.next.date.getTime():9e15)-(y.next?y.next.date.getTime():9e15),
+  outlay:(x,y)=>y.total-x.total,
+  start:(x,y)=>x.start-y.start,
+  name:(x,y)=>x.p.name.localeCompare(y.p.name)
+};
+
+/* ---------- rendering ---------- */
+function render(){
+  const has=state.policies.length>0;
+  $('#empty').hidden=has;
+  $('#dash').hidden=!has;
+  renderBanner();
+  if(!has) return;
+  renderPills();
+  const list=getList();
+  if(!list.length){ ui.filter='all'; return render(); }
+  renderHero(list);
+  renderGantt(list);
+  renderChart(list);
+  renderDues(list);
+  renderRecent(list);
+  renderCards(list);
+}
+
+function renderBanner(){
+  const has=state.policies.some(p=>p.sample);
+  $('#banner').innerHTML=has
+    ? '<div class="note"><span>These are sample policies so you can see how the ledger works. Replace them with your own.</span><button class="btn small" type="button" id="btn-rm-sample">Remove samples</button></div>'
+    : '';
+}
+
+function renderPills(){
+  const present=KEYS.filter(t=>state.policies.some(p=>p.type===t));
+  if(ui.filter!=='all' && present.indexOf(ui.filter)<0) ui.filter='all';
+  const el=$('#pills');
+  if(present.length<2){ el.innerHTML=''; return; }
+  el.innerHTML=['all'].concat(present).map(t=>
+    '<button type="button" class="pill" data-f="'+t+'" aria-pressed="'+(ui.filter===t)+'">'+(t==='all'?'All policies':TYPES[t].short)+'</button>'
+  ).join('');
+}
+
+function renderHero(list){
+  let total=0,paid=0,paidN=0,remainN=0,next12=0,count=list.length;
+  const byType={life:0,health:0,pension:0,other:0};
+  let minStart=Infinity,maxEnd=0,anyOpen=false,nextItem=null,openYear=0;
+  list.forEach(a=>{
+    total+=a.total; paid+=a.paid; paidN+=a.paidN; remainN+=a.remainN; next12+=a.next12;
+    byType[a.p.type]+=a.total;
+    minStart=Math.min(minStart,a.start.getTime());
+    maxEnd=Math.max(maxEnd,a.end.getTime());
+    if(!a.hasMat){ anyOpen=true; openYear=Math.max(openYear,a.ageEnd?a.end.getFullYear():state.horizon); }
+    if(a.next && (!nextItem || a.next.date<nextItem.date)) nextItem={date:a.next.date,amount:a.next.amount,name:a.p.name};
+  });
+  const remain=total-paid;
+  const pct=total>0?Math.round(paid/total*100):0;
+  const endYear=new Date(maxEnd).getFullYear();
+  const lede='Across '+count+(count===1?' policy':' policies')+', from '+fmtDate(new Date(minStart))+' until '+(anyOpen?'the last planned renewal in '+Math.max(openYear,endYear):'the last one matures in '+endYear)+'. You have paid '+pct+'% of it so far.';
+  const legend=KEYS.filter(k=>byType[k]>0).map(k=>
+    '<span><i class="dot" style="--c:'+TYPES[k].color+'"></i>'+TYPES[k].label+', <b>'+fmtC(byType[k])+'</b> ('+Math.round(byType[k]/total*100)+'%)</span>'
+  ).join('');
+  const shareBar=KEYS.filter(k=>byType[k]>0).map(k=>
+    '<i style="--c:'+TYPES[k].color+';width:'+(byType[k]/total*100)+'%"></i>'
+  ).join('');
+  $('#hero').innerHTML=
+    '<div>'+
+      '<div class="big-label">Lifetime outlay</div>'+
+      '<div class="big">'+fmt(total)+'</div>'+
+      '<p class="lede">'+esc(lede)+'</p>'+
+      '<div class="split" role="img" aria-label="'+pct+' percent paid"><i style="width:'+pct+'%"></i></div>'+
+      '<div class="split-caption"><span><b>'+fmt(paid)+'</b> paid</span><span><b>'+fmt(remain)+'</b> still to pay</span></div>'+
+    '</div>'+
+    '<div class="figs">'+
+      '<div class="fig"><div class="k">Paid so far</div><div class="v" title="'+fmt(paid)+'">'+fmtC(paid)+'</div><div class="n">'+paidN+' premiums</div></div>'+
+      '<div class="fig"><div class="k">Still to pay</div><div class="v" title="'+fmt(remain)+'">'+fmtC(remain)+'</div><div class="n">'+remainN+' premiums left</div></div>'+
+      '<div class="fig"><div class="k">Next 12 months</div><div class="v" title="'+fmt(next12)+'">'+fmtC(next12)+'</div><div class="n">about '+fmtC(next12/12)+' a month</div></div>'+
+      '<div class="fig"><div class="k">Next payment</div><div class="v">'+(nextItem?fmtDate(nextItem.date):'None left')+'</div><div class="n">'+(nextItem?esc(fmtC(nextItem.amount)+' for '+nextItem.name):'All premiums paid')+'</div></div>'+
+    '</div>'+
+    '<div class="hero-foot"><h3>Where the money goes</h3><div class="share" role="img" aria-label="Share of lifetime outlay by policy type">'+shareBar+'</div><div class="legend">'+legend+'</div></div>';
+}
+
+function renderGantt(list){
+  const el=$('#gantt');
+  const rows=list.slice().sort((a,b)=>a.start-b.start);
+  let lo=TODAY.getTime(), hi=TODAY.getTime();
+  rows.forEach(a=>{ lo=Math.min(lo,a.start.getTime()); hi=Math.max(hi,a.end.getTime()); });
+  const y0=new Date(lo).getFullYear(), y1=new Date(hi).getFullYear()+1;
+  const D0=new Date(y0,0,1).getTime(), D1=new Date(y1,0,1).getTime();
+  const pos=t=>((t instanceof Date?t.getTime():t)-D0)/(D1-D0)*100;
+  const width=el.clientWidth||320;
+  const maxTicks=Math.max(3,Math.floor(width/64));
+  const span=y1-y0;
+  const step=[1,2,5,10,20,25,50].find(s=>span/s<=maxTicks)||50;
+  let ticks='';
+  for(let y=Math.ceil(y0/step)*step;y<=y1;y+=step){
+    ticks+='<span class="g-tick" style="left:'+pos(new Date(y,0,1))+'%">'+y+'</span>';
+  }
+  const flag='<span class="g-flag" style="left:'+pos(TODAY)+'%">Today</span>';
+  const body=rows.map(a=>{
+    const p=a.p, s=pos(a.start), pe=pos(a.payEnd), e=pos(a.end);
+    const frac=clamp((TODAY-a.start)/(a.payEnd-a.start),0,1)*100;
+    const open=!a.hasMat;
+    const ag=n=>(n!=null?' (age '+n+')':'');
+    const sub=fmtC(a.total)+' in total, '+fmtDate(a.start)+ag(a.ageStart)+' to '+(a.hasMat?fmtDate(a.end)+ag(a.endAge):(a.ageEnd?'renewable, planned to age '+a.p.untilAge+' ('+a.end.getFullYear()+')':'renewable, projected to '+state.horizon+(a.endAge!=null?' (age '+a.endAge+')':'')));
+    const tail=(e-pe>0.3)?'<span class="g-tail" style="left:'+pe+'%;width:'+(e-pe)+'%"></span>':'';
+    const mat=a.hasMat?'<span class="g-mat" style="left:'+e+'%"></span>':'';
+    return '<div class="g-row" style="--c:'+TYPES[p.type].color+'">'+
+      '<div class="g-label"><b>'+esc(p.name)+'</b><span>'+esc(sub)+'</span></div>'+
+      '<div class="g-track">'+
+        tail+
+        '<span class="g-pay'+(open?' open':'')+'" style="left:'+s+'%;width:'+Math.max(pe-s,0.6)+'%"><span class="rest"></span><span class="done" style="width:'+frac+'%"></span></span>'+
+        mat+
+        '<span class="g-today" style="left:'+pos(TODAY)+'%"></span>'+
+      '</div></div>';
+  }).join('');
+  el.innerHTML='<div class="g-axis">'+ticks+flag+'</div>'+body;
+}
+
+function renderChart(list){
+  const yrs={}; let minY=9999,maxY=0;
+  list.forEach(a=>a.items.forEach(i=>{
+    const y=i.date.getFullYear();
+    if(!yrs[y]) yrs[y]={life:0,health:0,pension:0,other:0};
+    yrs[y][a.p.type]+=i.amount;
+    minY=Math.min(minY,y); maxY=Math.max(maxY,y);
+  }));
+  if(maxY===0){ $('#chart').innerHTML='<p class="sub">No payments to show yet.</p>'; $('#readout').innerHTML=''; $('#chart-legend').innerHTML=''; return; }
+  const rows=[]; const cum={life:0,health:0,pension:0,other:0};
+  for(let y=minY;y<=maxY;y++){
+    const r=yrs[y]||{life:0,health:0,pension:0,other:0};
+    const o={year:y};
+    KEYS.forEach(k=>{ if(ui.mode==='cum'){ cum[k]+=r[k]; o[k]=cum[k]; } else o[k]=r[k]; });
+    o.total=KEYS.reduce((s,k)=>s+o[k],0);
+    rows.push(o);
+  }
+  const maxV=Math.max.apply(null,rows.map(r=>r.total));
+  const niceMax=niceCeil(maxV);
+  const cols=rows.map(r=>{
+    const h=r.total/niceMax*100;
+    const segs=KEYS.filter(k=>r[k]>0).map(k=>'<i style="--c:'+TYPES[k].color+';height:'+(r[k]/r.total*100)+'%"></i>').join('');
+    return '<button type="button" class="yc-col'+(r.year>THIS_YEAR?' future':'')+(r.year===THIS_YEAR?' now':'')+'" data-y="'+r.year+'" aria-label="'+r.year+': '+fmt(r.total)+'"><span class="yc-stack" style="height:'+h+'%">'+segs+'</span></button>';
+  }).join('');
+  const grid='<div class="yc-grid"><div style="top:0"><span>'+fmtC(niceMax)+'</span></div><div style="top:50%"><span>'+fmtC(niceMax/2)+'</span></div></div>';
+  $('#chart').innerHTML='<div class="yc"><div class="yc-plot">'+grid+cols+'</div><div class="yc-axis"></div></div>';
+  const plot=$('.yc-plot'), axis=$('.yc-axis');
+  const w=plot.clientWidth||300, n=rows.length, per=w/n;
+  const need=Math.ceil(38/per);
+  const step=[1,2,5,10,20].find(s=>s>=need)||50;
+  axis.innerHTML=rows.map((r,i)=>(step===1||r.year%step===0)
+    ? '<span style="left:'+((i+0.5)/n*100)+'%">'+r.year+'</span>':'').join('');
+  $('#chart-legend').innerHTML=KEYS.filter(k=>list.some(a=>a.p.type===k)).map(k=>
+    '<span><i class="dot" style="--c:'+TYPES[k].color+'"></i>'+TYPES[k].label+'</span>').join('');
+  window.__rows=rows;
+  if(ui.sel==null || ui.sel<minY || ui.sel>maxY) ui.sel=(THIS_YEAR>=minY&&THIS_YEAR<=maxY)?THIS_YEAR:(THIS_YEAR<minY?minY:maxY);
+  setSel(ui.sel);
+}
+function setSel(y){
+  ui.sel=y;
+  const rows=window.__rows||[];
+  const r=rows.find(x=>x.year===y); if(!r) return;
+  $$('.yc-col').forEach(b=>b.classList.toggle('sel',Number(b.dataset.y)===y));
+  let st;
+  if(ui.mode==='cum') st='Total paid or due by the end of the year';
+  else st=y<THIS_YEAR?'Paid':(y===THIS_YEAR?'Part paid, part still due':'Projected');
+  const parts=KEYS.filter(k=>r[k]>0).map(k=>'<span class="rt"><i class="dot" style="--c:'+TYPES[k].color+'"></i>'+TYPES[k].short+' '+fmt(r[k])+'</span>').join('');
+  $('#readout').innerHTML='<span class="yr">'+y+'</span><span class="tot">'+fmt(r.total)+'</span><span class="st">'+st+'</span>'+parts;
+}
+
+function renderDues(list){
+  let all=[];
+  list.forEach(a=>a.upcoming.slice(0,8).forEach(i=>all.push({date:i.date,amount:i.amount,a:a})));
+  all.sort((x,y)=>x.date-y.date);
+  all=all.slice(0,8);
+  const el=$('#dues');
+  if(!all.length){ el.innerHTML='<p class="sub" style="padding:14px 0">No payments left. Every premium is paid.</p>'; return; }
+  el.innerHTML=all.map(d=>{
+    const n=Math.round((d.date-TODAY)/864e5);
+    return '<div class="due'+(n<=30?' soon':'')+'">'+
+      '<div class="date-chip"><b>'+d.date.getDate()+'</b><span>'+MON[d.date.getMonth()]+' '+String(d.date.getFullYear()).slice(2)+'</span></div>'+
+      '<div><div class="nm">'+esc(d.a.p.name)+'</div><div class="fq">'+FREQ[d.a.p.freq].label+'</div></div>'+
+      '<div><div class="amt">'+fmt(d.amount)+'</div><div class="when">'+rel(d.date)+'</div></div>'+
+    '</div>';
+  }).join('');
+}
+
+function renderRecent(list){
+  let past=[];
+  list.forEach(a=>a.items.forEach(i=>{
+    if(i.date<=TODAY) past.push({date:i.date,amount:i.amount,a:a});
+  }));
+  past.sort((x,y)=>y.date-x.date);
+  past=past.slice(0,4);
+  const wrap=$('#recent-wrap'), el=$('#recent-payments');
+  if(!past.length){ wrap.hidden=true; return; }
+  wrap.hidden=false;
+  el.innerHTML=past.map(d=>{
+    const n=Math.round((TODAY-d.date)/864e5);
+    let when='';
+    if(n===0) when='Paid today';
+    else if(n===1) when='Paid yesterday';
+    else if(n<30) when='Paid '+n+' days ago';
+    else {
+      const m = Math.floor(n/30.44);
+      when='Paid '+m+(m===1?' month':' months')+' ago';
+    }
+
+    return '<div class="due" style="padding:8px 0">'+
+      '<div class="date-chip"><b>'+d.date.getDate()+'</b><span>'+MON[d.date.getMonth()]+' '+String(d.date.getFullYear()).slice(2)+'</span></div>'+
+      '<div><div class="nm">'+esc(d.a.p.name)+'</div><div class="fq">'+FREQ[d.a.p.freq].label+'</div></div>'+
+      '<div><div class="amt">'+fmt(d.amount)+'</div><div class="when" style="color:var(--muted)">'+when+'</div></div>'+
+    '</div>';
+  }).join('');
+}
+
+function renderCards(list){
+  const rows=list.slice().sort(sorters[ui.sort]||sorters.next);
+  $('#cards').innerHTML=rows.map(a=>{
+    const p=a.p, f=FREQ[p.freq];
+    const pct=a.total>0?a.paid/a.total*100:0;
+    const meta2=[p.insurer,p.number?'Policy '+p.number:''].filter(Boolean).join(', ');
+    const tagCls=(a.status==='Active'||a.status==='Matured'||a.status==='Paid up'||a.status==='Not started')?'':'warn';
+    let kv='';
+    kv+='<dt>Premium</dt><dd>'+fmt(p.premium)+' '+f.adv+(Number(p.inc)>0?', rising '+p.inc+'% a year':'')+((a.h&&p.incSenior!==''&&p.incSenior!=null)?', '+p.incSenior+'% once 60 or over':'')+'</dd>';
+    kv+='<dt>Started</dt><dd>'+fmtDate(a.start)+(a.ageStart!=null?' (age '+a.ageStart+')':'')+'</dd>';
+    if(!a.h&&a.ageNow!=null) kv+='<dt>Life assured\'s age</dt><dd>'+a.ageNow+' now</dd>';
+    kv+='<dt>Last premium</dt><dd>'+(a.lastPremium?fmtDate(a.lastPremium)+(a.ageLast!=null?' (age '+a.ageLast+')':''):'None')+'</dd>';
+    kv+='<dt>'+(a.h?'Planned until':'Matures')+'</dt><dd>'+(a.hasMat?fmtDate(a.end)+(a.endAge!=null?' (age '+a.endAge+')':''):(a.ageEnd?'Age '+p.untilAge+', on '+fmtDate(a.end):'Renewable, projected to '+state.horizon+(a.endAge!=null?' (age '+a.endAge+')':'')))+'</dd>';
+    kv+='<dt>Next payment</dt><dd>'+(a.next?fmtDate(a.next.date)+', '+rel(a.next.date).toLowerCase():'None left')+'</dd>';
+    if(Number(p.cover)>0) kv+='<dt>'+(a.h?'Sum insured':'Cover')+'</dt><dd>'+fmt(p.cover)+'</dd>';
+    if(a.hasMat && Number(p.benefit)>0){
+      kv+='<dt>Maturity benefit</dt><dd>'+fmt(p.benefit)+'</dd>';
+      kv+='<dt>Benefit less premiums</dt><dd>'+(p.benefit-a.total>=0?'':'-')+fmt(Math.abs(p.benefit-a.total))+'</dd>';
+      if(a.irr!=null) kv+='<dt>Implied return</dt><dd>'+(a.irr*100).toFixed(1)+'% a year</dd>';
+    }
+    let hk='';
+    if(a.h){
+      const H=a.h, grp=p.plan==='group'; let r='';
+      r+='<dt>Plan</dt><dd>'+esc(PLANS[p.plan]||'Health plan')+(p.covers==='parents'?', for parents':', for me and family')+'</dd>';
+      if(p.members) r+='<dt>Members</dt><dd>'+esc(p.members)+'</dd>';
+      if(a.ageNow!=null) r+='<dt>Eldest insured\'s age</dt><dd>'+a.ageNow+' now</dd>';
+      if(f.months<12&&H.renewal) r+='<dt>Policy renews on</dt><dd>'+fmtDate(H.renewal)+'</dd>';
+      if(H.graceEnd) r+='<dt>Grace period ends</dt><dd>'+fmtDate(H.graceEnd)+'</dd>';
+      if(H.pedEnd&&!grp) r+='<dt>Pre-existing waiting</dt><dd>'+(H.pedEnd<=TODAY?'Over since '+fmtDate(H.pedEnd):'Ends '+fmtDate(H.pedEnd))+'</dd>';
+      if(!grp) r+='<dt>5-year moratorium</dt><dd>'+(H.moratorium<=TODAY?'Done since '+fmtDate(H.moratorium):'Ends '+fmtDate(H.moratorium))+'</dd>';
+      if(H.seniorFrom) r+='<dt>Senior citizen (60+)</dt><dd>'+(H.seniorFrom<=TODAY?'Since ':'From ')+fmtDate(H.seniorFrom)+'</dd>';
+      if(H.portFrom&&!grp) r+='<dt>Switch insurer between</dt><dd>'+fmtDate(H.portFrom)+' and '+fmtDate(H.portTo)+'</dd>';
+      hk='<div class="hk"><div class="hk-title">Health cover details</div><dl class="kv">'+r+'</dl></div>';
+    }
+    
+    if(p.notes) {
+      hk += '<div class="hk"><div class="hk-title">Notes & Document Links</div><p style="font-size:.9rem;color:var(--muted);white-space:pre-wrap;margin-top:4px;word-break:break-word;">'+esc(p.notes)+'</p></div>';
+    }
+
+    return '<article class="pcard" style="--c:'+TYPES[p.type].color+'">'+
+      '<div class="pc-head"><div><h3>'+esc(p.name)+'</h3>'+
+        '<div class="pc-meta"><i class="dot"></i>'+TYPES[p.type].label+'</div>'+
+        (meta2?'<div class="pc-meta">'+esc(meta2)+'</div>':'')+
+      '</div><span class="tag '+tagCls+'">'+a.status+'</span></div>'+
+      '<div class="pc-total"><span class="n">'+fmt(a.total)+'</span><span class="l">'+(a.hasMat?(a.h?'total till your end date':'total till maturity'):(a.ageEnd?'total till age '+p.untilAge:'total till '+state.horizon))+'</span></div>'+
+      '<div class="bar" role="img" aria-label="'+Math.round(pct)+' percent paid"><i style="width:'+pct+'%"></i></div>'+
+      '<div class="pc-split"><span><b>'+fmt(a.paid)+'</b> paid, '+a.paidN+' of '+a.items.length+'</span><span><b>'+fmt(a.remain)+'</b> to go</span></div>'+
+      '<dl class="kv">'+kv+'</dl>'+hk+
+      '<div class="pc-actions" data-id="'+esc(p.id)+'">'+
+        '<button type="button" class="btn small" data-act="sched">Schedule</button>'+
+        (a.h?'<button type="button" class="btn small" data-act="hinfo">Health rules</button>':'')+
+        '<button type="button" class="btn small" data-act="edit">Edit</button>'+
+        '<button type="button" class="btn small danger" data-act="del">Delete</button>'+
+      '</div>'+
+    '</article>';
+  }).join('');
+}
+
+/* ---------- dialogs ---------- */
+function openDlg(d){ if(!d.open){ if(d.showModal) d.showModal(); else d.setAttribute('open',''); } }
+function askConfirm(title,text,ok){
+  return new Promise(res=>{
+    const d=$('#dlg-confirm'); let result=false;
+    $('#c-title').textContent=title; $('#c-text').textContent=text;
+    const b=$('#c-ok'); b.textContent=ok;
+    b.onclick=()=>{ result=true; d.close(); };
+    d.onclose=()=>res(result);
+    openDlg(d);
+  });
+}
+
+function addChangeRow(date,amt){
+  const row=document.createElement('div'); row.className='chg-row';
+  row.innerHTML='<input type="date" class="chg-date" aria-label="Date the new premium starts">'+
+    '<input type="number" class="chg-amt" inputmode="decimal" min="0" step="any" placeholder="New premium (₹)" aria-label="New premium each time">'+
+    '<button type="button" class="btn small chg-del" aria-label="Remove this premium change">Remove</button>';
+  row.querySelector('.chg-date').value=date||'';
+  row.querySelector('.chg-amt').value=amt||'';
+  $('#chg-list').appendChild(row);
+}
+function readChanges(){
+  return $$('#chg-list .chg-row').map(r=>({date:r.querySelector('.chg-date').value,amount:Number(r.querySelector('.chg-amt').value)||0}))
+    .filter(c=>validISO(c.date)&&c.amount>0)
+    .sort((a,b)=>a.date<b.date?-1:(a.date>b.date?1:0));
+}
+function syncFormType(){
+  const h=$('#f-type').value==='health';
+  $('#health-fields').hidden=!h;
+  $('#fld-ppt').hidden=h; $('#fld-benefit').hidden=h;
+  $('#lb-maturity').textContent=h?'Keep paying until (optional)':'Maturity date';
+  $('#sm-maturity').textContent=h?'Health cover has no maturity. Leave empty to plan until an age or the year set in Settings.':'Leave empty for renewable policies.';
+  $('#lb-cover').textContent=h?'Sum insured (₹)':'Sum assured or cover (₹)';
+  $('#lb-inc').textContent=h?'Expected yearly premium increase (%)':'Yearly premium increase (%)';
+  $('#sm-inc').textContent=h?'Leave empty if the premium is fixed.':'Leave empty if the premium is fixed.';
+  $('#sm-dob').textContent=h?'Used for the senior citizen limit (60 and over), the age-based premium increase and to show ages.':"Optional. Shows the age at the start, at the last premium and at maturity. For a children's policy, use the child's date of birth.";
+  $('#sm-premium').textContent=h?'Enter what you actually pay. Individual health policies have had no GST since 22 Sep 2025.':'';
+}
+
+function updateIncCalc(isLoad) {
+  const base = Number($('#f-premium').value) || 0;
+  const amtStr = $('#calc-amt').value.trim();
+  const yrStr = $('#calc-yr').value.trim();
+  const res = $('#calc-res');
+  
+  if (amtStr === '' || yrStr === '') {
+    res.textContent = '';
+    return;
+  }
+  
+  const amt = Number(amtStr) || 0;
+  const yr = Number(yrStr) || 0;
+
+  if (base <= 0) {
+    res.textContent = 'Enter base premium first.';
+    return;
+  }
+  if (amt <= base) {
+    res.textContent = 'Renewal must be higher than base.';
+    return;
+  }
+  if (yr <= 1) {
+    res.textContent = 'Year must be 2 or later.';
+    return;
+  }
+
+  const cagr = Math.pow(amt / base, 1 / (yr - 1)) - 1;
+  const pct = +(cagr * 100).toFixed(2);
+  res.textContent = `Calculated as ${pct}%`;
+  
+  if (isLoad !== true) {
+    $('#f-inc').value = pct;
+  }
+}
+
+let editingId=null;
+function openForm(id){
+  editingId=id||null;
+  const p=id?state.policies.find(x=>x.id===id):null;
+  $('#dp-title').textContent=p?'Edit policy':'Add policy';
+  $('#f-name').value=p?p.name:'';
+  $('#f-type').value=p?p.type:'life';
+  $('#f-insurer').value=p?p.insurer:'';
+  $('#f-number').value=p?p.number:'';
+  $('#f-freq').value=p?p.freq:'yearly';
+  $('#f-premium').value=p?p.premium:'';
+  $('#calc-amt').value = p && p.calcAmt ? p.calcAmt : '';
+  $('#calc-yr').value = p && p.calcYr ? p.calcYr : '';
+  $('#f-inc').value = p && p.inc ? p.inc : '';
+  $('#f-start').value=p?p.start:'';
+  $('#f-maturity').value=p?p.maturity:'';
+  $('#f-ppt').value=p&&p.ppt!==''?p.ppt:'';
+  $('#f-cover').value=p&&p.cover!==''?p.cover:'';
+  $('#f-benefit').value=p&&p.benefit!==''?p.benefit:'';
+  $('#h-plan').value=(p&&p.plan)?p.plan:'individual';
+  $('#h-covers').value=(p&&p.covers==='parents')?'parents':'self';
+  $('#h-members').value=p?(p.members||''):'';
+  $('#f-dob').value=p?(p.dob||''):'';
+  $('#h-cont').value=p?(p.contFrom||''):'';
+  $('#h-ped').value=(p&&p.ped!==''&&p.ped!=null)?p.ped:'';
+  $('#h-incs').value=(p&&p.incSenior!==''&&p.incSenior!=null)?p.incSenior:'';
+  $('#h-until').value=(p&&p.untilAge!==''&&p.untilAge!=null)?p.untilAge:'';
+  $('#f-notes').value=p?(p.notes||''):'';
+  $('#chg-list').innerHTML='';
+  if(p&&Array.isArray(p.changes)) p.changes.forEach(c=>addChangeRow(c.date,c.amount));
+  syncFormType();
+  updateIncCalc(true);
+  $('#f-err').textContent='';
+  updatePreview();
+  openDlg($('#dlg-policy'));
+  setTimeout(()=>{ const a=document.activeElement; if(a&&/^(INPUT|SELECT|TEXTAREA)$/.test(a.tagName)) return; try{ $('#f-name').focus(); }catch(e){} },30);
+}
+function formPolicy(){
+  const v=id=>$('#'+id).value.trim();
+  const opt=id=>v(id)===''?'':(Number(v(id))||0);
+  const health=$('#f-type').value==='health';
+  return {
+    id:editingId||uid(), name:v('f-name'), type:$('#f-type').value, insurer:v('f-insurer'), number:v('f-number'),
+    start:v('f-start'), maturity:v('f-maturity'),
+    ppt:(health||v('f-ppt')==='')?'':Math.max(0,Math.floor(Number(v('f-ppt'))||0)),
+    premium:Number(v('f-premium'))||0, freq:$('#f-freq').value, 
+    inc:Math.max(0,Number($('#f-inc').value)||0),
+    calcAmt:opt('calc-amt'), calcYr:opt('calc-yr'),
+    cover:opt('f-cover'), benefit:health?'':opt('f-benefit'),
+    plan:health?$('#h-plan').value:'individual',
+    covers:health?$('#h-covers').value:'self',
+    members:health?v('h-members'):'',
+    dob:v('f-dob'),
+    contFrom:health?v('h-cont'):'',
+    ped:(health&&v('h-ped')!=='')?clamp(Math.floor(Number(v('h-ped'))||0),0,4):'',
+    incSenior:(health&&v('h-incs')!=='')?Math.max(0,Number(v('h-incs'))||0):'',
+    untilAge:(health&&Math.floor(Number(v('h-until')))>=1)?clamp(Math.floor(Number(v('h-until'))),1,120):'',
+    changes:health?readChanges():[],
+    notes:v('f-notes')
+  };
+}
+function updatePreview(){
+  const p=formPolicy(), box=$('#f-preview');
+  if(!validISO(p.start)||p.premium<=0){ box.textContent='Enter a start date and premium to see the total.'; return; }
+  if(p.maturity && pd(p.maturity)<=pd(p.start)){ box.textContent='The end date must be after the start date.'; return; }
+  const a=analyse(p);
+  box.innerHTML='<b>'+a.items.length+'</b> premiums, <b>'+fmt(a.total)+'</b> in total'+(p.maturity?'':(a.ageEnd?' (planned to age '+p.untilAge+')':' (projected to '+state.horizon+(a.endAge!=null?', age '+a.endAge:'')+')'))+'. Paid so far: <b>'+fmt(a.paid)+'</b>. Still to pay: <b>'+fmt(a.remain)+'</b>.';
+}
+function submitForm(e){
+  e.preventDefault();
+  const p=formPolicy(), err=$('#f-err');
+  const fail=(msg,id)=>{ err.textContent=msg; try{ $('#'+id).focus(); }catch(x){} };
+  if(!p.name) return fail('Give the policy a name.','f-name');
+  if(p.premium<=0) return fail('Enter the premium amount you pay each time.','f-premium');
+  if(!validISO(p.start)) return fail('Choose the policy start date.','f-start');
+  if(p.maturity && pd(p.maturity)<=pd(p.start)) return fail(p.type==='health'?'The end date must be after the start date.':'The maturity date must be after the start date.','f-maturity');
+  if(p.benefit && !p.maturity) return fail('Add a maturity date to use the maturity benefit.','f-maturity');
+  if(p.dob && pd(p.dob)>TODAY) return fail('The date of birth cannot be in the future.','f-dob');
+  if(p.dob && pd(p.dob)>pd(p.start)) return fail('The date of birth must be before the policy start date.','f-dob');
+  if(p.type==='health'){
+    if(p.contFrom && pd(p.contFrom)>pd(p.start)) return fail('Continuous cover cannot begin after this policy starts.','h-cont');
+    if(p.changes.some(c=>pd(c.date)<=pd(p.start))) return fail('A premium change must be after the start date.','chg-add');
+    if(p.untilAge!==''){
+      if(!p.dob) return fail('Add the date of birth to plan premiums until an age.','f-dob');
+      if(!p.maturity && addMonths(pd(p.dob),p.untilAge*12)<=pd(p.start)) return fail('That age is before this policy starts. Choose a higher age.','h-until');
+    }
+  }
+  if(editingId){
+    const i=state.policies.findIndex(x=>x.id===editingId);
+    if(i>=0) state.policies[i]=p; else state.policies.push(p);
+  } else state.policies.push(p);
+  save(); $('#dlg-policy').close(); render();
+}
+
+function openSchedule(id){
+  const p=state.policies.find(x=>x.id===id); if(!p) return;
+  const a=analyse(p);
+  const by={};
+  a.items.forEach(i=>{
+    const y=i.date.getFullYear();
+    if(!by[y]) by[y]={year:y,n:0,amt:0,first:i.date,last:i.date};
+    by[y].n++; by[y].amt+=i.amount; by[y].last=i.date;
+  });
+  let cum=0;
+  const dobS=(p.dob&&validISO(p.dob))?pd(p.dob):null;
+  const rows=Object.keys(by).map(Number).sort((x,y)=>x-y).map(y=>{
+    const r=by[y]; cum+=r.amt;
+    const st=r.last<=TODAY?'Paid':(r.first>TODAY?'Upcoming':'Part paid');
+    return '<tr><td>'+y+'</td>'+(dobS?'<td>'+ageOn(dobS,r.first)+'</td>':'')+'<td>'+r.n+'</td><td>'+fmt(r.amt)+'</td><td>'+fmt(cum)+'</td><td>'+st+'</td></tr>';
+  }).join('');
+  $('#ds-title').textContent=p.name;
+  $('#ds-body').innerHTML=
+    '<div class="dl-meta"><span>Started '+fmtDate(a.start)+'</span><span>'+(a.lastPremium?'Last premium '+fmtDate(a.lastPremium):'')+'</span><span>'+(a.hasMat?'Matures '+fmtDate(a.end):(a.ageEnd?'Planned to age '+p.untilAge+' ('+fmtDate(a.end)+')':'Projected to '+state.horizon+(a.endAge!=null?' (age '+a.endAge+')':'')))+'</span></div>'+
+    '<div class="tbl-wrap"><table><thead><tr><th>Year</th>'+(dobS?'<th>Age</th>':'')+'<th>Premiums</th><th>Amount</th><th>Running total</th><th>Status</th></tr></thead><tbody>'+rows+'</tbody>'+
+    '<tfoot><tr><td>Total</td>'+(dobS?'<td></td>':'')+'<td>'+a.items.length+'</td><td>'+fmt(a.total)+'</td><td></td><td></td></tr></tfoot></table></div>';
+  openDlg($('#dlg-sched'));
+}
+
+/* ---------- backup, restore and safety copies ---------- */
+function hashStr(str){ let h=0x811c9dc5; for(let i=0;i<str.length;i++){ h^=str.charCodeAt(i); h=Math.imul(h,0x01000193)>>>0; } return h.toString(16).padStart(8,'0'); }
+function cleanList(){ return state.policies.map(clean).filter(Boolean); }
+function dataSig(){ return hashStr(JSON.stringify({h:state.horizon,p:cleanList()})); }
+function realPolicies(){ return state.policies.some(p=>!p.sample); }
+function fmtDateTime(iso){
+  const d=new Date(iso); if(isNaN(d.getTime())) return '';
+  return fmtDate(d)+', '+d.toLocaleTimeString('en-IN',{hour:'numeric',minute:'2-digit'});
+}
+function updateBackupBadge(){
+  const b=$('#bk-badge'); if(!b) return;
+  b.hidden=!(realPolicies() && dataSig()!==state.backedUpSig);
+}
+
+const SNAP_KEY=KEY+'-snaps';
+let snaps=[];
+try{
+  const r=JSON.parse(localStorage.getItem(SNAP_KEY)||'[]');
+  if(Array.isArray(r)) snaps=r.filter(x=>x&&x.data&&Array.isArray(x.data.policies)).slice(0,5);
+}catch(e){ snaps=[]; }
+function snapshot(label){
+  const pol=cleanList();
+  if(!pol.length||pol.every(p=>p.sample)) return false;
+  const data={horizon:state.horizon,policies:pol};
+  const sig=hashStr(JSON.stringify(data));
+  if(snaps.length&&snaps[0].sig===sig) return true;
+  snaps.unshift({at:new Date().toISOString(),label:label,sig:sig,count:pol.length,data:data});
+  snaps=snaps.slice(0,5);
+  try{ localStorage.setItem(SNAP_KEY,JSON.stringify(snaps)); }catch(e){}
+  return true;
+}
+function renderSnaps(){
+  const el=$('#snaps');
+  if(!snaps.length){ el.innerHTML='<p class="sub" style="padding:8px 0">No safety copies yet. One is made automatically before you delete or restore anything.</p>'; return; }
+  el.innerHTML=snaps.map((x,i)=>
+    '<div class="snap"><div><b>'+esc(fmtDateTime(x.at))+'</b><div class="fq">'+esc(x.label)+', '+x.count+(x.count===1?' policy':' policies')+'</div></div>'+
+    '<button type="button" class="btn small" data-snap="'+i+'">Restore</button></div>'
+  ).join('');
+}
+async function restoreSnapshot(i){
+  const x=snaps[i]; if(!x) return;
+  const ok=await askConfirm('Restore this safety copy?','Your current policies will be replaced by the '+x.count+(x.count===1?' policy':' policies')+' saved on '+fmtDateTime(x.at)+'. Your current data is saved as a new safety copy first.','Restore copy');
+  if(!ok) return;
+  snapshot('Before restoring a safety copy');
+  state.policies=x.data.policies.map(clean).filter(Boolean);
+  const h=Number(x.data.horizon);
+  if(h>=THIS_YEAR&&h<=THIS_YEAR+80) state.horizon=Math.floor(h);
+  save(); render(); renderBackupStatus(); renderSnaps();
+  bkMsg('Safety copy restored.');
+}
+
+function buildBackup(){
+  const pol=cleanList();
+  return {app:'premium-ledger',version:2,exportedAt:new Date().toISOString(),horizon:state.horizon,count:pol.length,checksum:hashStr(JSON.stringify(pol)),policies:pol};
+}
+function backupText(){ return JSON.stringify(buildBackup(),null,2); }
+function stamp(){ return toISO(TODAY); }
+function bkMsg(t){ $('#bk-msg').textContent=t; }
+function markBackedUp(){
+  state.lastBackupAt=new Date().toISOString();
+  state.backedUpSig=dataSig();
+  save(); renderBackupStatus();
+}
+function renderBackupStatus(){
+  const el=$('#bk-status'); let msg,warn=false;
+  if(!realPolicies()) msg='You only have sample policies, so there is nothing to back up yet.';
+  else if(!state.lastBackupAt){ msg="You haven't made a backup yet. Save one now so your data survives if this browser is cleared."; warn=true; }
+  else if(dataSig()!==state.backedUpSig){ msg='Last backup: '+fmtDateTime(state.lastBackupAt)+'. You have made changes since, so save a new one.'; warn=true; }
+  else msg='Backed up on '+fmtDateTime(state.lastBackupAt)+'. Nothing has changed since.';
+  el.textContent=msg; el.classList.toggle('warn',warn);
+}
+
+function downloadText(name,text,mime){
+  try{
+    const url=URL.createObjectURL(new Blob([text],{type:mime}));
+    const a=document.createElement('a'); a.href=url; a.download=name;
+    document.body.appendChild(a); a.click();
+    setTimeout(()=>{ document.body.removeChild(a); URL.revokeObjectURL(url); },1000);
+    return true;
+  }catch(e){ return false; }
+}
+function copyText(text){
+  return new Promise(res=>{
+    const fb=()=>{
+      try{
+        const host=document.querySelector('dialog[open]')||document.body;
+        const t=document.createElement('textarea');
+        t.value=text; t.setAttribute('readonly','');
+        t.style.cssText='position:fixed;top:0;left:0;width:1px;height:1px;opacity:0';
+        host.appendChild(t); t.select(); t.setSelectionRange(0,text.length);
+        const ok=document.execCommand('copy'); host.removeChild(t); res(!!ok);
+      }catch(e){ res(false); }
+    };
+    try{
+      if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(()=>res(true),fb);
+      else fb();
+    }catch(e){ fb(); }
+  });
+}
+function doDownloadBackup(){
+  const text=backupText(); $('#bk-text').value=text;
+  const name='premium-ledger-backup-'+stamp()+'.json';
+  if(downloadText(name,text,'application/json')){
+    markBackedUp();
+    bkMsg('Download requested. Look for '+name+' in your downloads. If nothing appears, use Copy backup text instead.');
+  } else bkMsg('Your browser blocked the download. Use Copy backup text instead.');
+}
+function doCopyBackup(){
+  const text=backupText(); $('#bk-text').value=text;
+  copyText(text).then(ok=>{
+    if(ok){ markBackedUp(); bkMsg('Backup copied. Paste it into a note or a message to yourself.'); }
+    else{
+      $('#bk-details').open=true; const ta=$('#bk-text'); ta.focus(); ta.select();
+      bkMsg('Copying is blocked here. The text is selected below, so copy it by hand.');
+    }
+  });
+}
+
+function scheduleTable(){
+  const rows=[];
+  state.policies.map(analyse).forEach(a=>{
+    let cum=0;
+    a.items.forEach(i=>{
+      cum+=i.amount;
+      rows.push({date:i.date,name:a.p.name,type:TYPES[a.p.type].label,insurer:a.p.insurer,amt:i.amount,cum:cum,status:i.date<=TODAY?'Paid':'Upcoming'});
+    });
+  });
+  rows.sort((x,y)=>(x.date-y.date)||x.name.localeCompare(y.name));
+  return [['Due date','Policy','Type','Insurer','Amount (INR)','Running total for policy (INR)','Status']]
+    .concat(rows.map(r=>[toISO(r.date),r.name,r.type,r.insurer,String(r.amt),String(r.cum),r.status]));
+}
+function toTSV(t){ return t.map(r=>r.map(c=>String(c).replace(/[\t\r\n]+/g,' ')).join('\t')).join('\n'); }
+function toCSV(t){ return t.map(r=>r.map(c=>{ c=String(c); return /[",\r\n]/.test(c)?'"'+c.replace(/"/g,'""')+'"':c; }).join(',')).join('\r\n'); }
+function doCopySchedule(){
+  copyText(toTSV(scheduleTable())).then(ok=>bkMsg(ok?'Payment schedule copied. Paste it into Excel or Google Sheets.':'Copying is blocked here. Use Download schedule instead.'));
+}
+function doDownloadSchedule(){
+  const ok=downloadText('premium-schedule-'+stamp()+'.csv','\ufeff'+toCSV(scheduleTable()),'text/csv;charset=utf-8');
+  bkMsg(ok?'Download requested. If nothing appears, use Copy payment schedule instead.':'Your browser blocked the download. Use Copy payment schedule instead.');
+}
+
+let pending=null;
+function inspectBackup(text){
+  let d;
+  try{ d=JSON.parse(text); }catch(e){ return {ok:false,msg:'This is not a valid backup. Paste the full backup text, or choose the backup file.'}; }
+  const raw=Array.isArray(d)?d:(d&&d.policies);
+  if(!Array.isArray(raw)) return {ok:false,msg:'No policies were found in this backup.'};
+  const good=[],skipped=[],seen=new Set();
+  raw.forEach((r,i)=>{
+    const c=clean(r);
+    if(c){ if(seen.has(c.id)) c.id=uid(); seen.add(c.id); good.push(c); }
+    else{
+      let why='it could not be read';
+      if(r&&typeof r==='object'){
+        if(!String(r.name||'').trim()) why='it has no name';
+        else if(!validISO(String(r.start||''))) why='its start date is missing or not valid';
+        else if(!(Number(r.premium)>0)) why='its premium is missing or zero';
+      }
+      skipped.push('Item '+(i+1)+(r&&r.name?' ('+String(r.name).slice(0,40)+')':'')+' was skipped because '+why+'.');
+    }
+  });
+  let sum='none';
+  if(d&&!Array.isArray(d)&&d.checksum) sum=(hashStr(JSON.stringify(raw))===d.checksum)?'ok':'bad';
+  const h=(d&&!Array.isArray(d))?Number(d.horizon):0;
+  return {ok:true,good:good,skipped:skipped,checksum:sum,exportedAt:(d&&!Array.isArray(d)&&d.exportedAt)||'',horizon:(h>=THIS_YEAR&&h<=THIS_YEAR+80)?Math.floor(h):0};
+}
+function dupKey(p){ return [p.name.toLowerCase(),p.start,p.premium,p.freq].join('|'); }
+function mergeSplit(){
+  const ids=new Set(state.policies.map(p=>p.id)), keys=new Set(state.policies.map(dupKey));
+  const add=[],dup=[];
+  pending.good.forEach(p=>{ (ids.has(p.id)||keys.has(dupKey(p))?dup:add).push(p); });
+  return {add:add,dup:dup};
+}
+function currentMode(){ const m=$('input[name="rmode"]:checked'); return m?m.value:'merge'; }
+function updateChoiceNote(){
+  if(!pending) return;
+  const s=mergeSplit();
+  $('#rs-merge-note').textContent=s.add.length+' new '+(s.add.length===1?'policy':'policies')+' will be added'+(s.dup.length?'. '+s.dup.length+' you already have will be skipped':'')+'.';
+  $('#rs-replace-note').textContent='Everything now in the ledger is replaced. A safety copy is kept first.';
+  $('#rs-apply').disabled = currentMode()==='merge' ? s.add.length===0 : pending.good.length===0;
+}
+function checkRestore(){
+  const text=$('#rs-text').value.trim(), rep=$('#rs-report'), choice=$('#rs-choice');
+  const wasHidden=choice.hidden;
+  pending=null; $('#rs-apply').disabled=true; choice.hidden=true;
+  if(!text){ rep.innerHTML=''; return; }
+  const r=inspectBackup(text);
+  if(!r.ok){ rep.innerHTML='<div class="rp bad">'+esc(r.msg)+'</div>'; return; }
+  pending=r;
+  const when=r.exportedAt?fmtDateTime(r.exportedAt):'';
+  let html='<div><b>'+r.good.length+'</b> valid '+(r.good.length===1?'policy':'policies')+' found'+(when?', saved '+esc(when):'')+'.</div>';
+  if(r.good.length){
+    html+='<div class="ok">'+r.good.slice(0,6).map(p=>esc(p.name)).join(', ')+(r.good.length>6?' and '+(r.good.length-6)+' more':'')+'.</div>';
+  }
+  if(r.checksum==='ok') html+='<div class="ok">The checksum matches, so the text is complete and unedited.</div>';
+  else if(r.checksum==='bad') html+='<div class="warn">The checksum does not match. The text was edited or damaged, so check the policies after restoring.</div>';
+  else html+='<div class="ok">This backup has no checksum, so it cannot be verified.</div>';
+  r.skipped.forEach(m=>{ html+='<div class="warn">'+esc(m)+'</div>'; });
+  rep.innerHTML='<div class="rp">'+html+'</div>';
+  if(r.good.length){
+    choice.hidden=false;
+    if(wasHidden){ const v=realPolicies()?'merge':'replace'; const el=$('input[name="rmode"][value="'+v+'"]'); if(el) el.checked=true; }
+    updateChoiceNote();
+  }
+}
+function applyRestore(){
+  if(!pending||!pending.good.length) return;
+  const mode=currentMode();
+  const kept=snapshot('Before restoring a backup');
+  let msg;
+  if(mode==='replace'){
+    state.policies=pending.good.map(p=>Object.assign({},p));
+    if(pending.horizon) state.horizon=pending.horizon;
+    state.backedUpSig=dataSig();
+    state.lastBackupAt=(pending.exportedAt&&!isNaN(new Date(pending.exportedAt).getTime()))?pending.exportedAt:new Date().toISOString();
+    msg='Restored '+state.policies.length+(state.policies.length===1?' policy.':' policies.');
+  } else {
+    const s=mergeSplit();
+    s.add.forEach(p=>state.policies.push(Object.assign({},p)));
+    msg='Added '+s.add.length+(s.add.length===1?' policy':' policies')+(s.dup.length?' and skipped '+s.dup.length+' you already have':'')+'.';
+  }
+  save(); render();
+  $('#rs-text').value=''; $('#rs-file').value=''; pending=null; checkRestore();
+  $('#rs-report').innerHTML='<div class="rp"><div>'+esc(msg)+(kept?' Your previous data is saved under Safety copies.':'')+'</div></div>';
+  $('#bk-text').value=backupText();
+  renderBackupStatus(); renderSnaps();
+}
+/* ---------- wireless sync between devices (PeerJS) ---------- */
+const APP_BUILD='2026-09-20a';
+const SYNC_TTL=180000;
+const SYNC_LIBS=['https://cdn.jsdelivr.net/npm/peerjs@1.5.2/dist/peerjs.min.js','https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js'];
+const STUN_SERVERS=[{urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun1.l.google.com:19302'},{urls:'stun:stun.cloudflare.com:3478'},{urls:'stun:global.stun.twilio.com:3478'}];
+const RELAY_KEY=KEY+'-relay';
+const SERVICE_MSG='Could not reach the sync service. Check your internet connection. Wireless sync does not run inside the Claude preview, so open the ledger from its own web address (for example on GitHub Pages) on both devices.';
+const LIB_MSG='The sync tool could not be loaded. Check your internet connection and try again.';
+const sync={token:0,mode:null,peer:null,conn:null,timers:{},tick:null,tries:0,busy:false,sent:false,got:false,sentCount:0,hello:false,chk:''};
+let peerLibPromise=null;
+
+function getRelay(){ try{ const r=JSON.parse(localStorage.getItem(RELAY_KEY)||'null'); return (r&&r.url)?r:null; }catch(e){ return null; } }
+function iceConfig(){
+  const list=STUN_SERVERS.slice();
+  const r=getRelay();
+  if(r){
+    const urls=String(r.url).split(/[\s,]+/).filter(Boolean);
+    if(urls.length){ const e={urls:urls}; if(r.user) e.username=r.user; if(r.pass) e.credential=r.pass; list.push(e); }
+  }
+  return {iceServers:list,sdpSemantics:'unified-plan'};
+}
+function peerOpts(){ return {config:iceConfig(),debug:0}; }
+function peerCtor(){ return window.Peer||(window.peerjs&&window.peerjs.Peer)||null; }
+function loadPeerLib(){
+  if(peerCtor()) return Promise.resolve();
+  if(peerLibPromise) return peerLibPromise;
+  peerLibPromise=new Promise((resolve,reject)=>{
+    let i=0;
+    const next=()=>{
+      if(i>=SYNC_LIBS.length){ peerLibPromise=null; reject(new Error('peerjs load failed')); return; }
+      const sc=document.createElement('script'); let settled=false;
+      const fail=()=>{ if(settled) return; settled=true; clearTimeout(t); try{ sc.remove(); }catch(e){} next(); };
+      const t=setTimeout(fail,12000);
+      sc.onload=()=>{ if(settled) return; settled=true; clearTimeout(t); if(peerCtor()) resolve(); else next(); };
+      sc.onerror=fail;
+      sc.async=true; sc.src=SYNC_LIBS[i++]; document.head.appendChild(sc);
+    };
+    next();
+  });
+  return peerLibPromise;
+}
+function syncSupported(){ return typeof RTCPeerConnection!=='undefined'||typeof webkitRTCPeerConnection!=='undefined'; }
+function randInt(n){
+  const a=new Uint32Array(1);
+  if(window.crypto&&crypto.getRandomValues) crypto.getRandomValues(a); else a[0]=Math.floor(Math.random()*4294967296);
+  return a[0]%n;
+}
+function makeCode(){ return String(randInt(10000)).padStart(4,'0'); }
+function makeCheck(){ return String(100+randInt(900)); }
+function normCode(v){ return String(v||'').replace(/\D/g,'').slice(0,4); }
+function validCode(c){ return /^\d{4}$/.test(c); }
+function peerIdFor(code){ return 'pledger-pin-'+code; }
+function syMsg(t,bad){ const el=$('#sy-msg'); el.textContent=t||''; el.classList.toggle('bad',!!bad); }
+function setRecv(t,bad,spin){
+  const el=$('#sy-recv-status'); el.textContent=t||''; el.classList.toggle('bad',!!bad);
+  $('#sy-recv-spin').hidden=!spin;
+}
+function setTimer(name,ms,fn){ clearTimer(name); sync.timers[name]=setTimeout(fn,ms); }
+function clearTimer(name){ if(sync.timers[name]){ clearTimeout(sync.timers[name]); delete sync.timers[name]; } }
+function parseMsg(d){
+  try{
+    let t=null;
+    if(typeof d==='string') t=d;
+    else if(d instanceof ArrayBuffer) t=new TextDecoder().decode(d);
+    else if(d&&d.buffer instanceof ArrayBuffer) t=new TextDecoder().decode(d);
+    else if(d&&typeof d==='object') return d;
+    if(t==null||t.length>3000000) return null;
+    return JSON.parse(t);
+  }catch(e){ return null; }
+}
+function peerErrMsg(err){
+  const t=err&&err.type;
+  if(t==='peer-unavailable') return 'No device is waiting with that code. Check the code, that the other device is still showing it, and that both devices show the same page version.';
+  if(t==='network'||t==='server-error'||t==='socket-error'||t==='socket-closed') return SERVICE_MSG;
+  if(t==='webrtc') return 'The two devices could not connect directly. A VPN or a strict network may be blocking it. Try again on the same Wi-Fi, or turn the VPN off.';
+  if(t==='browser-incompatible') return 'This browser does not support wireless sync.';
+  return 'Sync failed ('+(t||'unknown error')+'). Try again.';
+}
+const NO_DIRECT_MSG='The two devices could not open a direct connection. This usually means they are on different networks, such as mobile data and Wi-Fi. Put both devices on the same Wi-Fi and try again, or use Share backup instead.';
+function syncStop(){
+  sync.token++;
+  Object.keys(sync.timers).forEach(k=>clearTimeout(sync.timers[k])); sync.timers={};
+  if(sync.tick){ clearInterval(sync.tick); sync.tick=null; }
+  const c=sync.conn, p=sync.peer;
+  sync.conn=null; sync.peer=null; sync.busy=false; sync.sent=false; sync.got=false; sync.tries=0; sync.hello=false; sync.chk='';
+  try{ if(c) c.close(); }catch(e){}
+  try{ if(p) p.destroy(); }catch(e){}
+}
+function syncCleanup(){
+  syncStop(); sync.mode=null;
+  $('#sy-host').hidden=true; $('#sy-recv-box').hidden=true; $('#sy-confirm').hidden=true;
+  $('#sy-code-show').textContent='----'; $('#sy-code-show').hidden=false; $('#sy-timer').textContent='';
+  $('#sy-host-hint').hidden=false; $('#sy-check').hidden=true; $('#sy-recv-check').hidden=true;
+  $('#sy-host-spin').hidden=false; setRecv('');
+}
+function syncEnd(msg,bad){ syncCleanup(); syMsg(msg,bad); }
+function syncFail(msg){
+  if(sync.mode==='recv'){ syncStop(); sync.mode='recv'; $('#sy-recv-check').hidden=true; setRecv(msg,true,false); }
+  else syncEnd(msg,true);
+}
+
+/* --- sending side --- */
+function syncHost(){
+  if(!syncSupported()){ syMsg('This browser does not support wireless sync.',true); return; }
+  if(!state.policies.length){ syMsg('There are no policies to send yet.',true); return; }
+  syncCleanup(); syMsg('');
+  sync.mode='host'; sync.tries=0;
+  hostStart();
+}
+function hostStart(){
+  const tok=sync.token, code=makeCode();
+  $('#sy-recv-box').hidden=true; $('#sy-host').hidden=false; $('#sy-confirm').hidden=true; $('#sy-check').hidden=true;
+  $('#sy-host-status').textContent='Getting a code…';
+  $('#sy-code-show').textContent='----'; $('#sy-code-show').hidden=false; $('#sy-host-hint').hidden=false;
+  $('#sy-timer').textContent=''; $('#sy-host-spin').hidden=false;
+  loadPeerLib().then(()=>{
+    if(tok!==sync.token) return;
+    const P=peerCtor(); let peer;
+    try{ peer=new P(peerIdFor(code),peerOpts()); }catch(e){ syncFail(SERVICE_MSG); return; }
+    sync.peer=peer;
+    const alive=()=>tok===sync.token&&sync.peer===peer;
+    setTimer('signal',15000,()=>{ if(alive()) syncFail(SERVICE_MSG); });
+    peer.on('open',()=>{ if(alive()){ clearTimer('signal'); showHostCode(code,tok); } });
+    peer.on('connection',conn=>onHostConn(conn,tok,peer));
+    peer.on('disconnected',()=>{ if(alive()&&!peer.destroyed){ try{ peer.reconnect(); }catch(e){} } });
+    peer.on('error',err=>{
+      if(!alive()) return;
+      if(err&&err.type==='unavailable-id'&&sync.tries<6){
+        sync.tries++; clearTimer('signal'); sync.peer=null;
+        try{ peer.destroy(); }catch(e){}
+        hostStart(); return;
+      }
+      syncFail(peerErrMsg(err));
+    });
+  }).catch(()=>{ if(tok===sync.token) syncFail(LIB_MSG); });
+}
+function showHostCode(code,tok){
+  $('#sy-host-status').textContent='Waiting for the other device…';
+  $('#sy-code-show').textContent=code;
+  const end=Date.now()+SYNC_TTL;
+  const upd=()=>{ const s=Math.max(0,Math.round((end-Date.now())/1000)); $('#sy-timer').textContent='Code expires in '+Math.floor(s/60)+':'+String(s%60).padStart(2,'0'); };
+  upd();
+  sync.tick=setInterval(()=>{ if(tok===sync.token) upd(); },1000);
+  setTimer('expire',SYNC_TTL,()=>{ if(tok===sync.token) syncEnd('The code expired. Choose Send again to get a new one.'); });
+}
+function onHostConn(conn,tok,peer){
+  if(tok!==sync.token||sync.peer!==peer||sync.conn){ try{ conn.close(); }catch(e){} return; }
+  sync.conn=conn;
+  const alive=()=>tok===sync.token&&sync.conn===conn;
+  conn.on('open',()=>{
+    if(!alive()) return;
+    clearTimer('expire'); if(sync.tick){ clearInterval(sync.tick); sync.tick=null; }
+    $('#sy-timer').textContent=''; $('#sy-code-show').hidden=true; $('#sy-host-hint').hidden=true;
+    $('#sy-host-status').textContent='A device connected. Checking it…';
+    setTimer('hello',10000,()=>{ if(alive()) syncEnd('The other device did not identify itself. Reload the page on both devices so they run the same version (this one is '+APP_BUILD+').',true); });
+  });
+  conn.on('data',d=>{
+    if(!alive()) return;
+    const m=parseMsg(d); if(!m) return;
+    if(m.t==='hello'&&!sync.hello&&!sync.sent){
+      sync.hello=true; clearTimer('hello');
+      const chk=String(m.chk||'').replace(/\D/g,'').slice(0,3);
+      if(chk.length!==3){ syncEnd('The other device sent an unexpected message. Reload both devices and try again.',true); return; }
+      const n=state.policies.length;
+      $('#sy-host-spin').hidden=true;
+      $('#sy-check').textContent=chk; $('#sy-check').hidden=false;
+      $('#sy-host-status').textContent='A device connected and shows the number below. Does the other device show the same number? Send '+n+(n===1?' policy':' policies')+' only if it does.';
+      $('#sy-confirm').hidden=false;
+      try{ $('#sy-send-now').focus(); }catch(e){}
+      setTimer('confirm',120000,()=>{ if(alive()) syncEnd('No answer, so nothing was sent.'); });
+    } else if(m.t==='ack'){
+      clearTimer('ack');
+      if(Number(m.count)>0) syncEnd('Sent '+sync.sentCount+(sync.sentCount===1?' policy':' policies')+'. Finish on the other device by choosing Add or Replace under Restore.');
+      else syncEnd('The other device could not read the data. Nothing was changed there.',true);
+    }
+  });
+  conn.on('close',()=>{ if(alive()&&!sync.sent) syncEnd('The other device disconnected before anything was sent.',true); });
+  conn.on('error',()=>{ if(alive()) syncEnd('The connection failed. Try again.',true); });
+}
+function hostSendNow(){
+  const conn=sync.conn; if(!conn||sync.sent||!sync.hello) return;
+  const tok=sync.token, bk=buildBackup();
+  try{ conn.send(JSON.stringify({t:'ledger',payload:bk})); }
+  catch(e){ syncEnd('Sending failed. Try again.',true); return; }
+  sync.sent=true; sync.sentCount=bk.count; clearTimer('confirm');
+  $('#sy-confirm').hidden=true; $('#sy-check').hidden=true; $('#sy-host-status').textContent='Sending…'; $('#sy-host-spin').hidden=false;
+  setTimer('ack',15000,()=>{ if(tok===sync.token) syncEnd('The other device did not confirm it received the data. Check that device before trying again.',true); });
+}
+function hostCancel(){
+  const c=sync.conn, tok=sync.token;
+  if(c&&!sync.sent){
+    try{ c.send(JSON.stringify({t:'declined'})); }catch(e){}
+    setTimeout(()=>{ if(tok===sync.token) syncCleanup(); },300);
+    syMsg('Cancelled. Nothing was sent.');
+  } else { syncCleanup(); syMsg('Cancelled.'); }
+}
+
+/* --- receiving side --- */
+function syncReceiveOpen(){
+  if(!syncSupported()){ syMsg('This browser does not support wireless sync.',true); return; }
+  syncCleanup(); syMsg('');
+  sync.mode='recv';
+  $('#sy-recv-box').hidden=false; setRecv('');
+  setTimeout(()=>{ const a=document.activeElement; if(a&&/^(INPUT|SELECT|TEXTAREA)$/.test(a.tagName)) return; try{ $('#sy-code-in').focus(); }catch(e){} },50);
+}
+function syncConnect(){
+  if(sync.mode!=='recv'||sync.busy||sync.peer) return;
+  const code=normCode($('#sy-code-in').value);
+  if(!validCode(code)){ setRecv('Enter the 4-digit code shown on the other device.',true,false); return; }
+  sync.busy=true; sync.got=false;
+  const tok=sync.token;
+  $('#sy-recv-check').hidden=true;
+  setRecv('Connecting…',false,true);
+  loadPeerLib().then(()=>{
+    if(tok!==sync.token) return;
+    const P=peerCtor(); let peer;
+    try{ peer=new P(peerOpts()); }catch(e){ syncFail(SERVICE_MSG); return; }
+    sync.peer=peer;
+    const alive=()=>tok===sync.token&&sync.peer===peer;
+    setTimer('signal',15000,()=>{ if(alive()) syncFail(SERVICE_MSG); });
+    peer.on('open',()=>{
+      if(!alive()) return;
+      clearTimer('signal'); setRecv('Looking for the other device…',false,true);
+      let conn;
+      try{ conn=peer.connect(peerIdFor(code),{reliable:true}); }catch(e){ syncFail(SERVICE_MSG); return; }
+      sync.conn=conn;
+      setTimer('conn',25000,()=>{ if(alive()) syncFail(NO_DIRECT_MSG); });
+      conn.on('open',()=>{
+        if(!alive()) return;
+        clearTimer('conn');
+        sync.chk=makeCheck();
+        try{ conn.send(JSON.stringify({t:'hello',chk:sync.chk,build:APP_BUILD})); }catch(e){ syncFail('The connection failed. Try again.'); return; }
+        $('#sy-recv-check').textContent=sync.chk; $('#sy-recv-check').hidden=false;
+        setRecv('Connected. Make sure the other device shows this same number, then tap Yes, send now there.',false,true);
+        setTimer('data',150000,()=>{ if(alive()) syncFail('The other device did not send anything in time.'); });
+      });
+      conn.on('data',d=>{ if(alive()) onRecvData(d); });
+      conn.on('close',()=>{ if(alive()&&!sync.got) syncFail('The other device disconnected.'); });
+      conn.on('error',()=>{ if(alive()) syncFail('The connection failed. Try again.'); });
+    });
+    peer.on('error',err=>{ if(alive()) syncFail(peerErrMsg(err)); });
+  }).catch(()=>{ if(tok===sync.token) syncFail(LIB_MSG); });
+}
+function onRecvData(d){
+  const m=parseMsg(d); if(!m) return;
+  if(m.t==='declined'){ syncFail('The other device cancelled the transfer.'); return; }
+  if(m.t!=='ledger'||!m.payload||typeof m.payload!=='object') return;
+  sync.got=true; clearTimer('data');
+  $('#rs-text').value=JSON.stringify(m.payload,null,2);
+  checkRestore();
+  const n=pending?pending.good.length:0;
+  try{ sync.conn.send(JSON.stringify({t:'ack',count:n})); }catch(e){}
+  $('#sy-recv-check').hidden=true;
+  setRecv('Received. Checking it…',false,true);
+  const tok=sync.token;
+  setTimeout(()=>{
+    if(tok!==sync.token) return;
+    syncCleanup();
+    if(n>0){
+      syMsg('Received '+n+(n===1?' policy':' policies')+'. Review them under Restore below, then choose Add or Replace.');
+      try{ $('#rs-report').scrollIntoView({block:'center'}); }catch(e){}
+    } else syMsg('The other device sent data that could not be read.',true);
+  },700);
+}
+
+/* --- diagnostics, relay settings and sharing --- */
+function gatherTypes(ms){
+  return new Promise(res=>{
+    const types={}; let pc, done=false;
+    const finish=()=>{ if(done) return; done=true; try{ pc.close(); }catch(e){} res(types); };
+    try{ pc=new RTCPeerConnection(iceConfig()); }catch(e){ res(null); return; }
+    try{ pc.createDataChannel('t'); }catch(e){}
+    pc.onicecandidate=e=>{
+      if(e.candidate){ const m=/ typ (\w+)/.exec(e.candidate.candidate||''); if(m) types[m[1]]=true; }
+      else finish();
+    };
+    pc.createOffer().then(o=>pc.setLocalDescription(o)).catch(finish);
+    setTimeout(finish,ms||6000);
+  });
+}
+function testService(){
+  return new Promise(res=>{
+    let peer, done=false;
+    const end=r=>{ if(done) return; done=true; clearTimeout(t); try{ if(peer) peer.destroy(); }catch(e){} res(r); };
+    const t=setTimeout(()=>end({ok:false,err:{type:'network'}}),12000);
+    try{ const P=peerCtor(); peer=new P(peerOpts()); }catch(e){ end({ok:false,err:{type:'network'}}); return; }
+    peer.on('open',()=>end({ok:true}));
+    peer.on('error',err=>end({ok:false,err:err}));
+  });
+}
+async function runSyncTest(){
+  const out=$('#sy-test-out'); out.hidden=false;
+  const lines=[];
+  const push=(ok,msg)=>{ lines.push('<li class="'+(ok?'ok':'bad')+'">'+(ok?'Passed: ':'Problem: ')+esc(msg)+'</li>'); out.innerHTML=lines.join(''); };
+  out.innerHTML='<li class="ok">Testing, this takes up to 15 seconds…</li>';
+  if(!syncSupported()){ push(false,'This browser does not support wireless sync.'); return; }
+  push(true,'This browser supports wireless sync. Page version '+APP_BUILD+'. Both devices should show the same version.');
+  try{ await loadPeerLib(); push(true,'The sync tool loaded.'); }
+  catch(e){ push(false,LIB_MSG); return; }
+  const svc=await testService();
+  if(svc.ok) push(true,'The sync service is reachable.'); else { push(false,peerErrMsg(svc.err)); }
+  const t=await gatherTypes(6000);
+  if(!t){ push(false,'This browser could not check the network.'); return; }
+  push(!!t.host,t.host?'This device can connect over your local network.':'No local network address was found. A VPN or privacy setting may be blocking it.');
+  push(!!t.srflx,t.srflx?'This device can find its public internet address, which helps two different networks connect.':'The public address could not be found. Connecting between different networks will probably fail. Use the same Wi-Fi on both devices, or Share backup.');
+  if(getRelay()) push(!!t.relay,t.relay?'Your relay server works.':'Your relay server did not respond. Check its address, user name and password.');
+  lines.push('<li class="ok">Run this test on both devices. If every check passes on both and pairing still fails, the two networks cannot reach each other directly. Use the same Wi-Fi, add a relay under Advanced, or use Share backup.</li>');
+  out.innerHTML=lines.join('');
+}
+function loadRelayFields(){
+  const r=getRelay()||{};
+  $('#sy-r-url').value=r.url||''; $('#sy-r-user').value=r.user||''; $('#sy-r-pass').value=r.pass||'';
+}
+function saveRelay(){
+  const url=$('#sy-r-url').value.trim();
+  if(!url){ syMsg('Enter the relay address, or choose Remove relay.',true); return; }
+  if(!/^(turns?|stuns?):/i.test(url)){ syMsg('The relay address should start with turn: or turns:',true); return; }
+  try{ localStorage.setItem(RELAY_KEY,JSON.stringify({url:url,user:$('#sy-r-user').value.trim(),pass:$('#sy-r-pass').value})); syMsg('Relay saved on this device. Run Test sync connection to check it.'); }
+  catch(e){ syMsg('This browser would not save the relay.',true); }
+}
+function clearRelay(){
+  try{ localStorage.removeItem(RELAY_KEY); }catch(e){}
+  loadRelayFields(); syMsg('Relay removed.');
+}
+function shareBackup(){
+  const text=backupText();
+  if(!navigator.share){ syMsg('Sharing is not available in this browser. Use Copy backup text instead.',true); return; }
+  navigator.share({title:'Premium ledger backup',text:text}).then(()=>{ markBackedUp(); syMsg('Shared. On the other device, paste it under Restore.'); }).catch(()=>{});
+}
+
+function openBackup(){
+  $('#bk-text').value=backupText();
+  $('#bk-details').open=false;
+  bkMsg('');
+  syncCleanup(); syMsg('');
+  $('#rs-text').value=''; try{ $('#rs-file').value=''; }catch(e){}
+  checkRestore();
+  renderBackupStatus(); renderSnaps();
+  openDlg($('#dlg-backup'));
+}
+
+function openSettings(){
+  $('#s-horizon').value=state.horizon;
+  $('#s-theme').value=state.theme;
+  openDlg($('#dlg-settings'));
+}
+
+/* ---------- events ---------- */
+document.addEventListener('click',async e=>{
+  const t=e.target;
+  const close=t.closest('[data-close]');
+  if(close){ const d=close.closest('dialog'); if(d) d.close(); return; }
+  const pill=t.closest('.pill'); if(pill){ ui.filter=pill.dataset.f; ui.sel=null; render(); return; }
+  const seg=t.closest('[data-mode]'); if(seg){
+    ui.mode=seg.dataset.mode;
+    $$('[data-mode]').forEach(b=>b.setAttribute('aria-pressed',String(b===seg)));
+    renderChart(getList()); return;
+  }
+  const col=t.closest('.yc-col'); if(col){ setSel(Number(col.dataset.y)); return; }
+  const act=t.closest('[data-act]');
+  if(act){
+    const id=act.parentElement.dataset.id, kind=act.dataset.act;
+    if(kind==='sched') openSchedule(id);
+    else if(kind==='hinfo') openDlg($('#dlg-hinfo'));
+    else if(kind==='edit') openForm(id);
+    else if(kind==='del'){
+      const p=state.policies.find(x=>x.id===id); if(!p) return;
+      if(await askConfirm('Delete this policy?','"'+p.name+'" will be removed from your ledger. A safety copy is kept under Backup in case you change your mind.','Delete policy')){
+        snapshot('Before deleting "'+p.name+'"');
+        state.policies=state.policies.filter(x=>x.id!==id); save(); render();
+      }
+    }
+    return;
+  }
+  if(t.closest('#btn-add')||t.closest('#btn-add2')) return openForm();
+  if(t.closest('#btn-backup')) return openBackup();
+  if(t.closest('#btn-settings')) return openSettings();
+  if(t.closest('#btn-sample')||t.closest('#s-sample')){
+    const have=new Set(state.policies.filter(p=>p.sample).map(p=>p.id));
+    samples().forEach(s=>{ if(!have.has(s.id)) state.policies.push(s); });
+    save(); render(); const d=$('#dlg-settings'); if(d.open) d.close(); return;
+  }
+  if(t.closest('#btn-rm-sample')){
+    state.policies=state.policies.filter(p=>!p.sample); save(); render(); return;
+  }
+  if(t.closest('#s-clear')){
+    if(await askConfirm('Delete all policies?','Every policy in this ledger will be removed from this browser. A safety copy is kept under Backup in case you change your mind.','Delete everything')){
+      snapshot('Before deleting everything');
+      state.policies=[]; save(); render(); $('#dlg-settings').close();
+    }
+    return;
+  }
+  if(t.closest('#tx-info')) return openDlg($('#dlg-hinfo'));
+  if(t.closest('#chg-add')){ addChangeRow('',''); updatePreview(); return; }
+  const cd=t.closest('.chg-del'); if(cd){ cd.parentElement.remove(); updatePreview(); return; }
+  if(t.closest('#sy-test')) return runSyncTest();
+  if(t.closest('#sy-share')) return shareBackup();
+  if(t.closest('#sy-r-save')) return saveRelay();
+  if(t.closest('#sy-r-clear')) return clearRelay();
+  if(t.closest('#sy-send-now')) return hostSendNow();
+  if(t.closest('#sy-host-cancel')) return hostCancel();
+  if(t.closest('#sy-send')) return syncHost();
+  if(t.closest('#sy-recv-cancel')){ syncCleanup(); syMsg('Cancelled.'); return; }
+  if(t.closest('#sy-recv')) return syncReceiveOpen();
+  if(t.closest('#sy-connect')) return syncConnect();
+  if(t.closest('#bk-download')) return doDownloadBackup();
+  if(t.closest('#bk-copy')) return doCopyBackup();
+  if(t.closest('#bk-sheet')) return doCopySchedule();
+  if(t.closest('#bk-csv')) return doDownloadSchedule();
+  if(t.closest('#rs-apply')) return applyRestore();
+  const sn=t.closest('[data-snap]'); if(sn) return restoreSnapshot(Number(sn.dataset.snap));
+});
+document.addEventListener('pointerover',e=>{
+  if(e.pointerType!=='mouse') return;
+  const col=e.target.closest&&e.target.closest('.yc-col'); if(col) setSel(Number(col.dataset.y));
+});
+document.addEventListener('focusin',e=>{
+  const col=e.target.closest&&e.target.closest('.yc-col'); if(col) setSel(Number(col.dataset.y));
+});
+$('#pform').addEventListener('submit',submitForm);
+$('#pform').addEventListener('input',updatePreview);
+$('#pform').addEventListener('change',updatePreview);
+$('#sort').addEventListener('change',e=>{ ui.sort=e.target.value; render(); });
+$('#s-horizon').addEventListener('change',e=>{
+  let h=Math.floor(Number(e.target.value)||0);
+  h=clamp(h,THIS_YEAR,THIS_YEAR+80);
+  e.target.value=h; state.horizon=h; save(); render();
+});
+$('#s-theme').addEventListener('change',e=>{ state.theme=e.target.value; applyTheme(); save(); });
+$('#calc-amt').addEventListener('input', () => updateIncCalc(false));
+$('#calc-yr').addEventListener('input', () => updateIncCalc(false));
+$('#f-premium').addEventListener('input', () => updateIncCalc(false));
+
+$('#dlg-backup').addEventListener('close',()=>{ syncCleanup(); syMsg(''); });
+window.addEventListener('pagehide',()=>{ syncStop(); });
+$('#sy-code-in').addEventListener('input',e=>{ e.target.value=normCode(e.target.value); });
+$('#sy-build').textContent='Page version '+APP_BUILD+'. Both devices should show the same version.';
+if(navigator.share) $('#sy-share').hidden=false;
+loadRelayFields();
+$('#sy-code-in').addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); syncConnect(); } });
+$('#f-type').addEventListener('change',syncFormType);
+let rsT=null;
+$('#rs-text').addEventListener('input',()=>{ clearTimeout(rsT); rsT=setTimeout(checkRestore,250); });
+$('#rs-choice').addEventListener('change',updateChoiceNote);
+$('#rs-file').addEventListener('change',e=>{
+  const f=e.target.files&&e.target.files[0]; if(!f) return;
+  if(f.size>5e6){ $('#rs-report').innerHTML='<div class="rp bad">That file is too large to be a backup.</div>'; return; }
+  const fr=new FileReader();
+  fr.onload=()=>{ $('#rs-text').value=String(fr.result||''); checkRestore(); };
+  fr.onerror=()=>{ $('#rs-report').innerHTML='<div class="rp bad">The file could not be read. Paste the backup text instead.</div>'; };
+  fr.readAsText(f);
+});
+
+let lastW=0,tm=null;
+window.addEventListener('resize',()=>{
+  clearTimeout(tm);
+  tm=setTimeout(()=>{
+    const w=document.documentElement.clientWidth;
+    if(Math.abs(w-lastW)>8){ lastW=w; if(state.policies.length) render(); }
+  },150);
+});
+
+/* ---------- start ---------- */
+applyTheme();
+save();
+render();
+lastW=document.documentElement.clientWidth;
+})();
+</script>
+</body>
+</html>
