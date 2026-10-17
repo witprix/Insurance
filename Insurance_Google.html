@@ -57,12 +57,13 @@ button{font:inherit;color:inherit;cursor:pointer}
 
 .note{border:1px solid var(--line);background:var(--tint);border-radius:12px;padding:10px 14px;display:flex;gap:10px 14px;flex-wrap:wrap;align-items:center;justify-content:space-between;margin-bottom:14px}
 
-.toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
-.pills{display:flex;flex-wrap:wrap;gap:6px}
-.pill{border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:0 14px;min-height:38px;font-weight:600;font-size:.92rem}
+.toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin-bottom:14px}
+.pills{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.pill{border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:0 14px;min-height:38px;font-weight:600;font-size:.92rem;transition:all 0.15s ease}
 .pill[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.pill-sep{width:2px;height:24px;background:var(--line);border-radius:1px;margin:0 4px}
 
-#dash > * + *{margin-top:14px}
+#view-policies > * + *{margin-top:14px}
 .panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:clamp(14px,2.4vw,24px)}
 .panel h2{font-size:1.2rem;font-weight:650}
 .panel .sub{color:var(--muted);font-size:.92rem;margin-top:2px}
@@ -159,7 +160,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 .sortl{display:inline-flex;align-items:center;gap:8px;font-size:.92rem;color:var(--muted)}
 .sortl select{width:auto;min-height:40px}
 .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,330px),1fr));gap:14px}
-.pcard{background:var(--panel);border:1px solid var(--line);border-top:5px solid var(--c);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.pcard{background:var(--panel);border:1px solid var(--line);border-top:5px solid var(--c);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:14px;min-width:0; position:relative; overflow:hidden;}
 .pc-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
 .pc-head h3{font-size:1.12rem;font-weight:650;line-height:1.25;overflow-wrap:anywhere}
 .pc-meta{color:var(--muted);font-size:.86rem;overflow-wrap:anywhere;display:flex;align-items:center;gap:6px;margin-top:3px}
@@ -261,6 +262,27 @@ small:empty{display:none}
 .spinner{border:3px solid rgba(128,128,128,.28);border-left-color:var(--focus);border-radius:50%;width:24px;height:24px;animation:spin 1s linear infinite;display:inline-block;margin-top:10px}
 @keyframes spin{to{transform:rotate(360deg)}}
 @media (prefers-reduced-motion:reduce){.spinner{animation-duration:4s}}
+#bottomnav{display:none}
+@media (max-width:700px){
+  #bottomnav{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:20;background:var(--panel);border-top:1px solid var(--line);padding:6px 6px calc(6px + env(safe-area-inset-bottom,0px));gap:6px}
+  #bottomnav button{flex:1;min-height:46px;border:0;background:transparent;border-radius:10px;font-weight:600;font-size:.82rem}
+  #bottomnav button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+  .wrap{padding-bottom:100px}
+  #toast{bottom:calc(78px + env(safe-area-inset-bottom,0px))!important}
+}
+#toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:30;background:var(--ink);color:var(--bg);border-radius:12px;padding:8px 8px 8px 16px;display:flex;gap:12px;align-items:center;box-shadow:0 8px 24px rgba(0,0,0,.3);max-width:calc(100vw - 24px)}
+#toast .btn{background:var(--bg);color:var(--ink)}
+.claim-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;padding:10px;border:1px solid var(--line);border-radius:10px}
+.claim-row .cl-note,.claim-row .claim-del{grid-column:1/-1}
+.hk a{color:var(--focus)}
+#print-area{display:none}
+@media print{
+  body.printing .wrap,body.printing dialog,body.printing #bottomnav,body.printing #toast{display:none!important}
+  body.printing #print-area{display:block;padding:12px;font:13px/1.45 var(--body)}
+  body.printing{background:#fff}
+  #print-area,#print-area *{color:#000!important;background:#fff!important}
+  #print-area table{width:100%}
+}
 </style>
 </head>
 <body>
@@ -273,6 +295,7 @@ small:empty{display:none}
     <div class="actions">
       <button class="btn primary" id="btn-add" type="button">Add policy</button>
       <button class="btn" id="btn-backup" type="button">Backup &amp; sync<span class="badge" id="bk-badge" hidden><span class="sr">, changes not backed up</span></span></button>
+      <button class="btn" id="btn-report" type="button">Report</button>
       <button class="btn" id="btn-settings" type="button">Settings</button>
     </div>
   </header>
@@ -289,67 +312,93 @@ small:empty{display:none}
   </section>
 
   <main id="dash" hidden>
-    <div class="toolbar"><div class="pills" id="pills" role="group" aria-label="Filter by policy type"></div></div>
+    <!-- NAVIGATION TABS -->
+    <div class="toolbar"><div class="pills" id="pills" role="group" aria-label="Navigation"></div><input id="q" type="search" placeholder="Search name, bank, number…" aria-label="Search" autocomplete="off" style="width:min(100%,260px)"></div>
 
-    <section class="panel hero" id="hero" aria-label="Summary"></section>
+    <!-- MAIN POLICIES VIEW -->
+    <div id="view-policies">
+      <section class="panel" id="today-card" aria-label="Today"></section>
+      <section class="panel hero" id="hero" aria-label="Summary"></section>
 
-    <section class="panel" aria-labelledby="tl-h">
-      <h2 id="tl-h">Policy timeline</h2>
-      <p class="sub">Each bar runs from the first premium to the last one. The thin line carries on to maturity.</p>
-      <div class="gantt" id="gantt"></div>
-      <div class="key">
-        <span><i class="k-solid"></i>Premiums paid</span>
-        <span><i class="k-light"></i>Premiums still to pay</span>
-        <span><i class="k-line"></i>No more premiums, policy continues</span>
-        <span><i class="k-dia"></i>Maturity</span>
-        <span><i class="k-today"></i>Today</span>
-      </div>
-    </section>
-
-    <div class="cols">
-      <section class="panel" aria-labelledby="ch-h">
-        <div class="chart-head">
-          <div>
-            <h2 id="ch-h">Money going out</h2>
-            <p class="sub">Select a bar to see that year's payments.</p>
-          </div>
-          <div class="seg" role="group" aria-label="Chart view">
-            <button type="button" data-mode="year" aria-pressed="true">Each year</button>
-            <button type="button" data-mode="cum" aria-pressed="false">Running total</button>
-          </div>
-        </div>
-        <div class="readout" id="readout" aria-live="polite"></div>
-        <div id="chart"></div>
-        <div class="legend" id="chart-legend"></div>
-        <p class="chart-note">Paler bars are projections. The underlined year is this year.</p>
-        
-        <div id="recent-wrap" style="margin-top:24px;border-top:1px solid var(--line);padding-top:16px" hidden>
-          <h3 style="font-size:1.1rem;font-weight:650;margin-bottom:8px">Recently paid</h3>
-          <div id="recent-payments"></div>
+      <section class="panel" aria-labelledby="tl-h">
+        <h2 id="tl-h">Policy timeline</h2>
+        <p class="sub">Each bar runs from the first premium to the last one. The thin line carries on to maturity.</p>
+        <div class="gantt" id="gantt"></div>
+        <div class="key">
+          <span><i class="k-solid"></i>Premiums paid</span>
+          <span><i class="k-light"></i>Premiums still to pay</span>
+          <span><i class="k-line"></i>No more premiums, policy continues</span>
+          <span><i class="k-dia"></i>Maturity</span>
+          <span><i class="k-today"></i>Today</span>
         </div>
       </section>
 
-      <section class="panel" aria-labelledby="du-h">
-        <h2 id="du-h">Coming up</h2>
-        <p class="sub">The next payments across your policies.</p>
-        <div id="dues"></div>
+      <div class="cols">
+        <section class="panel" aria-labelledby="ch-h">
+          <div class="chart-head">
+            <div>
+              <h2 id="ch-h">Money going out</h2>
+              <p class="sub">Select a bar to see that year's payments.</p>
+            </div>
+            <div class="seg" role="group" aria-label="Chart view">
+              <button type="button" data-mode="year" aria-pressed="true">Each year</button>
+              <button type="button" data-mode="cum" aria-pressed="false">Running total</button>
+            </div>
+          </div>
+          <div class="readout" id="readout" aria-live="polite"></div>
+          <div id="chart"></div>
+          <div class="legend" id="chart-legend"></div>
+          <p class="chart-note">Paler bars are projections. The underlined year is this year.</p>
+          
+          <div id="recent-wrap" style="margin-top:24px;border-top:1px solid var(--line);padding-top:16px" hidden>
+            <h3 style="font-size:1.1rem;font-weight:650;margin-bottom:8px">Recently paid</h3>
+            <div id="recent-payments"></div>
+          </div>
+        </section>
+
+        <section class="panel" aria-labelledby="du-h">
+          <h2 id="du-h">Coming up</h2>
+          <p class="sub">The next payments across your policies.</p>
+          <div id="dues"></div>
+        </section>
+      </div>
+
+      <section aria-labelledby="pol-h">
+        <div class="sec-head">
+          <h2 id="pol-h">Your policies</h2>
+          <label class="sortl">Status <select id="status-f"><option value="all">All</option><option>Active</option><option>Paid up</option><option>Matured</option><option>Not started</option></select></label>
+          <label class="sortl">Sort by
+            <select id="sort">
+              <option value="next">Next payment</option>
+              <option value="outlay">Lifetime outlay</option>
+              <option value="start">Start date</option>
+              <option value="name">Name</option>
+            </select>
+          </label>
+        </div>
+        <div class="cards" id="cards"></div>
       </section>
     </div>
 
-    <section aria-labelledby="pol-h">
+    <!-- SAVINGS VIEW -->
+    <div id="view-savings" hidden>
       <div class="sec-head">
-        <h2 id="pol-h">Your policies</h2>
-        <label class="sortl">Sort by
-          <select id="sort">
-            <option value="next">Next payment</option>
-            <option value="outlay">Lifetime outlay</option>
-            <option value="start">Start date</option>
-            <option value="name">Name</option>
-          </select>
-        </label>
+        <h2>Savings Accounts</h2>
+        <button class="btn primary small" id="btn-add-sav" type="button">Add account</button>
       </div>
-      <div class="cards" id="cards"></div>
-    </section>
+      <div class="cards" id="sav-cards"></div>
+    </div>
+
+    <!-- FIXED DEPOSITS VIEW -->
+    <div id="view-fds" hidden>
+      <div class="sec-head">
+        <h2>Fixed Deposits</h2>
+        <button class="btn primary small" id="btn-add-fd" type="button">Add FD</button>
+      </div>
+      <section class="panel" id="fd-ladder-wrap" hidden style="margin-bottom:14px"><h2>Maturity ladder</h2><p class="sub">When each fixed deposit matures, so you can plan reinvestment.</p><div class="gantt" id="fd-ladder"></div></section>
+      <div class="cards" id="fd-cards"></div>
+    </div>
+
   </main>
 
   <footer class="foot" id="foot">
@@ -460,6 +509,13 @@ small:empty{display:none}
           <label for="f-notes">Notes & Document Links</label>
           <textarea id="f-notes" placeholder="Add policy notes or paste links to Google Drive / iCloud for your PDFs and images..."></textarea>
         </div>
+        <div class="field" id="fld-pension"><label for="f-pension">Expected monthly pension (₹)</label><input id="f-pension" type="number" inputmode="decimal" min="0" step="any" placeholder="Optional"><small>Compared with the premiums you pay. Assumes payouts start on the maturity date.</small></div>
+        <div class="field"><label for="f-nominee">Nominee</label><input id="f-nominee" maxlength="80" autocomplete="off" placeholder="Optional"></div>
+        <div class="field"><label for="f-agent">Agent name</label><input id="f-agent" maxlength="80" autocomplete="off" placeholder="Optional"></div>
+        <div class="field"><label for="f-agentph">Agent phone</label><input id="f-agentph" type="tel" inputmode="tel" maxlength="20" autocomplete="off" placeholder="Optional"></div>
+        <div class="field"><label for="f-claimph">Claims helpline</label><input id="f-claimph" type="tel" inputmode="tel" maxlength="20" autocomplete="off" placeholder="Optional"></div>
+        <div class="field full"><label>Claim log</label><small>Date, amount claimed and a short note.</small><div id="claim-list"></div><div><button type="button" class="btn small" id="claim-add" style="margin-top:8px">Add a claim</button></div></div>
+        <div class="field full"><label for="f-docs">Documents</label><input type="file" id="f-docs" accept="image/*,application/pdf" multiple style="padding-top:8px"><small>PDFs or photos, up to 10 per policy. Kept only in this browser and not included in backups.</small><div id="doc-list"></div></div>
       </div>
       <fieldset class="hsec" id="health-fields" hidden>
         <legend>Health cover details</legend>
@@ -511,6 +567,7 @@ small:empty{display:none}
             <label>Known premium changes</label>
             <small>Use this when your insurer has already told you a new premium, for example after a sum insured increase or an age band change. Later increases build on it.</small>
             <div id="chg-list"></div>
+            <small id="chg-fmt"></small>
             <div><button type="button" class="btn small" id="chg-add" style="margin-top:8px">Add a premium change</button></div>
           </div>
         </div>
@@ -525,39 +582,72 @@ small:empty{display:none}
   </form>
 </dialog>
 
-<!-- Health rules -->
-<dialog id="dlg-hinfo" aria-labelledby="hi-title">
-  <div class="dlg">
-    <div class="dlg-head">
-      <h2 id="hi-title">Health insurance rules in India</h2>
-      <button type="button" class="btn small" data-close>Close</button>
+<!-- Savings Form -->
+<dialog id="dlg-sav" aria-labelledby="sav-title">
+  <form id="sav-form" class="dlg">
+    <div class="dlg-head"><h2 id="sav-title">Add Savings Account</h2><button type="button" class="btn small" data-close>Close</button></div>
+    <div class="dlg-body">
+      <div class="fgrid">
+        <div class="field full"><label for="sav-bank">Bank Name</label><input id="sav-bank" autocomplete="off" required></div>
+        <div class="field full"><label for="sav-accName">Name As In Bank Account</label><input id="sav-accName" autocomplete="off"></div>
+        <div class="field"><label for="sav-accNo">Bank Account No</label><input id="sav-accNo" autocomplete="off" inputmode="numeric" placeholder="Digits only"></div>
+        <div class="field"><label for="sav-ifsc">IFSC Code</label><input id="sav-ifsc" autocomplete="off" maxlength="11" pattern="[A-Za-z]{4}0[A-Za-z0-9]{6}" title="11 characters, for example SBIN0001234" placeholder="e.g. SBIN0001234" style="text-transform:uppercase"></div>
+        <div class="field"><label for="sav-branch">Branch Name</label><input id="sav-branch" autocomplete="off"></div>
+        <div class="field"><label for="sav-amt">Current Balance (₹)</label><input id="sav-amt" type="number" min="0" step="any" required></div>
+      </div>
     </div>
-    <div class="dlg-body hinfo">
-      <p>Checked in September 2026 against IRDAI, GST Council and income tax sources. Rules change, and your policy wording always comes first.</p>
-      <h3>Waiting periods</h3>
-      <p>Pre-existing conditions can have a waiting period of at most 36 months. Many policies also have a 30-day initial wait for illnesses, while accidents are covered from day one. Waiting periods carry over when you port to another insurer with no break in cover.</p>
-      <h3>Five-year moratorium</h3>
-      <p>After 60 months of continuous cover, an insurer cannot reject a claim for non-disclosure or misrepresentation, except for proven fraud. A lapse can reset it, so port to a new insurer instead of buying a fresh policy.</p>
-      <h3>Grace period</h3>
-      <p>30 days after the due date for yearly, half-yearly and quarterly premiums, and 15 days for monthly instalments. Pay within it and your benefits continue.</p>
-      <h3>Switching insurer</h3>
-      <p>IRDAI's 2024 master circular lets you apply to port between 60 and 30 days before renewal. The new insurer must credit the waiting periods you have already served.</p>
-      <h3>Senior citizens</h3>
-      <p>Since January 2025, insurers cannot raise premiums for people aged 60 and over by more than 10% a year without IRDAI's approval.</p>
-      <h3>GST</h3>
-      <p>No GST on individual health policies, including family floater and senior citizen plans, for premiums paid on or after 22 September 2025. Group and employer policies still carry 18%.</p>
+    <div class="dlg-foot">
+      <button type="button" class="btn" data-close>Cancel</button>
+      <button type="submit" class="btn primary">Save</button>
     </div>
-  </div>
+  </form>
 </dialog>
 
-<!-- Schedule -->
-<dialog id="dlg-sched" aria-labelledby="ds-title">
-  <div class="dlg">
-    <div class="dlg-head">
-      <h2 id="ds-title">Payment schedule</h2>
-      <button type="button" class="btn small" data-close>Close</button>
+<!-- FD Form -->
+<dialog id="dlg-fd" aria-labelledby="fd-title">
+  <form id="fd-form" class="dlg">
+    <div class="dlg-head"><h2 id="fd-title">Add Fixed Deposit</h2><button type="button" class="btn small" data-close>Close</button></div>
+    <div class="dlg-body">
+      <div class="fgrid">
+        <div class="field full"><label for="fd-bank">Bank Name</label><input id="fd-bank" autocomplete="off" required></div>
+        <div class="field"><label for="fd-fdNum">FD Number</label><input id="fd-fdNum" autocomplete="off"></div>
+        <div class="field"><label for="fd-amt">Principal Amt (₹)</label><input id="fd-amt" type="number" min="0" step="any" required></div>
+        <div class="field"><label for="fd-rate">Interest Rate (% per year)</label><input id="fd-rate" type="number" inputmode="decimal" min="0" max="100" step="any" placeholder="e.g. 7.1"><small>Compounded quarterly to estimate the maturity amount.</small></div>
+        <div class="field"><label for="fd-tenure">Tenure (Years)</label><input id="fd-tenure" type="number" inputmode="decimal" min="0" max="50" step="any" placeholder="e.g. 1.5"><small id="fd-tenure-info">Enter years. Decimals work: 1.5 = 1 year 6 months.</small></div>
+        <div class="field"><label for="fd-invested">Invested on</label><input id="fd-invested" type="date"></div>
+        <div class="field"><label for="fd-mat">Maturing on</label><input id="fd-mat" type="date"></div>
+        <div class="field"><label for="fd-mat-amt">Maturity Amt (₹)</label><input id="fd-mat-amt" type="number" inputmode="decimal" min="0" step="any"><small>Estimated automatically. Type your own to override.</small></div>
+        <div class="field"><label for="fd-method">Investment Method</label><input id="fd-method" autocomplete="off" placeholder="e.g. Netbanking, Branch"></div>
+        <div class="field"><label for="fd-txnId">Transaction Id</label><input id="fd-txnId" autocomplete="off"></div>
+        <div class="field full">
+          <label for="fd-receipt">FD Receipt (Max 1.5MB)</label>
+          <input type="file" id="fd-receipt" accept="image/*,application/pdf" style="padding-top:8px">
+          <small id="fd-receipt-name" style="color:var(--focus)"></small>
+        </div>
+      </div>
     </div>
-    <div class="dlg-body" id="ds-body"></div>
+    <div class="dlg-foot">
+      <button type="button" class="btn" data-close>Cancel</button>
+      <button type="submit" class="btn primary">Save</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- Document Viewer -->
+<dialog id="dlg-viewer" aria-labelledby="v-title">
+  <div class="dlg" style="width:90vw; max-width:1200px; height:90vh; max-height:1200px">
+    <div class="dlg-head">
+      <h2 id="v-title">Document Viewer</h2>
+      <div class="actions">
+        <button type="button" class="btn small" id="v-zoomin">Zoom In (+)</button>
+        <button type="button" class="btn small" id="v-zoomout">Zoom Out (-)</button>
+        <button type="button" class="btn small" id="v-reset">Reset</button>
+        <button type="button" class="btn small" data-close>Close</button>
+      </div>
+    </div>
+    <div class="dlg-body" style="overflow:auto; background:var(--tint); display:flex; align-items:center; justify-content:center; padding:0" id="v-container">
+      <div id="v-content" style="transform-origin: center center; transition: transform 0.2s;"></div>
+    </div>
   </div>
 </dialog>
 
@@ -577,6 +667,7 @@ small:empty{display:none}
       <div class="sy-relay">
         <div class="field"><label for="tg-token">Bot Token</label><input id="tg-token" type="password" placeholder="123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11" autocomplete="off" spellcheck="false"></div>
         <div class="field"><label for="tg-chatid">Chat ID</label><input id="tg-chatid" placeholder="Your numeric Chat ID (e.g. 123456789)" autocomplete="off" spellcheck="false"></div>
+        <label style="display:flex;gap:8px;align-items:flex-start;font-size:.92rem"><input type="checkbox" id="tg-auto" style="width:auto;min-height:0;margin-top:4px"><span>Auto-send a backup when this page is open, something has changed and the last backup is over 7 days old</span></label>
         <div class="bk-actions" style="margin-top:0">
           <button type="button" class="btn small" id="tg-save">Save credentials</button>
           <button type="button" class="btn small" id="tg-clear">Remove credentials</button>
@@ -708,7 +799,7 @@ small:empty{display:none}
       </div>
       <div class="set-row">
         <button type="button" class="btn" id="s-sample">Add sample policies</button>
-        <button type="button" class="btn danger" id="s-clear">Delete all policies</button>
+        <button type="button" class="btn danger" id="s-clear">Delete all data</button>
       </div>
     </div>
   </div>
@@ -723,6 +814,53 @@ small:empty{display:none}
       <button type="button" class="btn" data-close>Cancel</button>
       <button type="button" class="btn primary" id="c-ok">Confirm</button>
     </div>
+  </div>
+</dialog>
+
+<nav id="bottomnav" aria-label="Sections" hidden>
+  <button type="button" class="bn" data-v="policies">Policies</button>
+  <button type="button" class="bn" data-v="savings">Savings</button>
+  <button type="button" class="bn" data-v="fds">FDs</button>
+  <button type="button" class="bn" id="bn-report">Report</button>
+</nav>
+<div id="toast" role="status" hidden><span id="toast-msg"></span><button type="button" class="btn small" id="toast-undo">Undo</button></div>
+<div id="print-area"></div>
+
+<!-- Report -->
+<dialog id="dlg-report" aria-labelledby="rp-title">
+  <div class="dlg">
+    <div class="dlg-head"><h2 id="rp-title">Yearly report</h2><button type="button" class="btn small" data-close>Close</button></div>
+    <div class="dlg-body">
+      <div class="field" style="max-width:240px"><label for="rp-fy">Financial year (April to March)</label><select id="rp-fy"></select></div>
+      <div id="rp-body" style="margin-top:16px"></div>
+    </div>
+    <div class="dlg-foot"><button type="button" class="btn" data-close>Close</button><button type="button" class="btn primary" id="rp-print">Print or save as PDF</button></div>
+  </div>
+</dialog>
+
+<!-- Schedule -->
+<dialog id="dlg-sched" aria-labelledby="ds-title">
+  <div class="dlg">
+    <div class="dlg-head"><h2 id="ds-title">Schedule</h2><button type="button" class="btn small" data-close>Close</button></div>
+    <div class="dlg-body" id="ds-body"></div>
+    <div class="dlg-foot"><button type="button" class="btn" data-close>Close</button></div>
+  </div>
+</dialog>
+
+<!-- Health rules -->
+<dialog id="dlg-hinfo" aria-labelledby="hi-title">
+  <div class="dlg">
+    <div class="dlg-head"><h2 id="hi-title">Health rules</h2><button type="button" class="btn small" data-close>Close</button></div>
+    <div class="dlg-body hinfo">
+      <h3>Grace period</h3><p>A missed renewal can usually be paid within a grace period, typically 30 days (15 days for monthly premiums). Cover may lapse after it.</p>
+      <h3>5-year moratorium</h3><p>After 60 months of continuous cover, an insurer generally cannot reject a claim except for fraud or permanent exclusions.</p>
+      <h3>Pre-existing disease waiting period</h3><p>Set in your policy schedule. IRDAI allows at most 3 years.</p>
+      <h3>Senior citizens (60+)</h3><p>Insurers may not raise senior citizen premiums by more than 10% a year without IRDAI's approval.</p>
+      <h3>Switching insurer (portability)</h3><p>Apply to the new insurer between 60 and 30 days before renewal so continuity benefits carry over.</p>
+      <h3>GST</h3><p>Individual health policies have had no GST since 22 Sep 2025. Enter what you actually pay.</p>
+      <p style="margin-top:14px">This is a summary. Your policy document and insurer are the final word.</p>
+    </div>
+    <div class="dlg-foot"><button type="button" class="btn" data-close>Close</button></div>
   </div>
 </dialog>
 
@@ -769,7 +907,7 @@ function fmtC(n){
   return '₹'+INR.format(Math.round(n||0));
 }
 function pd(s){ const a=String(s).split('-').map(Number); return new Date(a[0],a[1]-1,a[2]); }
-function validISO(s){ if(!/^\d{4}-\d{2}-\d{2}$/.test(String(s||''))) return false; const d=pd(s); return !isNaN(d.getTime()); }
+function validISO(s){ s=String(s||''); if(!/^\d{4}-\d{2}-\d{2}$/.test(s)) return false; const d=pd(s); return !isNaN(d.getTime())&&toISO(d)===s; }
 function toISO(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
 function fmtDate(d){ return d.getDate()+' '+MON[d.getMonth()]+' '+d.getFullYear(); }
 function addMonths(d,n){
@@ -778,8 +916,8 @@ function addMonths(d,n){
   return new Date(y,m,Math.min(d.getDate(),last));
 }
 const NOW=new Date();
-const TODAY=new Date(NOW.getFullYear(),NOW.getMonth(),NOW.getDate());
-const THIS_YEAR=TODAY.getFullYear();
+let TODAY=new Date(NOW.getFullYear(),NOW.getMonth(),NOW.getDate());
+let THIS_YEAR=TODAY.getFullYear();
 function rel(d){
   const n=Math.round((d-TODAY)/864e5);
   if(n<=0) return 'Today';
@@ -800,12 +938,51 @@ function niceCeil(v){
 let storageOK=true;
 try{ localStorage.setItem(KEY+'-t','1'); localStorage.removeItem(KEY+'-t'); }catch(e){ storageOK=false; }
 
+const RECEIPT_RE=/^data:(image\/(?:png|jpeg|gif|webp)|application\/pdf);base64,[A-Za-z0-9+\/=]+$/;
+function okReceipt(u){ u=String(u||''); return u.length<4e6 && RECEIPT_RE.test(u); }
+function cleanPhone(v){ return String(v||'').replace(/[^0-9+\-() ]/g,'').slice(0,20); }
+function cleanClaims(a){ if(!Array.isArray(a)) return []; return a.map(c=>({date:String((c&&c.date)||''),amount:Math.max(0,Number(c&&c.amount)||0),note:String((c&&c.note)||'').slice(0,120)})).filter(c=>validISO(c.date)).sort((x,y)=>x.date<y.date?-1:(x.date>y.date?1:0)).slice(0,50); }
+const DOC_TYPES=/^(image\/(png|jpeg|gif|webp)|application\/pdf)$/;
+function cleanDocs(a){ if(!Array.isArray(a)) return []; return a.map(d=>({id:String((d&&d.id)||'').replace(/[^a-z0-9]/gi,'').slice(0,40),name:String((d&&d.name)||'').slice(0,80),type:String((d&&d.type)||''),size:Math.max(0,Number(d&&d.size)||0)})).filter(d=>d.id&&DOC_TYPES.test(d.type)).slice(0,10); }
 function cleanChanges(a){
   if(!Array.isArray(a)) return [];
   return a.map(c=>({date:String((c&&c.date)||''),amount:Number(c&&c.amount)||0}))
     .filter(c=>validISO(c.date)&&c.amount>0)
     .sort((x,y)=>x.date<y.date?-1:(x.date>y.date?1:0)).slice(0,20);
 }
+function cleanSav(s){
+  if(!s||typeof s!=='object') return null;
+  const b = String(s.bank||'').trim().slice(0,80);
+  const a = Number(s.amount)||0;
+  if(!b) return null;
+  return {
+    id:String(s.id||uid()), bank:b, amount:a,
+    accName: String(s.accName||'').slice(0,80),
+    accNo: String(s.accNo||'').slice(0,40),
+    ifsc: String(s.ifsc||'').slice(0,20),
+    branch: String(s.branch||'').slice(0,80)
+  };
+}
+function cleanFd(f){
+  if(!f||typeof f!=='object') return null;
+  const b = String(f.bank||'').trim().slice(0,80);
+  const a = Number(f.amount)||0;
+  if(!b) return null;
+  return {
+    id:String(f.id||uid()), bank:b, amount:a,
+    rate: Number(f.rate)||0,
+    tenure: Math.min(600, Math.max(0, Math.floor(Number(f.tenure)||0))),
+    invested: validISO(f.invested)?String(f.invested):'',
+    maturity: validISO(f.maturity)?String(f.maturity):'',
+    matAmt: Number(f.matAmt)||0,
+    txnId: String(f.txnId||'').slice(0,80),
+    method: String(f.method||'').slice(0,80),
+    fdNum: String(f.fdNum||'').slice(0,80),
+    receiptUrl: okReceipt(f.receiptUrl)?String(f.receiptUrl):'',
+    receiptType: okReceipt(f.receiptUrl)?String(f.receiptUrl).slice(5,String(f.receiptUrl).indexOf(';')):''
+  };
+}
+
 function clean(p){
   if(!p||typeof p!=='object') return null;
   const num=v=>(v===''||v==null)?'':(Number(v)||0);
@@ -835,7 +1012,10 @@ function clean(p){
     untilAge:(Math.floor(Number(p.untilAge))>=1)?clamp(Math.floor(Number(p.untilAge)),1,120):'',
     changes:cleanChanges(p.changes),
     sample:!!p.sample,
-    notes:String(p.notes||'').slice(0,3000)
+    notes:String(p.notes||'').slice(0,3000),
+    nominee:String(p.nominee||'').slice(0,80), agentName:String(p.agentName||'').slice(0,80),
+    agentPhone:cleanPhone(p.agentPhone), claimsPhone:cleanPhone(p.claimsPhone),
+    pensionMonthly:num(p.pensionMonthly), claims:cleanClaims(p.claims), docs:cleanDocs(p.docs)
   };
   if(!c.name||!validISO(c.start)||c.premium<=0) return null;
   if(c.maturity && (!validISO(c.maturity) || pd(c.maturity)<=pd(c.start))) c.maturity='';
@@ -852,8 +1032,10 @@ function samples(){
 }
 function loadState(){
   let d=null;
-  try{ const raw=localStorage.getItem(KEY); if(raw) d=JSON.parse(raw); }catch(e){ d=null; }
-  const st={policies:null,horizon:THIS_YEAR+20,theme:'auto',lastBackupAt:null,backedUpSig:null};
+  let raw=null;
+  try{ raw=localStorage.getItem(KEY); if(raw) d=JSON.parse(raw); }catch(e){ d=null; try{ if(raw) localStorage.setItem(KEY+'-corrupt',raw); }catch(x){} }
+  const st={policies:null, savings:null, fds:null, horizon:THIS_YEAR+20, theme:'auto', lastBackupAt:null, backedUpSig:null};
+  
   if(d && Array.isArray(d.policies)){
     st.policies=d.policies.map(clean).filter(Boolean);
     const h=Number(d.horizon);
@@ -864,13 +1046,20 @@ function loadState(){
   } else {
     st.policies=samples();
   }
+  
+  if(d && Array.isArray(d.savings)) st.savings=d.savings.map(cleanSav).filter(Boolean);
+  else st.savings = [];
+  
+  if(d && Array.isArray(d.fds)) st.fds=d.fds.map(cleanFd).filter(Boolean);
+  else st.fds = [];
+  
   return st;
 }
 const state=loadState();
-const ui={filter:'all',sort:'next',mode:'year',sel:null};
+const ui={view:'policies', filter:'all', sort:'next', mode:'year', sel:null, q:'', status:'all'};
 
 function save(){
-  try{ localStorage.setItem(KEY,JSON.stringify(state)); }
+  try{ localStorage.setItem(KEY,JSON.stringify(state)); storageOK=true; }
   catch(e){ storageOK=false; }
   $('#storage-note').textContent = storageOK
     ? 'Your data stays in this browser only. Use Backup to keep a copy.'
@@ -1017,37 +1206,64 @@ const sorters={
 
 /* ---------- rendering ---------- */
 function render(){
-  const has=state.policies.length>0;
-  $('#empty').hidden=has;
+  const hasPol=state.policies.length>0;
+  const has=hasPol||state.savings.length>0||state.fds.length>0;
+  $('#empty').hidden=!(!has||(!hasPol&&ui.view==='policies'));
   $('#dash').hidden=!has;
+  $('#bottomnav').hidden=!has;
+  $$('#bottomnav .bn[data-v]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.v===ui.view)));
   renderBanner();
   if(!has) return;
+  
   renderPills();
-  const list=getList();
-  if(!list.length){ ui.filter='all'; return render(); }
-  renderHero(list);
-  renderGantt(list);
-  renderChart(list);
-  renderDues(list);
-  renderRecent(list);
-  renderCards(list);
+  
+  $('#view-policies').hidden = ui.view !== 'policies' || !hasPol;
+  $('#view-savings').hidden = ui.view !== 'savings';
+  $('#view-fds').hidden = ui.view !== 'fds';
+
+  if (ui.view === 'policies' && hasPol) {
+    const list=getList();
+    if(!list.length && ui.filter !== 'all'){ ui.filter='all'; return render(); }
+    renderToday(list); renderHero(list);
+    renderGantt(list);
+    renderChart(list);
+    renderDues(list);
+    renderRecent(list);
+    renderCards(list);
+  } else if (ui.view === 'savings') {
+    renderSavings();
+  } else if (ui.view === 'fds') {
+    renderFDs(); renderFdLadder();
+  }
 }
 
+function backupDue(){
+  if(!realPolicies()||dataSig()===state.backedUpSig) return null;
+  if(!state.lastBackupAt) return 'You have not made a backup yet.';
+  const d=Math.floor((Date.now()-new Date(state.lastBackupAt).getTime())/864e5);
+  return d>=7?('Your last backup was '+d+' days ago and you have changed things since.'):null;
+}
 function renderBanner(){
-  const has=state.policies.some(p=>p.sample);
-  $('#banner').innerHTML=has
-    ? '<div class="note"><span>These are sample policies so you can see how the ledger works. Replace them with your own.</span><button class="btn small" type="button" id="btn-rm-sample">Remove samples</button></div>'
-    : '';
+  let h='';
+  if(state.policies.some(p=>p.sample)) h+='<div class="note"><span>These are sample policies so you can see how the ledger works. Replace them with your own.</span><button class="btn small" type="button" id="btn-rm-sample">Remove samples</button></div>';
+  const due=backupDue();
+  if(due) h+='<div class="note"><span>'+esc(due)+'</span><button class="btn small" type="button" id="btn-bk-now">Back up now</button></div>';
+  $('#banner').innerHTML=h;
 }
 
 function renderPills(){
   const present=KEYS.filter(t=>state.policies.some(p=>p.type===t));
   if(ui.filter!=='all' && present.indexOf(ui.filter)<0) ui.filter='all';
-  const el=$('#pills');
-  if(present.length<2){ el.innerHTML=''; return; }
-  el.innerHTML=['all'].concat(present).map(t=>
-    '<button type="button" class="pill" data-f="'+t+'" aria-pressed="'+(ui.filter===t)+'">'+(t==='all'?'All policies':TYPES[t].short)+'</button>'
+  
+  let html = ['all'].concat(present).map(t=>
+    '<button type="button" class="pill" data-v="policies" data-f="'+t+'" aria-pressed="'+(ui.view==='policies'&&ui.filter===t)+'">'+(t==='all'?'All policies':TYPES[t].short)+'</button>'
   ).join('');
+
+  html += '<span class="pill-sep"></span>';
+  html += '<button type="button" class="pill" data-v="savings" aria-pressed="'+(ui.view==='savings')+'">Savings</button>';
+  html += '<button type="button" class="pill" data-v="fds" aria-pressed="'+(ui.view==='fds')+'">Fixed Deposits</button>';
+
+  $('#pills').innerHTML = html;
 }
 
 function renderHero(list){
@@ -1072,6 +1288,27 @@ function renderHero(list){
   const shareBar=KEYS.filter(k=>byType[k]>0).map(k=>
     '<i style="--c:'+TYPES[k].color+';width:'+(byType[k]/total*100)+'%"></i>'
   ).join('');
+  
+  // RESERVES CALCULATION
+  const totalSav = state.savings.reduce((s, x) => s + x.amount, 0);
+  const activeFds = state.fds.filter(x=>{ const m=fdDates(x).mat; return !(m&&m<=TODAY); });
+  const matN = state.fds.length - activeFds.length;
+  const totalFd = activeFds.reduce((s, x) => s + x.amount, 0);
+  const reserves = totalSav + totalFd;
+  const remainAll = ui.filter==='all' ? remain : state.policies.reduce((t,q)=>t+analyse(q).remain,0);
+  const gap = remainAll - reserves;
+
+  let fundHtml = '';
+  if(reserves > 0 || gap > 0) {
+     const gapText = gap > 0
+       ? `<span style="color:var(--soon);"><b>${fmt(gap)}</b> shortfall (need to save)</span>`
+       : `<span style="color:var(--health);"><b>${fmt(Math.abs(gap))}</b> surplus!</span>`;
+     fundHtml = `<div class="note" style="margin-top:18px;background:var(--panel);align-items:flex-start;">
+       <div style="flex:1;min-width:200px"><b>Funding Plan:</b> ${fmt(reserves)} saved across banks and FDs.${matN?` (${matN} matured FD${matN>1?'s':''} not counted)`:''}</div>
+       <div>${gapText}</div>
+     </div>`;
+  }
+
   $('#hero').innerHTML=
     '<div>'+
       '<div class="big-label">Lifetime outlay</div>'+
@@ -1079,6 +1316,7 @@ function renderHero(list){
       '<p class="lede">'+esc(lede)+'</p>'+
       '<div class="split" role="img" aria-label="'+pct+' percent paid"><i style="width:'+pct+'%"></i></div>'+
       '<div class="split-caption"><span><b>'+fmt(paid)+'</b> paid</span><span><b>'+fmt(remain)+'</b> still to pay</span></div>'+
+      fundHtml +
     '</div>'+
     '<div class="figs">'+
       '<div class="fig"><div class="k">Paid so far</div><div class="v" title="'+fmt(paid)+'">'+fmtC(paid)+'</div><div class="n">'+paidN+' premiums</div></div>'+
@@ -1087,6 +1325,122 @@ function renderHero(list){
       '<div class="fig"><div class="k">Next payment</div><div class="v">'+(nextItem?fmtDate(nextItem.date):'None left')+'</div><div class="n">'+(nextItem?esc(fmtC(nextItem.amount)+' for '+nextItem.name):'All premiums paid')+'</div></div>'+
     '</div>'+
     '<div class="hero-foot"><h3>Where the money goes</h3><div class="share" role="img" aria-label="Share of lifetime outlay by policy type">'+shareBar+'</div><div class="legend">'+legend+'</div></div>';
+}
+
+function matchQ(txt){ const q=(ui.q||'').trim().toLowerCase(); return !q||String(txt).toLowerCase().indexOf(q)>=0; }
+function fdDates(f){
+  const inv=validISO(f.invested)?pd(f.invested):null;
+  const mat=validISO(f.maturity)?pd(f.maturity):((inv&&f.tenure>0)?addMonths(inv,f.tenure):null);
+  return {inv,mat};
+}
+function fdAccrued(f,date){
+  const d=fdDates(f); if(!d.inv||!d.mat||d.mat<=d.inv||!(f.rate>0)||!(f.amount>0)) return null;
+  const tot=d.mat-d.inv, el=Math.min(Math.max(date-d.inv,0),tot);
+  const months=f.tenure>0?f.tenure:(tot/864e5)/30.4375;
+  return f.amount*Math.pow(1+f.rate/400,months/3*(el/tot))-f.amount;
+}
+function fdTag(f){
+  const m=fdDates(f).mat; if(!m) return '';
+  const n=Math.round((m-TODAY)/864e5);
+  if(n<=0) return '<span class="tag">Matured</span>';
+  if(n<=30) return '<span class="tag warn">'+n+(n===1?' day':' days')+' left</span>';
+  return '';
+}
+function fdMeta(f){
+  const m=fdDates(f).mat; if(!m) return '';
+  const n=Math.round((m-TODAY)/864e5);
+  return '<div class="pc-meta">'+(n<=0?'Matured on ':'Matures on ')+fmtDate(m)+(n>0?' ('+rel(m).toLowerCase()+')':'')+'</div>';
+}
+function fdExtraKv(f){
+  const d=fdDates(f); let r='';
+  if(f.matAmt>f.amount) r+='<dt>Total interest</dt><dd>'+fmt(f.matAmt-f.amount)+'</dd>';
+  const acc=(d.inv&&d.inv<=TODAY)?fdAccrued(f,TODAY):null;
+  if(acc!=null) r+='<dt>'+(d.mat&&d.mat<=TODAY?'Interest earned':'Interest earned so far')+'</dt><dd>'+fmt(acc)+'</dd>';
+  if(d.mat&&d.mat>TODAY) r+='<dt>Days left</dt><dd>'+Math.round((d.mat-TODAY)/864e5)+'</dd>';
+  return r;
+}
+function renderFdLadder(){
+  const wrap=$('#fd-ladder-wrap'), el=$('#fd-ladder');
+  const rows=state.fds.map(f=>({f:f,d:fdDates(f)})).filter(x=>x.d.mat).sort((a,b)=>a.d.mat-b.d.mat);
+  if(!rows.length){ wrap.hidden=true; return; }
+  wrap.hidden=false;
+  let lo=TODAY.getTime(), hi=TODAY.getTime();
+  rows.forEach(x=>{ lo=Math.min(lo,(x.d.inv||TODAY).getTime()); hi=Math.max(hi,x.d.mat.getTime()); });
+  const y0=new Date(lo).getFullYear(), y1=new Date(hi).getFullYear()+1;
+  const D0=new Date(y0,0,1).getTime(), D1=new Date(y1,0,1).getTime();
+  const pos=t=>((t instanceof Date?t.getTime():t)-D0)/(D1-D0)*100;
+  const maxTicks=Math.max(3,Math.floor((el.clientWidth||320)/64)), span=y1-y0;
+  const step=[1,2,5,10,20,25,50].find(k=>span/k<=maxTicks)||50;
+  let ticks=''; for(let y=Math.ceil(y0/step)*step;y<=y1;y+=step) ticks+='<span class="g-tick" style="left:'+pos(new Date(y,0,1))+'%">'+y+'</span>';
+  const flag='<span class="g-flag" style="left:'+pos(TODAY)+'%">Today</span>';
+  const by={};
+  const body=rows.map(x=>{
+    const s=pos(x.d.inv||TODAY), e=pos(x.d.mat);
+    const done=x.d.inv?clamp((TODAY-x.d.inv)/(x.d.mat-x.d.inv),0,1)*100:0;
+    const yr=x.d.mat.getFullYear(); by[yr]=by[yr]||{n:0,amt:0}; by[yr].n++; by[yr].amt+=(x.f.matAmt||x.f.amount);
+    return '<div class="g-row" style="--c:var(--other)"><div class="g-label"><b>'+esc(x.f.bank)+'</b><span>'+esc(fmtC(x.f.amount)+' to '+fmtC(x.f.matAmt||x.f.amount)+' on '+fmtDate(x.d.mat))+'</span></div>'+
+      '<div class="g-track"><span class="g-pay" style="left:'+s+'%;width:'+Math.max(e-s,0.6)+'%"><span class="rest"></span><span class="done" style="width:'+done+'%"></span></span><span class="g-mat" style="left:'+e+'%"></span><span class="g-today" style="left:'+pos(TODAY)+'%"></span></div></div>';
+  }).join('');
+  const yearly=Object.keys(by).sort().map(y=>'<span><b>'+y+'</b>: '+fmtC(by[y].amt)+' from '+by[y].n+(by[y].n===1?' FD':' FDs')+'</span>').join('');
+  el.innerHTML='<div class="g-axis">'+ticks+flag+'</div>'+body+'<div class="legend">'+yearly+'</div>';
+}
+function renderSavings() {
+  const el = $('#sav-cards');
+  if(!state.savings.length) { el.innerHTML = '<p class="sub">No savings accounts added yet.</p>'; return; }
+  const sv = state.savings.filter(s=>matchQ([s.bank,s.accName,s.accNo,s.branch,s.ifsc].join(' ')));
+  if(!sv.length) { el.innerHTML = '<p class="sub">No accounts match your search.</p>'; return; }
+  el.innerHTML = sv.map(s => {
+    let kv='';
+    if(s.accName) kv+=`<dt>A/C Name</dt><dd>${esc(s.accName)}</dd>`;
+    if(s.accNo) kv+=`<dt>Account No</dt><dd>${esc(s.accNo)}</dd>`;
+    if(s.ifsc) kv+=`<dt>IFSC Code</dt><dd>${esc(s.ifsc)}</dd>`;
+    if(s.branch) kv+=`<dt>Branch</dt><dd>${esc(s.branch)}</dd>`;
+    return `
+      <article class="pcard" style="--c:var(--pension)">
+        <div class="pc-head"><h3>${esc(s.bank)}</h3></div>
+        <div class="pc-total"><span class="n">${fmt(s.amount)}</span></div>
+        ${kv ? `<dl class="kv" style="margin-top:10px">${kv}</dl>` : ''}
+        <div class="pc-actions" style="margin-top:12px" data-sid="${esc(s.id)}">
+          <button type="button" class="btn small" data-act="tgsav">Send via Telegram</button>
+          <button type="button" class="btn small" data-act="editsav">Edit</button>
+          <button type="button" class="btn small danger" data-act="delsav">Delete</button>
+        </div>
+      </article>
+    `;
+  }).join('');
+}
+
+function renderFDs() {
+  const el = $('#fd-cards');
+  if(!state.fds.length) { el.innerHTML = '<p class="sub">No Fixed Deposits added yet.</p>'; return; }
+  const fl = state.fds.filter(f=>matchQ([f.bank,f.fdNum,f.txnId,f.method].join(' ')));
+  if(!fl.length) { el.innerHTML = '<p class="sub">No FDs match your search.</p>'; return; }
+  el.innerHTML = fl.map(f => {
+    let kv='';
+    if(f.fdNum) kv+=`<dt>FD Number</dt><dd>${esc(f.fdNum)}</dd>`;
+    if(f.rate) kv+=`<dt>Interest Rate</dt><dd>${f.rate}%</dd>`;
+    if(f.tenure) kv+=`<dt>Tenure</dt><dd>${fmtTenure(f.tenure)}${f.tenure>=12?' ('+f.tenure+' months)':''}</dd>`;
+    if(f.invested) kv+=`<dt>Invested On</dt><dd>${fmtDate(pd(f.invested))}</dd>`;
+    if(f.matAmt) kv+=`<dt>Maturity Amt</dt><dd>${fmt(f.matAmt)}</dd>`;
+    if(f.method) kv+=`<dt>Method</dt><dd>${esc(f.method)}</dd>`;
+    if(f.txnId) kv+=`<dt>Transaction ID</dt><dd>${esc(f.txnId)}</dd>`;
+    kv+=fdExtraKv(f);
+    
+    return `
+      <article class="pcard" style="--c:var(--other)">
+        <div class="pc-head"><h3>${esc(f.bank)}</h3>${fdTag(f)}</div>
+        <div class="pc-total"><span class="n">${fmt(f.amount)}</span><span class="l">Principal</span></div>
+        ${fdMeta(f)}
+        ${kv ? `<dl class="kv" style="margin-top:10px">${kv}</dl>` : ''}
+        <div class="pc-actions" style="margin-top:12px" data-fid="${esc(f.id)}">
+          <button type="button" class="btn small" data-act="tgfd">Send via Telegram</button>
+          ${f.receiptUrl ? `<button type="button" class="btn small primary" data-act="viewreceipt">View Receipt</button>` : ''}
+          <button type="button" class="btn small" data-act="editfd">Edit</button>
+          <button type="button" class="btn small danger" data-act="delfd">Delete</button>
+        </div>
+      </article>
+    `;
+  }).join('');
 }
 
 function renderGantt(list){
@@ -1178,19 +1532,37 @@ function setSel(y){
 
 function renderDues(list){
   let all=[];
-  list.forEach(a=>a.upcoming.slice(0,8).forEach(i=>all.push({date:i.date,amount:i.amount,a:a})));
+  list.forEach(a=>a.upcoming.slice(0,8).forEach(i=>all.push({date:i.date,amount:i.amount,name:a.p.name,sub:FREQ[a.p.freq].label})));
+  if(ui.filter==='all') state.fds.forEach(f=>{ const m=fdDates(f).mat; if(m&&m>TODAY) all.push({date:m,amount:f.matAmt||f.amount,name:f.bank+' FD',sub:'FD matures'}); });
   all.sort((x,y)=>x.date-y.date);
   all=all.slice(0,8);
   const el=$('#dues');
-  if(!all.length){ el.innerHTML='<p class="sub" style="padding:14px 0">No payments left. Every premium is paid.</p>'; return; }
+  if(!all.length){ el.innerHTML='<p class="sub" style="padding:14px 0">Nothing coming up. Every premium is paid.</p>'; return; }
   el.innerHTML=all.map(d=>{
     const n=Math.round((d.date-TODAY)/864e5);
     return '<div class="due'+(n<=30?' soon':'')+'">'+
       '<div class="date-chip"><b>'+d.date.getDate()+'</b><span>'+MON[d.date.getMonth()]+' '+String(d.date.getFullYear()).slice(2)+'</span></div>'+
-      '<div><div class="nm">'+esc(d.a.p.name)+'</div><div class="fq">'+FREQ[d.a.p.freq].label+'</div></div>'+
+      '<div><div class="nm">'+esc(d.name)+'</div><div class="fq">'+esc(d.sub)+'</div></div>'+
       '<div><div class="amt">'+fmt(d.amount)+'</div><div class="when">'+rel(d.date)+'</div></div>'+
     '</div>';
   }).join('');
+}
+
+function renderToday(list){
+  const all=ui.filter==='all'?list:state.policies.map(analyse);
+  const wk=addDays(TODAY,7); let n=0,amt=0,nxt=null;
+  all.forEach(a=>{
+    a.upcoming.forEach(i=>{ if(i.date<=wk){ n++; amt+=i.amount; } });
+    if(a.next&&(!nxt||a.next.date<nxt.date)) nxt={date:a.next.date,name:a.p.name,amount:a.next.amount};
+  });
+  let fd=null;
+  state.fds.forEach(f=>{ const m=fdDates(f).mat; if(m&&m>TODAY&&(!fd||m<fd.date)) fd={date:m,name:f.bank}; });
+  const day=TODAY.toLocaleDateString('en-IN',{weekday:'long'});
+  const box=(k,v,sub)=>'<div class="fig"><div class="k">'+k+'</div><div class="v">'+v+'</div><div class="n">'+sub+'</div></div>';
+  $('#today-card').innerHTML='<h2 style="font-size:1.1rem">Today, '+esc(day)+' '+fmtDate(TODAY)+'</h2><div class="figs" style="grid-template-columns:repeat(auto-fit,minmax(170px,1fr));margin-top:12px">'+
+    box('Due in 7 days',n?fmtC(amt):'Nothing',n?n+(n===1?' payment':' payments'):'You are clear this week')+
+    box('Next premium',nxt?fmtDate(nxt.date):'None left',nxt?esc(fmtC(nxt.amount)+' for '+nxt.name):'All premiums paid')+
+    box('Next FD maturity',fd?fmtDate(fd.date):'None',fd?esc(fd.name+', '+rel(fd.date).toLowerCase()):'No FD dates added')+'</div>';
 }
 
 function renderRecent(list){
@@ -1222,8 +1594,39 @@ function renderRecent(list){
   }).join('');
 }
 
+function telLink(v){ const d=cleanPhone(v); return d?'<a href="tel:'+esc(d.replace(/[^0-9+]/g,''))+'">'+esc(d)+'</a>':''; }
+function extraCard(a){
+  const p=a.p; let kv='', out='';
+  if(p.nominee) kv+='<dt>Nominee</dt><dd>'+esc(p.nominee)+'</dd>';
+  if(p.agentName||p.agentPhone) kv+='<dt>Agent</dt><dd>'+esc(p.agentName)+(p.agentName&&p.agentPhone?', ':'')+telLink(p.agentPhone)+'</dd>';
+  if(p.claimsPhone) kv+='<dt>Claims helpline</dt><dd>'+telLink(p.claimsPhone)+'</dd>';
+  if(kv) out+='<div class="hk"><div class="hk-title">Nominee and contacts</div><dl class="kv">'+kv+'</dl></div>';
+  const pm=Number(p.pensionMonthly)||0;
+  if(p.type==='pension'&&pm>0){
+    const mo=a.total/pm;
+    let r='<dt>Expected pension</dt><dd>'+fmt(pm)+' a month</dd><dt>Premiums equal</dt><dd>'+mo.toFixed(1)+' months of pension</dd>';
+    if(a.hasMat){
+      const be=addMonths(a.end,Math.ceil(mo));
+      r+='<dt>Pension starts</dt><dd>'+fmtDate(a.end)+'</dd><dt>Break-even</dt><dd>'+fmtDate(be)+(validISO(p.dob)?' (age '+ageOn(pd(p.dob),be)+')':'')+'</dd>';
+      if(a.end<=TODAY){
+        const m=Math.max(0,(TODAY.getFullYear()-a.end.getFullYear())*12+TODAY.getMonth()-a.end.getMonth()-(TODAY.getDate()<a.end.getDate()?1:0));
+        r+='<dt>Pension received so far</dt><dd>'+fmt(m*pm)+'</dd>';
+      }
+    }
+    out+='<div class="hk"><div class="hk-title">Pension outlook</div><dl class="kv">'+r+'</dl></div>';
+  }
+  if(p.claims&&p.claims.length){
+    const tot=p.claims.reduce((t,c)=>t+c.amount,0);
+    out+='<div class="hk"><div class="hk-title">Claim log, '+fmt(tot)+' claimed</div>'+p.claims.map(c=>'<div style="font-size:.9rem;color:var(--muted)">'+esc(fmtDate(pd(c.date)))+', '+fmt(c.amount)+(c.note?', '+esc(c.note):'')+'</div>').join('')+'</div>';
+  }
+  if(p.docs&&p.docs.length){
+    out+='<div class="hk"><div class="hk-title">Documents</div>'+p.docs.map(d=>'<div class="snap" style="padding:6px 0"><b style="font-size:.9rem;overflow-wrap:anywhere">'+esc(d.name)+'</b><button type="button" class="btn small" data-act="viewdoc" data-doc="'+esc(d.id)+'">View</button></div>').join('')+'</div>';
+  }
+  return out;
+}
 function renderCards(list){
-  const rows=list.slice().sort(sorters[ui.sort]||sorters.next);
+  const rows=list.filter(a=>(ui.status==='all'||a.status===ui.status)&&matchQ([a.p.name,a.p.insurer,a.p.number,a.p.nominee,a.p.agentName].join(' '))).sort(sorters[ui.sort]||sorters.next);
+  if(!rows.length){ $('#cards').innerHTML='<p class="sub">No policies match your search or filter.</p>'; return; }
   $('#cards').innerHTML=rows.map(a=>{
     const p=a.p, f=FREQ[p.freq];
     const pct=a.total>0?a.paid/a.total*100:0;
@@ -1257,6 +1660,7 @@ function renderCards(list){
       hk='<div class="hk"><div class="hk-title">Health cover details</div><dl class="kv">'+r+'</dl></div>';
     }
     
+    hk+=extraCard(a);
     if(p.notes) {
       hk += '<div class="hk"><div class="hk-title">Notes & Document Links</div><p style="font-size:.9rem;color:var(--muted);white-space:pre-wrap;margin-top:4px;word-break:break-word;">'+esc(p.notes)+'</p></div>';
     }
@@ -1310,7 +1714,7 @@ function readChanges(){
 function syncFormType(){
   const h=$('#f-type').value==='health';
   $('#health-fields').hidden=!h;
-  $('#fld-ppt').hidden=h; $('#fld-benefit').hidden=h;
+  $('#fld-ppt').hidden=h; $('#fld-benefit').hidden=h; $('#fld-pension').hidden=$('#f-type').value!=='pension';
   $('#lb-maturity').textContent=h?'Keep paying until (optional)':'Maturity date';
   $('#sm-maturity').textContent=h?'Health cover has no maturity. Leave empty to plan until an age or the year set in Settings.':'Leave empty for renewable policies.';
   $('#lb-cover').textContent=h?'Sum insured (₹)':'Sum assured or cover (₹)';
@@ -1356,6 +1760,39 @@ function updateIncCalc(isLoad) {
   }
 }
 
+let formDocs=[], formNewDocs=new Set(), formRemoved=[], formSaved=false, docBusy=false;
+let toastT=null, toastCommit=null;
+function hideToast(commit){ clearTimeout(toastT); $('#toast').hidden=true; const c=toastCommit; toastCommit=null; if(commit&&c){ try{ c(); }catch(e){} } }
+function toastUndo(msg,undo,commit){
+  hideToast(true);
+  $('#toast-msg').textContent=msg; $('#toast').hidden=false; toastCommit=commit||null;
+  $('#toast-undo').onclick=()=>{ clearTimeout(toastT); $('#toast').hidden=true; toastCommit=null; undo(); };
+  toastT=setTimeout(()=>hideToast(true),8000);
+}
+function idb(){ return new Promise((res,rej)=>{ if(!window.indexedDB){ rej(new Error('no idb')); return; } const r=indexedDB.open('premium-ledger-docs',1); r.onupgradeneeded=()=>r.result.createObjectStore('docs'); r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); }); }
+function idbDo(mode,fn){ return idb().then(db=>new Promise((res,rej)=>{ const tx=db.transaction('docs',mode); const rq=fn(tx.objectStore('docs')); tx.oncomplete=()=>{ db.close(); res(rq&&rq.result); }; tx.onerror=tx.onabort=()=>{ db.close(); rej(tx.error); }; })); }
+const docPut=(id,blob)=>idbDo('readwrite',st=>st.put(blob,id));
+const docGet=id=>idbDo('readonly',st=>st.get(id));
+const docDel=id=>idbDo('readwrite',st=>st.delete(id)).catch(()=>{});
+function fmtSize(n){ return n>=1048576?(n/1048576).toFixed(1)+' MB':Math.max(1,Math.round(n/1024))+' KB'; }
+function renderDocList(){
+  $('#doc-list').innerHTML=formDocs.map(d=>'<div class="snap"><div><b style="overflow-wrap:anywhere">'+esc(d.name)+'</b><div class="fq">'+fmtSize(d.size)+'</div></div><div class="actions"><button type="button" class="btn small doc-view" data-doc="'+esc(d.id)+'">View</button><button type="button" class="btn small danger doc-rm" data-doc="'+esc(d.id)+'">Remove</button></div></div>').join('');
+}
+function openDoc(id){
+  docGet(id).then(b=>{
+    if(!b||!DOC_TYPES.test(b.type)){ alert('This file is not stored on this device. Documents are not part of backups, so attach it again here.'); return; }
+    openViewerBlob(b);
+  }).catch(()=>alert('Documents are not available in this browser.'));
+}
+function addClaimRow(date,amt,note){
+  const row=document.createElement('div'); row.className='claim-row';
+  row.innerHTML='<input type="date" class="cl-date" aria-label="Claim date"><input type="number" class="cl-amt" inputmode="decimal" min="0" step="any" placeholder="Amount (₹)" aria-label="Claim amount"><input class="cl-note" maxlength="120" placeholder="Note, for example hospital or claim number" aria-label="Claim note"><button type="button" class="btn small claim-del">Remove this claim</button>';
+  row.querySelector('.cl-date').value=date||''; row.querySelector('.cl-amt').value=amt||''; row.querySelector('.cl-note').value=note||'';
+  $('#claim-list').appendChild(row);
+}
+function readClaims(){
+  return $$('#claim-list .claim-row').map(r=>({date:r.querySelector('.cl-date').value,amount:Number(r.querySelector('.cl-amt').value)||0,note:r.querySelector('.cl-note').value.trim().slice(0,120)})).filter(c=>validISO(c.date));
+}
 let editingId=null;
 function openForm(id){
   editingId=id||null;
@@ -1386,13 +1823,110 @@ function openForm(id){
   $('#f-notes').value=p?(p.notes||''):'';
   $('#chg-list').innerHTML='';
   if(p&&Array.isArray(p.changes)) p.changes.forEach(c=>addChangeRow(c.date,c.amount));
+  $('#f-nominee').value=p?(p.nominee||''):''; $('#f-agent').value=p?(p.agentName||''):'';
+  $('#f-agentph').value=p?(p.agentPhone||''):''; $('#f-claimph').value=p?(p.claimsPhone||''):'';
+  $('#f-pension').value=(p&&p.pensionMonthly!==''&&p.pensionMonthly!=null)?p.pensionMonthly:'';
+  $('#claim-list').innerHTML=''; if(p&&Array.isArray(p.claims)) p.claims.forEach(c=>addClaimRow(c.date,c.amount,c.note));
+  formDocs=(p&&Array.isArray(p.docs))?p.docs.slice():[]; formNewDocs=new Set(); formRemoved=[]; formSaved=false; $('#f-docs').value=''; renderDocList();
   syncFormType();
   updateIncCalc(true);
+  refreshDateHints($('#dlg-policy'));
   $('#f-err').textContent='';
   updatePreview();
   openDlg($('#dlg-policy'));
   setTimeout(()=>{ const a=document.activeElement; if(a&&/^(INPUT|SELECT|TEXTAREA)$/.test(a.tagName)) return; try{ $('#f-name').focus(); }catch(e){} },30);
 }
+
+let editSavId=null;
+function openSavForm(id) {
+  editSavId = id || null;
+  const s = id ? state.savings.find(x=>x.id===id) : null;
+  $('#sav-title').textContent = s ? 'Edit Account' : 'Add Account';
+  $('#sav-bank').value = s ? s.bank : '';
+  $('#sav-accName').value = s ? s.accName : '';
+  $('#sav-accNo').value = s ? s.accNo : '';
+  $('#sav-ifsc').value = s ? s.ifsc : '';
+  $('#sav-branch').value = s ? s.branch : '';
+  $('#sav-amt').value = s ? s.amount : '';
+  openDlg($('#dlg-sav'));
+}
+
+let editFdId=null;
+let tempReceiptBase64 = '';
+let tempReceiptType = '';
+function openFdForm(id) {
+  editFdId = id || null;
+  const f = id ? state.fds.find(x=>x.id===id) : null;
+  $('#fd-title').textContent = f ? 'Edit Fixed Deposit' : 'Add Fixed Deposit';
+  $('#fd-bank').value = f ? f.bank : '';
+  $('#fd-fdNum').value = f ? f.fdNum : '';
+  $('#fd-amt').value = f ? f.amount : '';
+  $('#fd-rate').value = f && f.rate ? f.rate : '';
+  $('#fd-tenure').value = f && f.tenure ? +(f.tenure/12).toFixed(2) : '';
+  $('#fd-invested').value = f ? f.invested : '';
+  $('#fd-mat').value = f ? f.maturity : '';
+  $('#fd-mat-amt').value = f && f.matAmt ? f.matAmt : '';
+  $('#fd-mat-amt').dataset.manual='';
+  $('#fd-method').value = f ? f.method : '';
+  $('#fd-txnId').value = f ? f.txnId : '';
+  $('#fd-receipt').value = '';
+  $('#fd-receipt-name').textContent = f && f.receiptUrl ? '(Receipt already saved)' : '';
+  tempReceiptBase64 = f ? f.receiptUrl : '';
+  tempReceiptType = f ? f.receiptType : '';
+  updateFdCalc(true); refreshDateHints($('#dlg-fd'));
+  openDlg($('#dlg-fd'));
+}
+
+function tenureMonths(){ const y=Number($('#fd-tenure').value); return (y>0&&isFinite(y))?Math.min(600,Math.round(y*12)):0; }
+function fmtTenure(m){
+  m=Math.round(Number(m)||0); if(m<=0) return '';
+  const y=Math.floor(m/12), r=m%12;
+  return (y?y+(y===1?' year':' years'):'')+(y&&r?' ':'')+(r?r+(r===1?' month':' months'):'');
+}
+function setTenureInfo(m){
+  $('#fd-tenure-info').textContent = m>0
+    ? '= '+m+(m===1?' month':' months')+(m>=12?' ('+fmtTenure(m)+')':'')
+    : 'Enter years. Decimals work: 1.5 = 1 year 6 months.';
+}
+const DATE_PATTERN=(function(){
+  try{
+    return new Intl.DateTimeFormat(navigator.language||'en-IN',{day:'2-digit',month:'2-digit',year:'numeric'})
+      .formatToParts(new Date(2026,11,25))
+      .map(q=>q.type==='day'?'DD':q.type==='month'?'MM':q.type==='year'?'YYYY':(q.type==='literal'?'-':'')).join('');
+  }catch(e){ return 'DD-MM-YYYY'; }
+})();
+function refreshDateHints(root){
+  $$('input[type="date"]',root).forEach(el=>{
+    if(el.closest('.chg-row,.claim-row')) return;
+    let h=el.parentNode.querySelector('.datefmt');
+    if(!h){ h=document.createElement('small'); h.className='datefmt'; el.insertAdjacentElement('afterend',h); }
+    h.textContent='Format: '+DATE_PATTERN+(validISO(el.value)?'  \u2192  '+fmtDate(pd(el.value)):'');
+  });
+  const cf=$('#chg-fmt'); if(cf) cf.textContent='Date format: '+DATE_PATTERN;
+}
+function updateFdCalc(isLoad, keepDate) {
+  const p = Number($('#fd-amt').value)||0;
+  const r = Number($('#fd-rate').value)||0;
+  const tM = tenureMonths();
+  setTenureInfo(tM); 
+  const invD = $('#fd-invested').value;
+  
+  if(p>0 && r>0 && tM>0) {
+    const a = p * Math.pow(1 + r/400, tM/3);
+    if((!isLoad && $('#fd-mat-amt').dataset.manual!=='1') || !$('#fd-mat-amt').value) {
+      $('#fd-mat-amt').value = Math.round(a);
+    }
+  }
+  if(tM>0 && validISO(invD) && !keepDate) {
+    if(!isLoad || !$('#fd-mat').value) {
+      const d = pd(invD);
+      const matD = addMonths(d, tM);
+      $('#fd-mat').value = toISO(matD);
+      refreshDateHints($('#dlg-fd'));
+    }
+  }
+}
+
 function formPolicy(){
   const v=id=>$('#'+id).value.trim();
   const opt=id=>v(id)===''?'':(Number(v(id))||0);
@@ -1414,7 +1948,10 @@ function formPolicy(){
     incSenior:(health&&v('h-incs')!=='')?Math.max(0,Number(v('h-incs'))||0):'',
     untilAge:(health&&Math.floor(Number(v('h-until')))>=1)?clamp(Math.floor(Number(v('h-until'))),1,120):'',
     changes:health?readChanges():[],
-    notes:v('f-notes')
+    notes:v('f-notes'),
+    nominee:v('f-nominee'), agentName:v('f-agent'), agentPhone:v('f-agentph'), claimsPhone:v('f-claimph'),
+    pensionMonthly:($('#f-type').value==='pension')?opt('f-pension'):'',
+    claims:readClaims(), docs:formDocs.slice()
   };
 }
 function updatePreview(){
@@ -1428,6 +1965,7 @@ function submitForm(e){
   e.preventDefault();
   const p=formPolicy(), err=$('#f-err');
   const fail=(msg,id)=>{ err.textContent=msg; try{ $('#'+id).focus(); }catch(x){} };
+  if(docBusy) return fail('Please wait, a document is still being prepared.','f-docs');
   if(!p.name) return fail('Give the policy a name.','f-name');
   if(p.premium<=0) return fail('Enter the premium amount you pay each time.','f-premium');
   if(!validISO(p.start)) return fail('Choose the policy start date.','f-start');
@@ -1447,7 +1985,7 @@ function submitForm(e){
     const i=state.policies.findIndex(x=>x.id===editingId);
     if(i>=0) state.policies[i]=p; else state.policies.push(p);
   } else state.policies.push(p);
-  save(); $('#dlg-policy').close(); render();
+  formSaved=true; formRemoved.forEach(docDel); formRemoved=[]; formNewDocs=new Set(); save(); $('#dlg-policy').close(); render();
 }
 
 function openSchedule(id){
@@ -1477,8 +2015,10 @@ function openSchedule(id){
 /* ---------- backup, restore and safety copies ---------- */
 function hashStr(str){ let h=0x811c9dc5; for(let i=0;i<str.length;i++){ h^=str.charCodeAt(i); h=Math.imul(h,0x01000193)>>>0; } return h.toString(16).padStart(8,'0'); }
 function cleanList(){ return state.policies.map(clean).filter(Boolean); }
-function dataSig(){ return hashStr(JSON.stringify({h:state.horizon,p:cleanList()})); }
-function realPolicies(){ return state.policies.some(p=>!p.sample); }
+function cleanSavList() { return state.savings.map(cleanSav).filter(Boolean); }
+function cleanFdList() { return state.fds.map(cleanFd).filter(Boolean); }
+function dataSig(){ return hashStr(JSON.stringify({h:state.horizon,p:cleanList(),s:cleanSavList(),f:cleanFdList()})); }
+function realPolicies(){ return state.policies.some(p=>!p.sample)||state.savings.length>0||state.fds.length>0; }
 function fmtDateTime(iso){
   const d=new Date(iso); if(isNaN(d.getTime())) return '';
   return fmtDate(d)+', '+d.toLocaleTimeString('en-IN',{hour:'numeric',minute:'2-digit'});
@@ -1495,14 +2035,18 @@ try{
   if(Array.isArray(r)) snaps=r.filter(x=>x&&x.data&&Array.isArray(x.data.policies)).slice(0,5);
 }catch(e){ snaps=[]; }
 function snapshot(label){
-  const pol=cleanList();
-  if(!pol.length||pol.every(p=>p.sample)) return false;
-  const data={horizon:state.horizon,policies:pol};
+  const pol=cleanList(), sv=cleanSavList(), fdl=cleanFdList();
+  if(pol.every(p=>p.sample)&&!sv.length&&!fdl.length) return false;
+  const data={horizon:state.horizon,policies:pol,savings:sv,fds:fdl};
   const sig=hashStr(JSON.stringify(data));
   if(snaps.length&&snaps[0].sig===sig) return true;
   snaps.unshift({at:new Date().toISOString(),label:label,sig:sig,count:pol.length,data:data});
   snaps=snaps.slice(0,5);
-  try{ localStorage.setItem(SNAP_KEY,JSON.stringify(snaps)); }catch(e){}
+  try{ localStorage.setItem(SNAP_KEY,JSON.stringify(snaps)); }
+  catch(e){
+    snaps.forEach(sn=>{ if(sn.data&&Array.isArray(sn.data.fds)) sn.data.fds=sn.data.fds.map(f=>Object.assign({},f,{receiptUrl:'',receiptType:''})); });
+    try{ localStorage.setItem(SNAP_KEY,JSON.stringify(snaps)); }catch(e2){ snaps.shift(); return false; }
+  }
   return true;
 }
 function renderSnaps(){
@@ -1519,6 +2063,8 @@ async function restoreSnapshot(i){
   if(!ok) return;
   snapshot('Before restoring a safety copy');
   state.policies=x.data.policies.map(clean).filter(Boolean);
+  if(Array.isArray(x.data.savings)) state.savings = x.data.savings.map(cleanSav).filter(Boolean);
+  if(Array.isArray(x.data.fds)) state.fds = x.data.fds.map(cleanFd).filter(Boolean);
   const h=Number(x.data.horizon);
   if(h>=THIS_YEAR&&h<=THIS_YEAR+80) state.horizon=Math.floor(h);
   save(); render(); renderBackupStatus(); renderSnaps();
@@ -1527,7 +2073,7 @@ async function restoreSnapshot(i){
 
 function buildBackup(){
   const pol=cleanList();
-  return {app:'premium-ledger',version:2,exportedAt:new Date().toISOString(),horizon:state.horizon,count:pol.length,checksum:hashStr(JSON.stringify(pol)),policies:pol};
+  return {app:'premium-ledger',version:3,exportedAt:new Date().toISOString(),horizon:state.horizon,count:pol.length,checksum:hashStr(JSON.stringify(pol)),policies:pol,savings:cleanSavList(),fds:cleanFdList()};
 }
 function backupText(){ return JSON.stringify(buildBackup(),null,2); }
 function stamp(){ return toISO(TODAY); }
@@ -1592,6 +2138,7 @@ function doCopyBackup(){
   });
 }
 
+function safeCell(v){ v=String(v==null?'':v); return /^[=+\-@\t\r]/.test(v)?"'"+v:v; }
 function scheduleTable(){
   const rows=[];
   state.policies.map(analyse).forEach(a=>{
@@ -1603,7 +2150,7 @@ function scheduleTable(){
   });
   rows.sort((x,y)=>(x.date-y.date)||x.name.localeCompare(y.name));
   return [['Due date','Policy','Type','Insurer','Amount (INR)','Running total for policy (INR)','Status']]
-    .concat(rows.map(r=>[toISO(r.date),r.name,r.type,r.insurer,String(r.amt),String(r.cum),r.status]));
+    .concat(rows.map(r=>[toISO(r.date),safeCell(r.name),r.type,safeCell(r.insurer),String(r.amt),String(r.cum),r.status]));
 }
 function toTSV(t){ return t.map(r=>r.map(c=>String(c).replace(/[\t\r\n]+/g,' ')).join('\t')).join('\n'); }
 function toCSV(t){ return t.map(r=>r.map(c=>{ c=String(c); return /[",\r\n]/.test(c)?'"'+c.replace(/"/g,'""')+'"':c; }).join(',')).join('\r\n'); }
@@ -1635,10 +2182,15 @@ function inspectBackup(text){
       skipped.push('Item '+(i+1)+(r&&r.name?' ('+String(r.name).slice(0,40)+')':'')+' was skipped because '+why+'.');
     }
   });
+  
+  const goodSav = (Array.isArray(d.savings) ? d.savings : []).map(cleanSav).filter(Boolean);
+  const goodFd = (Array.isArray(d.fds) ? d.fds : []).map(cleanFd).filter(Boolean);
+
   let sum='none';
   if(d&&!Array.isArray(d)&&d.checksum) sum=(hashStr(JSON.stringify(raw))===d.checksum)?'ok':'bad';
   const h=(d&&!Array.isArray(d))?Number(d.horizon):0;
-  return {ok:true,good:good,skipped:skipped,checksum:sum,exportedAt:(d&&!Array.isArray(d)&&d.exportedAt)||'',horizon:(h>=THIS_YEAR&&h<=THIS_YEAR+80)?Math.floor(h):0};
+  
+  return {ok:true,good:good,goodSav:goodSav,goodFd:goodFd,skipped:skipped,checksum:sum,exportedAt:(d&&!Array.isArray(d)&&d.exportedAt)||'',horizon:(h>=THIS_YEAR&&h<=THIS_YEAR+80)?Math.floor(h):0};
 }
 function dupKey(p){ return [p.name.toLowerCase(),p.start,p.premium,p.freq].join('|'); }
 function mergeSplit(){
@@ -1651,9 +2203,9 @@ function currentMode(){ const m=$('input[name="rmode"]:checked'); return m?m.val
 function updateChoiceNote(){
   if(!pending) return;
   const s=mergeSplit();
-  $('#rs-merge-note').textContent=s.add.length+' new '+(s.add.length===1?'policy':'policies')+' will be added'+(s.dup.length?'. '+s.dup.length+' you already have will be skipped':'')+'.';
+  $('#rs-merge-note').textContent=s.add.length+' new '+(s.add.length===1?'policy':'policies')+' will be added'+(s.dup.length?'. '+s.dup.length+' you already have will be skipped':'')+'. Savings and FDs will be merged.';
   $('#rs-replace-note').textContent='Everything now in the ledger is replaced. A safety copy is kept first.';
-  $('#rs-apply').disabled = currentMode()==='merge' ? s.add.length===0 : pending.good.length===0;
+  $('#rs-apply').disabled = currentMode()==='merge' ? s.add.length===0 && pending.goodSav.length===0 && pending.goodFd.length===0 : pending.good.length===0;
 }
 function checkRestore(){
   const text=$('#rs-text').value.trim(), rep=$('#rs-report'), choice=$('#rs-choice');
@@ -1665,6 +2217,9 @@ function checkRestore(){
   pending=r;
   const when=r.exportedAt?fmtDateTime(r.exportedAt):'';
   let html='<div><b>'+r.good.length+'</b> valid '+(r.good.length===1?'policy':'policies')+' found'+(when?', saved '+esc(when):'')+'.</div>';
+  if(r.goodSav.length > 0 || r.goodFd.length > 0) {
+    html+='<div>Also found <b>'+r.goodSav.length+'</b> savings accounts and <b>'+r.goodFd.length+'</b> fixed deposits.</div>';
+  }
   if(r.good.length){
     html+='<div class="ok">'+r.good.slice(0,6).map(p=>esc(p.name)).join(', ')+(r.good.length>6?' and '+(r.good.length-6)+' more':'')+'.</div>';
   }
@@ -1673,19 +2228,21 @@ function checkRestore(){
   else html+='<div class="ok">This backup has no checksum, so it cannot be verified.</div>';
   r.skipped.forEach(m=>{ html+='<div class="warn">'+esc(m)+'</div>'; });
   rep.innerHTML='<div class="rp">'+html+'</div>';
-  if(r.good.length){
+  if(r.good.length || r.goodSav.length || r.goodFd.length){
     choice.hidden=false;
     if(wasHidden){ const v=realPolicies()?'merge':'replace'; const el=$('input[name="rmode"][value="'+v+'"]'); if(el) el.checked=true; }
     updateChoiceNote();
   }
 }
 function applyRestore(){
-  if(!pending||!pending.good.length) return;
+  if(!pending||(!pending.good.length && !pending.goodSav.length && !pending.goodFd.length)) return;
   const mode=currentMode();
   const kept=snapshot('Before restoring a backup');
   let msg;
   if(mode==='replace'){
     state.policies=pending.good.map(p=>Object.assign({},p));
+    state.savings=pending.goodSav.map(s=>Object.assign({},s));
+    state.fds=pending.goodFd.map(f=>Object.assign({},f));
     if(pending.horizon) state.horizon=pending.horizon;
     state.backedUpSig=dataSig();
     state.lastBackupAt=(pending.exportedAt&&!isNaN(new Date(pending.exportedAt).getTime()))?pending.exportedAt:new Date().toISOString();
@@ -1693,6 +2250,13 @@ function applyRestore(){
   } else {
     const s=mergeSplit();
     s.add.forEach(p=>state.policies.push(Object.assign({},p)));
+    const sk=x=>[x.bank.toLowerCase(),x.accNo,x.ifsc,x.accName].join('|');
+    const savIds=new Set(state.savings.map(x=>x.id)), savKeys=new Set(state.savings.map(sk));
+    pending.goodSav.forEach(x=>{ if(savKeys.has(sk(x))) return; const y=Object.assign({},x); if(savIds.has(y.id)) y.id=uid(); state.savings.push(y); savKeys.add(sk(y)); savIds.add(y.id); });
+    const fk=x=>[x.bank.toLowerCase(),x.fdNum,x.amount,x.invested].join('|');
+    const fdIds=new Set(state.fds.map(x=>x.id)), fdKeys=new Set(state.fds.map(fk));
+    pending.goodFd.forEach(x=>{ if(fdKeys.has(fk(x))) return; const y=Object.assign({},x); if(fdIds.has(y.id)) y.id=uid(); state.fds.push(y); fdKeys.add(fk(y)); fdIds.add(y.id); });
+    
     msg='Added '+s.add.length+(s.add.length===1?' policy':' policies')+(s.dup.length?' and skipped '+s.dup.length+' you already have':'')+'.';
   }
   save(); render();
@@ -1702,7 +2266,7 @@ function applyRestore(){
   renderBackupStatus(); renderSnaps();
 }
 
-/* ---------- Telegram Backup ---------- */
+/* ---------- Telegram Backup & Notifications ---------- */
 const TG_KEY = KEY + '-telegram';
 
 function getTgCreds() {
@@ -1713,11 +2277,13 @@ function loadTgFields() {
   if(c) {
     $('#tg-token').value = c.token || '';
     $('#tg-chatid').value = c.chatId || '';
+    $('#tg-auto').checked = !!c.auto;
     $('#tg-ops').hidden = false;
     $('#tg-hint').hidden = false;
   } else {
     $('#tg-token').value = '';
     $('#tg-chatid').value = '';
+    $('#tg-auto').checked = false;
     $('#tg-ops').hidden = true;
     $('#tg-hint').hidden = true;
   }
@@ -1727,7 +2293,7 @@ function saveTgCreds() {
   const chatId = $('#tg-chatid').value.trim();
   if(!token || !chatId) { tgMsg('Enter both Bot Token and Chat ID.', true); return; }
   try {
-    localStorage.setItem(TG_KEY, JSON.stringify({token, chatId}));
+    localStorage.setItem(TG_KEY, JSON.stringify({token, chatId, auto:$('#tg-auto').checked}));
     loadTgFields();
     tgMsg('Telegram credentials saved.');
   } catch(e) { tgMsg('Could not save credentials.', true); }
@@ -1743,6 +2309,30 @@ function tgMsg(msg, bad) {
   el.classList.toggle('bad', !!bad);
 }
 
+const tgE=v=>String(v==null?'':v).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+async function tgSendMsgText(text) {
+  const c = getTgCreds();
+  if(!c) { alert('Save Telegram Bot Token and Chat ID in Backup & Sync settings first.'); return; }
+  try {
+    const res = await fetch(`https://api.telegram.org/bot${c.token}/sendMessage`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({chat_id: c.chatId, text: text, parse_mode: 'HTML'})
+    });
+    const d = await res.json();
+    if(d.ok) alert('Sent to Telegram successfully!');
+    else alert('Telegram error: ' + d.description);
+  } catch(e) { alert('Network error connecting to Telegram.'); }
+}
+
+let autoTried=0;
+function maybeAutoBackup(){
+  const c=getTgCreds(); if(!c||!c.auto||!c.token||!c.chatId) return;
+  if(!realPolicies()||dataSig()===state.backedUpSig) return;
+  if(state.lastBackupAt&&Date.now()-new Date(state.lastBackupAt).getTime()<7*864e5) return;
+  if(Date.now()-autoTried<36e5) return;
+  autoTried=Date.now(); sendToTelegram();
+}
 async function sendToTelegram() {
   const c = getTgCreds();
   if(!c) return tgMsg('Save credentials first.', true);
@@ -1789,7 +2379,7 @@ async function fetchFromTelegram() {
     for(let i = updates.length - 1; i >= 0; i--) {
       const u = updates[i];
       const msg = u.message || u.channel_post;
-      if(msg && msg.document && msg.document.file_name && msg.document.file_name.includes('premium-ledger')) {
+      if(msg && msg.chat && String(msg.chat.id)===String(c.chatId) && msg.document && msg.document.file_name && msg.document.file_name.includes('premium-ledger')) {
         fileId = msg.document.file_id;
         break;
       }
@@ -1821,7 +2411,7 @@ async function fetchFromTelegram() {
 }
 
 /* ---------- wireless sync between devices (PeerJS) ---------- */
-const APP_BUILD='2026-09-20a';
+const APP_BUILD='2026-10-17b';
 const SYNC_TTL=180000;
 const SYNC_LIBS=['https://cdn.jsdelivr.net/npm/peerjs@1.5.2/dist/peerjs.min.js','https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js'];
 const STUN_SERVERS=[{urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun1.l.google.com:19302'},{urls:'stun:stun.cloudflare.com:3478'},{urls:'stun:global.stun.twilio.com:3478'}];
@@ -1886,7 +2476,7 @@ function parseMsg(d){
     else if(d instanceof ArrayBuffer) t=new TextDecoder().decode(d);
     else if(d&&d.buffer instanceof ArrayBuffer) t=new TextDecoder().decode(d);
     else if(d&&typeof d==='object') return d;
-    if(t==null||t.length>3000000) return null;
+    if(t==null||t.length>15000000) return null;
     return JSON.parse(t);
   }catch(e){ return null; }
 }
@@ -1924,7 +2514,7 @@ function syncFail(msg){
 /* --- sending side --- */
 function syncHost(){
   if(!syncSupported()){ syMsg('This browser does not support wireless sync.',true); return; }
-  if(!state.policies.length){ syMsg('There are no policies to send yet.',true); return; }
+  if(!state.policies.length&&!state.savings.length&&!state.fds.length){ syMsg('There is nothing to send yet.',true); return; }
   syncCleanup(); syMsg('');
   sync.mode='host'; sync.tries=0;
   hostStart();
@@ -2070,7 +2660,7 @@ function onRecvData(d){
   sync.got=true; clearTimer('data');
   $('#rs-text').value=JSON.stringify(m.payload,null,2);
   checkRestore();
-  const n=pending?pending.good.length:0;
+  const n=pending?(pending.good.length+pending.goodSav.length+pending.goodFd.length):0;
   try{ sync.conn.send(JSON.stringify({t:'ack',count:n})); }catch(e){}
   $('#sy-recv-check').hidden=true;
   setRecv('Received. Checking it…',false,true);
@@ -2150,6 +2740,49 @@ function shareBackup(){
   navigator.share({title:'Premium ledger backup',text:text}).then(()=>{ markBackedUp(); syMsg('Shared. On the other device, paste it under Restore.'); }).catch(()=>{});
 }
 
+function fyOf(d){ return d.getMonth()>=3?d.getFullYear():d.getFullYear()-1; }
+function buildReport(y){
+  const A=new Date(y,3,1), B=new Date(y+1,3,1), lab=y+'-'+String(y+1).slice(2);
+  const rows=[]; let tp=0,td=0;
+  state.policies.map(analyse).forEach(a=>{
+    let paid=0,due=0,c=0;
+    a.items.forEach(i=>{ if(i.date>=A&&i.date<B){ c++; if(i.date<=TODAY) paid+=i.amount; else due+=i.amount; } });
+    if(c){ rows.push('<tr><td>'+esc(a.p.name)+'</td><td>'+TYPES[a.p.type].short+'</td><td>'+c+'</td><td>'+fmt(paid)+'</td><td>'+fmt(due)+'</td><td>'+fmt(paid+due)+'</td></tr>'); tp+=paid; td+=due; }
+  });
+  let h='<h3 class="bk-h" style="margin-top:0">Premiums, FY '+lab+'</h3><p class="sub">1 Apr '+y+' to 31 Mar '+(y+1)+'</p>';
+  h+=rows.length?'<div class="tbl-wrap"><table><thead><tr><th>Policy</th><th>Type</th><th>Payments</th><th>Paid</th><th>Still due</th><th>Total</th></tr></thead><tbody>'+rows.join('')+'</tbody><tfoot><tr><td>Total</td><td></td><td></td><td>'+fmt(tp)+'</td><td>'+fmt(td)+'</td><td>'+fmt(tp+td)+'</td></tr></tfoot></table></div>':'<p class="sub">No premiums fall in this year.</p>';
+  const fr=[]; let ti=0;
+  state.fds.forEach(f=>{
+    const d=fdDates(f); let it=null;
+    if(d.inv&&d.mat&&d.inv<B&&d.mat>A){
+      const lo=d.inv>A?d.inv:A, hi=d.mat<B?d.mat:B;
+      const x=fdAccrued(f,hi), z=fdAccrued(f,lo); if(x!=null&&z!=null) it=x-z;
+    }
+    const mat=d.mat&&d.mat>=A&&d.mat<B;
+    if(it!=null||mat){ ti+=it||0; fr.push('<tr><td>'+esc(f.bank)+'</td><td>'+esc(f.fdNum||'')+'</td><td>'+fmt(f.amount)+'</td><td>'+(it!=null?fmt(it):'-')+'</td><td>'+(mat?esc(fmtDate(d.mat))+', '+fmt(f.matAmt||f.amount):'-')+'</td></tr>'); }
+  });
+  h+='<h3 class="bk-h">Fixed deposits, FY '+lab+'</h3>';
+  h+=fr.length?'<div class="tbl-wrap"><table><thead><tr><th>Bank</th><th>FD no.</th><th>Principal</th><th>Interest in year</th><th>Matures</th></tr></thead><tbody>'+fr.join('')+'</tbody><tfoot><tr><td>Total</td><td></td><td></td><td>'+fmt(ti)+'</td><td></td></tr></tfoot></table></div><p class="sub">Interest is an estimate from the rate and tenure you entered. Use your bank statement or TDS certificate for tax filing.</p>':'<p class="sub">No fixed deposits fall in this year.</p>';
+  const sv=state.savings.reduce((t,x)=>t+x.amount,0);
+  if(state.savings.length) h+='<h3 class="bk-h">Savings</h3><p>Total balance across '+state.savings.length+(state.savings.length===1?' account':' accounts')+' as entered: <b>'+fmt(sv)+'</b></p>';
+  return h;
+}
+function openReport(){
+  const cur=fyOf(TODAY); let lo=cur, hi=cur+1;
+  state.policies.forEach(q=>{ if(validISO(q.start)) lo=Math.min(lo,fyOf(pd(q.start))); });
+  state.policies.map(analyse).forEach(a=>{ hi=Math.max(hi,fyOf(a.end)); });
+  state.fds.forEach(f=>{ const d=fdDates(f); if(d.inv) lo=Math.min(lo,fyOf(d.inv)); if(d.mat) hi=Math.max(hi,fyOf(d.mat)); });
+  hi=Math.min(hi,cur+30);
+  let o=''; for(let y=lo;y<=hi;y++) o+='<option value="'+y+'"'+(y===cur?' selected':'')+'>FY '+y+'-'+String(y+1).slice(2)+'</option>';
+  $('#rp-fy').innerHTML=o;
+  $('#rp-body').innerHTML=buildReport(cur);
+  openDlg($('#dlg-report'));
+}
+function printReport(){
+  const y=Number($('#rp-fy').value);
+  $('#print-area').innerHTML='<h2>Premium ledger</h2><p>Yearly summary, generated '+esc(fmtDate(TODAY))+'</p>'+buildReport(y);
+  document.body.classList.add('printing'); window.print();
+}
 function openBackup(){
   $('#bk-text').value=backupText();
   $('#bk-details').open=false;
@@ -2168,12 +2801,60 @@ function openSettings(){
   openDlg($('#dlg-settings'));
 }
 
+let currentZoom = 1;
+function updateZoom() {
+  $('#v-content').style.transform = `scale(${currentZoom})`;
+}
+let viewerUrl=null;
+function clearViewer(){ const c=$('#v-content'); c.textContent=''; if(viewerUrl){ URL.revokeObjectURL(viewerUrl); viewerUrl=null; } }
+function dataUrlToBlob(u){ const i=u.indexOf(','); const mime=u.slice(5,u.indexOf(';')); const bin=atob(u.slice(i+1)); const a=new Uint8Array(bin.length); for(let k=0;k<bin.length;k++) a[k]=bin.charCodeAt(k); return new Blob([a],{type:mime}); }
+function openViewerBlob(blob){
+  currentZoom=1; updateZoom(); clearViewer();
+  const c=$('#v-content');
+  try{
+    viewerUrl=URL.createObjectURL(blob);
+    const pdf=blob.type==='application/pdf';
+    const el=document.createElement(pdf?'iframe':'img'); el.src=viewerUrl;
+    if(pdf){ el.style.cssText='width:80vw;height:80vh;border:none'; el.title='Document'; } else { el.style.cssText='max-width:100%;display:block'; el.alt='Document'; }
+    c.appendChild(el);
+  }catch(e){ c.textContent='This document could not be opened.'; }
+  openDlg($('#dlg-viewer'));
+}
+function openViewer(url) {
+  currentZoom = 1; updateZoom(); clearViewer();
+  const c = $('#v-content');
+  if(!okReceipt(url)){ c.textContent='This receipt cannot be displayed.'; openDlg($('#dlg-viewer')); return; }
+  try{
+    viewerUrl=URL.createObjectURL(dataUrlToBlob(url));
+    const isPdf=url.startsWith('data:application/pdf');
+    const el=document.createElement(isPdf?'iframe':'img');
+    el.src=viewerUrl;
+    if(isPdf){ el.style.cssText='width:80vw;height:80vh;border:none'; el.title='Receipt'; }
+    else { el.style.cssText='max-width:100%;display:block'; el.alt='FD receipt'; }
+    c.appendChild(el);
+  }catch(e){ c.textContent='This receipt could not be opened.'; }
+  openDlg($('#dlg-viewer'));
+}
+
 /* ---------- events ---------- */
 document.addEventListener('click',async e=>{
   const t=e.target;
   const close=t.closest('[data-close]');
   if(close){ const d=close.closest('dialog'); if(d) d.close(); return; }
-  const pill=t.closest('.pill'); if(pill){ ui.filter=pill.dataset.f; ui.sel=null; render(); return; }
+  
+  const pill=t.closest('.pill'); 
+  if(pill){ 
+    const v = pill.dataset.v;
+    if(v === 'policies') {
+      ui.view = 'policies';
+      ui.filter = pill.dataset.f;
+    } else {
+      ui.view = v;
+    }
+    ui.sel=null; render(); return; 
+  }
+  
+  const bn=t.closest('.bn[data-v]'); if(bn){ ui.view=bn.dataset.v; if(ui.view==='policies') ui.filter='all'; ui.sel=null; render(); window.scrollTo(0,0); return; }
   const seg=t.closest('[data-mode]'); if(seg){
     ui.mode=seg.dataset.mode;
     $$('[data-mode]').forEach(b=>b.setAttribute('aria-pressed',String(b===seg)));
@@ -2182,21 +2863,65 @@ document.addEventListener('click',async e=>{
   const col=t.closest('.yc-col'); if(col){ setSel(Number(col.dataset.y)); return; }
   const act=t.closest('[data-act]');
   if(act){
-    const id=act.parentElement.dataset.id, kind=act.dataset.act;
-    if(kind==='sched') openSchedule(id);
+    const kind=act.dataset.act;
+    if(kind==='sched') openSchedule(act.parentElement.dataset.id);
     else if(kind==='hinfo') openDlg($('#dlg-hinfo'));
-    else if(kind==='edit') openForm(id);
+    else if(kind==='edit') openForm(act.parentElement.dataset.id);
     else if(kind==='del'){
+      const id=act.parentElement.dataset.id;
       const p=state.policies.find(x=>x.id===id); if(!p) return;
       if(await askConfirm('Delete this policy?','"'+p.name+'" will be removed from your ledger. A safety copy is kept under Backup in case you change your mind.','Delete policy')){
         snapshot('Before deleting "'+p.name+'"');
-        state.policies=state.policies.filter(x=>x.id!==id); save(); render();
+        const idx=state.policies.findIndex(x=>x.id===id); state.policies=state.policies.filter(x=>x.id!==id); save(); render();
+        toastUndo('Deleted "'+p.name+'".',()=>{ state.policies.splice(Math.min(idx,state.policies.length),0,p); save(); render(); },()=>{ (p.docs||[]).forEach(d=>docDel(d.id)); });
       }
+    }
+    else if(kind==='viewdoc') openDoc(act.dataset.doc);
+    else if(kind==='editsav') openSavForm(act.parentElement.dataset.sid);
+    else if(kind==='delsav'){
+       const id=act.parentElement.dataset.sid;
+       const s=state.savings.find(x=>x.id===id); if(!s) return;
+       if(await askConfirm('Delete account?','"'+s.bank+'" will be removed.','Delete account')) {
+         snapshot('Before deleting savings account');
+         const idx=state.savings.findIndex(x=>x.id===id); state.savings=state.savings.filter(x=>x.id!==id); save(); render();
+         toastUndo('Deleted "'+s.bank+'".',()=>{ state.savings.splice(Math.min(idx,state.savings.length),0,s); save(); render(); });
+       }
+    }
+    else if(kind==='tgsav') {
+      const id=act.parentElement.dataset.sid;
+      const s = state.savings.find(x=>x.id===id); if(!s) return;
+      const text = '🏦 <b>Savings Account</b>\n<b>Bank:</b> '+tgE(s.bank)+'\n<b>Name:</b> '+tgE(s.accName||'N/A')+'\n<b>A/c No:</b> <code>'+tgE(s.accNo||'N/A')+'</code>\n<b>IFSC:</b> <code>'+tgE(s.ifsc||'N/A')+'</code>\n<b>Branch:</b> '+tgE(s.branch||'N/A')+'\n<b>Balance:</b> ₹'+INR.format(s.amount);
+      tgSendMsgText(text);
+    }
+    else if(kind==='editfd') openFdForm(act.parentElement.dataset.fid);
+    else if(kind==='delfd'){
+       const id=act.parentElement.dataset.fid;
+       const f=state.fds.find(x=>x.id===id); if(!f) return;
+       if(await askConfirm('Delete Fixed Deposit?','"'+f.bank+'" will be removed.','Delete FD')) {
+         snapshot('Before deleting fixed deposit');
+         const idx=state.fds.findIndex(x=>x.id===id); state.fds=state.fds.filter(x=>x.id!==id); save(); render();
+         toastUndo('Deleted FD at "'+f.bank+'".',()=>{ state.fds.splice(Math.min(idx,state.fds.length),0,f); save(); render(); });
+       }
+    }
+    else if(kind==='tgfd') {
+      const id=act.parentElement.dataset.fid;
+      const f = state.fds.find(x=>x.id===id); if(!f) return;
+      const text = '📜 <b>Fixed Deposit</b>\n<b>Bank:</b> '+tgE(f.bank)+'\n<b>FD No:</b> <code>'+tgE(f.fdNum||'N/A')+'</code>\n<b>Principal:</b> ₹'+INR.format(f.amount)+'\n<b>Rate:</b> '+(f.rate||0)+'%\n<b>Tenure:</b> '+(fmtTenure(f.tenure)||'N/A')+'\n<b>Invested:</b> '+(f.invested?fmtDate(pd(f.invested)):'N/A')+'\n<b>Maturing:</b> '+(f.maturity?fmtDate(pd(f.maturity)):'N/A')+'\n<b>Mat. Amount:</b> ₹'+INR.format(f.matAmt||0);
+      tgSendMsgText(text);
+    }
+    else if(kind==='viewreceipt') {
+      const id=act.parentElement.dataset.fid;
+      const f = state.fds.find(x=>x.id===id); if(!f || !f.receiptUrl) return;
+      openViewer(f.receiptUrl, f.receiptType);
     }
     return;
   }
   if(t.closest('#btn-add')||t.closest('#btn-add2')) return openForm();
-  if(t.closest('#btn-backup')) return openBackup();
+  if(t.closest('#btn-add-sav')) return openSavForm();
+  if(t.closest('#btn-add-fd')) return openFdForm();
+  if(t.closest('#btn-backup')||t.closest('#btn-bk-now')) return openBackup();
+  if(t.closest('#btn-report')||t.closest('#bn-report')) return openReport();
+  if(t.closest('#rp-print')) return printReport();
   if(t.closest('#btn-settings')) return openSettings();
   if(t.closest('#btn-sample')||t.closest('#s-sample')){
     const have=new Set(state.policies.filter(p=>p.sample).map(p=>p.id));
@@ -2207,15 +2932,19 @@ document.addEventListener('click',async e=>{
     state.policies=state.policies.filter(p=>!p.sample); save(); render(); return;
   }
   if(t.closest('#s-clear')){
-    if(await askConfirm('Delete all policies?','Every policy in this ledger will be removed from this browser. A safety copy is kept under Backup in case you change your mind.','Delete everything')){
+    if(await askConfirm('Delete all data?','Every policy, savings account, and fixed deposit in this ledger will be removed from this browser. A safety copy is kept under Backup in case you change your mind.','Delete everything')){
       snapshot('Before deleting everything');
-      state.policies=[]; save(); render(); $('#dlg-settings').close();
+      state.policies=[]; state.savings=[]; state.fds=[]; save(); render(); $('#dlg-settings').close();
     }
     return;
   }
   if(t.closest('#tx-info')) return openDlg($('#dlg-hinfo'));
   if(t.closest('#chg-add')){ addChangeRow('',''); updatePreview(); return; }
   const cd=t.closest('.chg-del'); if(cd){ cd.parentElement.remove(); updatePreview(); return; }
+  if(t.closest('#claim-add')){ addClaimRow('','',''); updatePreview(); return; }
+  const cx=t.closest('.claim-del'); if(cx){ cx.closest('.claim-row').remove(); updatePreview(); return; }
+  const dv=t.closest('.doc-view'); if(dv) return openDoc(dv.dataset.doc);
+  const dr=t.closest('.doc-rm'); if(dr){ const id=dr.dataset.doc; formDocs=formDocs.filter(d=>d.id!==id); if(formNewDocs.has(id)){ formNewDocs.delete(id); docDel(id); } else formRemoved.push(id); renderDocList(); return; }
   if(t.closest('#sy-test')) return runSyncTest();
   if(t.closest('#sy-share')) return shareBackup();
   if(t.closest('#sy-r-save')) return saveRelay();
@@ -2235,6 +2964,11 @@ document.addEventListener('click',async e=>{
   if(t.closest('#tg-clear')) return clearTgCreds();
   if(t.closest('#tg-send')) return sendToTelegram();
   if(t.closest('#tg-fetch')) return fetchFromTelegram();
+  
+  if(t.closest('#v-zoomin')) { currentZoom = Math.min(5, currentZoom + 0.2); updateZoom(); }
+  if(t.closest('#v-zoomout')) { currentZoom = Math.max(0.2, currentZoom - 0.2); updateZoom(); }
+  if(t.closest('#v-reset')) { currentZoom = 1; updateZoom(); }
+
   const sn=t.closest('[data-snap]'); if(sn) return restoreSnapshot(Number(sn.dataset.snap));
 });
 document.addEventListener('pointerover',e=>{
@@ -2244,7 +2978,104 @@ document.addEventListener('pointerover',e=>{
 document.addEventListener('focusin',e=>{
   const col=e.target.closest&&e.target.closest('.yc-col'); if(col) setSel(Number(col.dataset.y));
 });
-$('#pform').addEventListener('submit',submitForm);
+
+// Savings Submit
+$('#sav-form').addEventListener('submit', e => {
+  e.preventDefault();
+  const bank = $('#sav-bank').value.trim();
+  const amt = Number($('#sav-amt').value) || 0;
+  if(!bank) return;
+  const obj = { 
+    id: editSavId || uid(), bank, amount: amt,
+    accName: $('#sav-accName').value.trim(),
+    accNo: $('#sav-accNo').value.trim(),
+    ifsc: $('#sav-ifsc').value.trim(),
+    branch: $('#sav-branch').value.trim()
+  };
+  if(editSavId) {
+    const i = state.savings.findIndex(x=>x.id===editSavId);
+    if(i>=0) state.savings[i] = obj; else state.savings.push(obj);
+  } else state.savings.push(obj);
+  save(); $('#dlg-sav').close(); render();
+});
+
+// FD Submit
+$('#fd-form').addEventListener('submit', e => {
+  e.preventDefault();
+  const bank = $('#fd-bank').value.trim();
+  const amt = Number($('#fd-amt').value) || 0;
+  const mat = $('#fd-mat').value;
+  const inv = $('#fd-invested').value;
+  if(!bank) return;
+  if(receiptBusy){ alert('Please wait, the receipt is still being prepared.'); return; }
+  if(validISO(inv)&&validISO(mat)&&pd(mat)<=pd(inv)){ alert('The maturity date must be after the investment date.'); return; }
+  const obj = { 
+    id: editFdId || uid(), bank, amount: amt, 
+    rate: Number($('#fd-rate').value)||0,
+    tenure: tenureMonths(),
+    invested: validISO(inv)?inv:'',
+    maturity: validISO(mat)?mat:'',
+    matAmt: Number($('#fd-mat-amt').value)||0,
+    method: $('#fd-method').value.trim(),
+    txnId: $('#fd-txnId').value.trim(),
+    fdNum: $('#fd-fdNum').value.trim(),
+    receiptUrl: tempReceiptBase64,
+    receiptType: tempReceiptType
+  };
+  if(editFdId) {
+    const i = state.fds.findIndex(x=>x.id===editFdId);
+    if(i>=0) state.fds[i] = obj; else state.fds.push(obj);
+  } else state.fds.push(obj);
+  save(); $('#dlg-fd').close(); render();
+});
+
+// FD Auto-calc listeners
+$('#fd-amt').addEventListener('input', () => updateFdCalc(false));
+$('#fd-rate').addEventListener('input', () => updateFdCalc(false));
+$('#fd-tenure').addEventListener('input', () => updateFdCalc(false));
+$('#fd-invested').addEventListener('change', () => updateFdCalc(false));
+
+// FD File listener
+let receiptBusy=false;
+function readAsDataURL(f){ return new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(String(r.result||'')); r.onerror=()=>rej(r.error); r.readAsDataURL(f); }); }
+function compressImage(f){
+  return new Promise(res=>{
+    if(!/^image\/(jpeg|png|webp)$/.test(f.type)){ res(null); return; }
+    const url=URL.createObjectURL(f), img=new Image();
+    img.onload=()=>{
+      try{
+        const k=Math.min(1,1600/Math.max(img.width,img.height));
+        const c=document.createElement('canvas'); c.width=Math.max(1,Math.round(img.width*k)); c.height=Math.max(1,Math.round(img.height*k));
+        const x=c.getContext('2d'); x.fillStyle='#fff'; x.fillRect(0,0,c.width,c.height); x.drawImage(img,0,0,c.width,c.height);
+        res(c.toDataURL('image/jpeg',0.78));
+      }catch(e){ res(null); }
+      URL.revokeObjectURL(url);
+    };
+    img.onerror=()=>{ URL.revokeObjectURL(url); res(null); };
+    img.src=url;
+  });
+}
+$('#fd-receipt').addEventListener('change', async e => {
+  const f = e.target.files && e.target.files[0];
+  if(!f) return; // picker cancelled: keep any saved receipt
+  const note=$('#fd-receipt-name');
+  if(!/^(image\/(png|jpeg|webp|gif)|application\/pdf)$/.test(f.type)){ alert('Please choose a JPG, PNG, WebP, GIF or PDF file.'); e.target.value=''; return; }
+  if(f.size > 10*1024*1024){ alert('File too large. Please choose a file under 10 MB.'); e.target.value=''; return; }
+  receiptBusy=true; note.textContent='(Preparing…)';
+  try{
+    let data=await compressImage(f);
+    if(!data){
+      if(f.size > 1.5*1024*1024){ alert('This file is over 1.5 MB and cannot be shrunk. Use a smaller file or a photo.'); e.target.value=''; note.textContent=''; return; }
+      data=await readAsDataURL(f);
+    }
+    if(!okReceipt(data)){ alert('That file could not be used.'); e.target.value=''; note.textContent=''; return; }
+    tempReceiptBase64=data; tempReceiptType=data.slice(5,data.indexOf(';'));
+    note.textContent='(Ready to save)';
+  }catch(err){ alert('The file could not be read.'); e.target.value=''; note.textContent=''; }
+  finally{ receiptBusy=false; }
+});
+
+
 $('#pform').addEventListener('input',updatePreview);
 $('#pform').addEventListener('change',updatePreview);
 $('#sort').addEventListener('change',e=>{ ui.sort=e.target.value; render(); });
@@ -2259,7 +3090,7 @@ $('#calc-yr').addEventListener('input', () => updateIncCalc(false));
 $('#f-premium').addEventListener('input', () => updateIncCalc(false));
 
 $('#dlg-backup').addEventListener('close',()=>{ syncCleanup(); syMsg(''); });
-window.addEventListener('pagehide',()=>{ syncStop(); });
+window.addEventListener('pagehide',()=>{ syncStop(); hideToast(true); });
 $('#sy-code-in').addEventListener('input',e=>{ e.target.value=normCode(e.target.value); });
 $('#sy-build').textContent='Page version '+APP_BUILD+'. Both devices should show the same version.';
 if(navigator.share) $('#sy-share').hidden=false;
@@ -2271,7 +3102,7 @@ $('#rs-text').addEventListener('input',()=>{ clearTimeout(rsT); rsT=setTimeout(c
 $('#rs-choice').addEventListener('change',updateChoiceNote);
 $('#rs-file').addEventListener('change',e=>{
   const f=e.target.files&&e.target.files[0]; if(!f) return;
-  if(f.size>5e6){ $('#rs-report').innerHTML='<div class="rp bad">That file is too large to be a backup.</div>'; return; }
+  if(f.size>20e6){ $('#rs-report').innerHTML='<div class="rp bad">That file is too large to be a backup.</div>'; return; }
   const fr=new FileReader();
   fr.onload=()=>{ $('#rs-text').value=String(fr.result||''); checkRestore(); };
   fr.onerror=()=>{ $('#rs-report').innerHTML='<div class="rp bad">The file could not be read. Paste the backup text instead.</div>'; };
@@ -2287,10 +3118,75 @@ window.addEventListener('resize',()=>{
   },150);
 });
 
+$('#fd-mat').addEventListener('change',()=>{
+  const a=$('#fd-invested').value, b=$('#fd-mat').value;
+  if(!(validISO(a)&&validISO(b))) return;
+  const A=pd(a), B=pd(b); if(B<=A) return;
+  let m=(B.getFullYear()-A.getFullYear())*12+B.getMonth()-A.getMonth();
+  if(B.getDate()<A.getDate()) m--;
+  if(m>0){ $('#fd-tenure').value=+(m/12).toFixed(2); updateFdCalc(false,true); }
+});
+['input','change'].forEach(ev=>document.addEventListener(ev,e=>{
+  if(e.target&&e.target.type==='date'&&e.target.parentNode) refreshDateHints(e.target.parentNode);
+}));
+let qT=null;
+$('#q').addEventListener('input',e=>{ clearTimeout(qT); const v=e.target.value; qT=setTimeout(()=>{ ui.q=v; render(); },150); });
+$('#status-f').addEventListener('change',e=>{ ui.status=e.target.value; render(); });
+$('#rp-fy').addEventListener('change',()=>{ $('#rp-body').innerHTML=buildReport(Number($('#rp-fy').value)); });
+window.addEventListener('afterprint',()=>document.body.classList.remove('printing'));
+try{ matchMedia('print').addEventListener('change',e=>{ if(!e.matches) document.body.classList.remove('printing'); }); }catch(e){}
+$('#dlg-policy').addEventListener('close',()=>{ if(!formSaved) formNewDocs.forEach(docDel); formNewDocs=new Set(); formRemoved=[]; formSaved=false; });
+$('#tg-auto').addEventListener('change',()=>{
+  const c=getTgCreds(); if(!c){ $('#tg-auto').checked=false; tgMsg('Save your credentials first.',true); return; }
+  c.auto=$('#tg-auto').checked;
+  try{ localStorage.setItem(TG_KEY,JSON.stringify(c)); tgMsg(c.auto?'Weekly auto-backup is on.':'Auto-backup is off.'); }catch(e){ tgMsg('Could not save this setting.',true); }
+});
+$('#f-docs').addEventListener('change',async e=>{
+  const files=Array.from(e.target.files||[]); e.target.value='';
+  if(!files.length) return;
+  docBusy=true; const err=$('#f-err'); err.textContent='';
+  try{
+    for(const f of files){
+      if(formDocs.length>=10){ err.textContent='A policy can have up to 10 documents.'; break; }
+      if(!DOC_TYPES.test(f.type)){ err.textContent='"'+f.name+'" is not a PDF or image.'; continue; }
+      if(f.size>10*1024*1024){ err.textContent='"'+f.name+'" is over 10 MB.'; continue; }
+      let blob=f;
+      if(/^image\/(jpeg|png|webp)$/.test(f.type)){ const d=await compressImage(f); if(d&&okReceipt(d)) blob=dataUrlToBlob(d); }
+      const id='d'+Date.now().toString(36)+Math.random().toString(36).slice(2,8);
+      await docPut(id,blob);
+      formDocs.push({id:id,name:f.name.slice(0,80),type:blob.type||f.type,size:blob.size}); formNewDocs.add(id);
+    }
+    renderDocList();
+  }catch(x){ err.textContent='Documents could not be saved in this browser.'; }
+  finally{ docBusy=false; }
+});
+function refreshToday(){
+  const n=new Date(), t=new Date(n.getFullYear(),n.getMonth(),n.getDate());
+  if(t.getTime()!==TODAY.getTime()){ TODAY=t; THIS_YEAR=t.getFullYear(); render(); }
+}
+document.addEventListener('visibilitychange',()=>{ if(!document.hidden){ refreshToday(); maybeAutoBackup(); } });
+window.addEventListener('focus',refreshToday);
+$('#dlg-viewer').addEventListener('close',clearViewer);
+$('#fd-mat-amt').addEventListener('input',e=>{ e.target.dataset.manual='1'; });
+window.addEventListener('storage',e=>{
+  if(e.key!==KEY||!e.newValue) return;
+  try{
+    const d=JSON.parse(e.newValue); if(!d||!Array.isArray(d.policies)) return;
+    state.policies=d.policies.map(clean).filter(Boolean);
+    state.savings=(Array.isArray(d.savings)?d.savings:[]).map(cleanSav).filter(Boolean);
+    state.fds=(Array.isArray(d.fds)?d.fds:[]).map(cleanFd).filter(Boolean);
+    if(typeof d.lastBackupAt==='string') state.lastBackupAt=d.lastBackupAt;
+    if(typeof d.backedUpSig==='string') state.backedUpSig=d.backedUpSig;
+    render();
+  }catch(err){}
+});
+
 /* ---------- start ---------- */
 applyTheme();
 save();
 render();
+refreshDateHints();
+setTimeout(maybeAutoBackup,4000);
 lastW=document.documentElement.clientWidth;
 })();
 </script>
