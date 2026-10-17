@@ -570,9 +570,27 @@ small:empty{display:none}
     </div>
     <div class="dlg-body">
       <div class="bk-status" id="bk-status" role="status"></div>
+      
+      <!-- TELEGRAM BACKUP & SYNC MODULE -->
+      <h3 class="bk-h">Telegram Backup & Sync</h3>
+      <p class="sub">Send your backup directly to a Telegram chat, and fetch it back anytime. You need a Bot Token (from BotFather) and your Chat ID.</p>
+      <div class="sy-relay">
+        <div class="field"><label for="tg-token">Bot Token</label><input id="tg-token" type="password" placeholder="123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11" autocomplete="off" spellcheck="false"></div>
+        <div class="field"><label for="tg-chatid">Chat ID</label><input id="tg-chatid" placeholder="Your numeric Chat ID (e.g. 123456789)" autocomplete="off" spellcheck="false"></div>
+        <div class="bk-actions" style="margin-top:0">
+          <button type="button" class="btn small" id="tg-save">Save credentials</button>
+          <button type="button" class="btn small" id="tg-clear">Remove credentials</button>
+        </div>
+        <div class="bk-actions" id="tg-ops" style="margin-top:10px" hidden>
+          <button type="button" class="btn primary" id="tg-send">Send backup to Telegram</button>
+          <button type="button" class="btn" id="tg-fetch">Fetch latest backup</button>
+        </div>
+        <p class="sy-sub" id="tg-hint" hidden>To restore a backup here, <b>forward the backup file back to your bot</b> in the Telegram app, then click Fetch.</p>
+        <div class="status" id="tg-msg" role="status" style="margin-top:8px"></div>
+      </div>
 
-      <h3 class="bk-h">Save a copy</h3>
-      <p class="sub">Your policies live only in this browser. A backup lets you move them to another device, or recover them if this browser's data is cleared.</p>
+      <h3 class="bk-h">Save a copy manually</h3>
+      <p class="sub">Your policies live only in this browser. A manual backup lets you move them to another device, or recover them if this browser's data is cleared.</p>
       <div class="bk-actions">
         <button type="button" class="btn primary" id="bk-download">Download backup file</button>
         <button type="button" class="btn" id="bk-copy">Copy backup text</button>
@@ -587,8 +605,8 @@ small:empty{display:none}
       </div>
       <div class="status" id="bk-msg" role="status"></div>
 
-      <h3 class="bk-h">Sync with another device</h3>
-      <p class="sub">Send your ledger from this device to your phone or PC. Open this same web address on both devices, choose Send on one and Receive on the other, then type the 4-digit code. The data goes directly between the two devices and is encrypted on the way. A free public service (PeerJS) only helps the devices find each other. Both devices need internet, and it works best when both are on the same Wi-Fi.</p>
+      <h3 class="bk-h">Sync with another device (PeerJS)</h3>
+      <p class="sub">Send your ledger from this device to your phone or PC over the internet.</p>
       <div class="bk-actions">
         <button type="button" class="btn" id="sy-send">Send to another device</button>
         <button type="button" class="btn" id="sy-recv">Receive from another device</button>
@@ -1683,6 +1701,125 @@ function applyRestore(){
   $('#bk-text').value=backupText();
   renderBackupStatus(); renderSnaps();
 }
+
+/* ---------- Telegram Backup ---------- */
+const TG_KEY = KEY + '-telegram';
+
+function getTgCreds() {
+  try { return JSON.parse(localStorage.getItem(TG_KEY) || 'null'); } catch(e) { return null; }
+}
+function loadTgFields() {
+  const c = getTgCreds();
+  if(c) {
+    $('#tg-token').value = c.token || '';
+    $('#tg-chatid').value = c.chatId || '';
+    $('#tg-ops').hidden = false;
+    $('#tg-hint').hidden = false;
+  } else {
+    $('#tg-token').value = '';
+    $('#tg-chatid').value = '';
+    $('#tg-ops').hidden = true;
+    $('#tg-hint').hidden = true;
+  }
+}
+function saveTgCreds() {
+  const token = $('#tg-token').value.trim();
+  const chatId = $('#tg-chatid').value.trim();
+  if(!token || !chatId) { tgMsg('Enter both Bot Token and Chat ID.', true); return; }
+  try {
+    localStorage.setItem(TG_KEY, JSON.stringify({token, chatId}));
+    loadTgFields();
+    tgMsg('Telegram credentials saved.');
+  } catch(e) { tgMsg('Could not save credentials.', true); }
+}
+function clearTgCreds() {
+  try { localStorage.removeItem(TG_KEY); } catch(e){}
+  loadTgFields();
+  tgMsg('Telegram credentials removed.');
+}
+function tgMsg(msg, bad) {
+  const el = $('#tg-msg');
+  el.textContent = msg;
+  el.classList.toggle('bad', !!bad);
+}
+
+async function sendToTelegram() {
+  const c = getTgCreds();
+  if(!c) return tgMsg('Save credentials first.', true);
+  tgMsg('Sending backup to Telegram...');
+  
+  const text = backupText();
+  const filename = 'premium-ledger-backup-' + stamp() + '.json';
+  const blob = new Blob([text], {type: 'application/json'});
+  
+  const fd = new FormData();
+  fd.append('chat_id', c.chatId);
+  fd.append('document', blob, filename);
+  fd.append('caption', `Premium Ledger Backup - ${fmtDate(TODAY)}\n${state.policies.length} policies.`);
+  
+  try {
+    const res = await fetch(`https://api.telegram.org/bot${c.token}/sendDocument`, {
+      method: 'POST',
+      body: fd
+    });
+    const data = await res.json();
+    if(data.ok) {
+      markBackedUp();
+      tgMsg('Backup sent to Telegram successfully!');
+    } else {
+      tgMsg('Telegram error: ' + data.description, true);
+    }
+  } catch(e) {
+    tgMsg('Network error while sending to Telegram.', true);
+  }
+}
+
+async function fetchFromTelegram() {
+  const c = getTgCreds();
+  if(!c) return tgMsg('Save credentials first.', true);
+  tgMsg('Searching Telegram for the latest forwarded backup...');
+  
+  try {
+    const res = await fetch(`https://api.telegram.org/bot${c.token}/getUpdates?offset=-100`);
+    const data = await res.json();
+    if(!data.ok) return tgMsg('Telegram error: ' + data.description, true);
+    
+    let fileId = null;
+    const updates = data.result || [];
+    for(let i = updates.length - 1; i >= 0; i--) {
+      const u = updates[i];
+      const msg = u.message || u.channel_post;
+      if(msg && msg.document && msg.document.file_name && msg.document.file_name.includes('premium-ledger')) {
+        fileId = msg.document.file_id;
+        break;
+      }
+    }
+    
+    if(!fileId) {
+      return tgMsg('No backup file found. Please forward the backup file back to your bot in Telegram, then try again.', true);
+    }
+    
+    tgMsg('Backup found. Downloading...');
+    const fRes = await fetch(`https://api.telegram.org/bot${c.token}/getFile?file_id=${fileId}`);
+    const fData = await fRes.json();
+    if(!fData.ok) return tgMsg('Error getting file path: ' + fData.description, true);
+    
+    const filePath = fData.result.file_path;
+    const dlRes = await fetch(`https://api.telegram.org/file/bot${c.token}/${filePath}`);
+    if(!dlRes.ok) return tgMsg('Error downloading file.', true);
+    
+    const jsonText = await dlRes.text();
+    $('#rs-text').value = jsonText;
+    checkRestore();
+    tgMsg('Backup fetched successfully! Check the Restore section below to apply it.');
+    
+    try { $('#rs-report').scrollIntoView({behavior: 'smooth', block: 'center'}); } catch(e){}
+    
+  } catch(e) {
+    tgMsg('Network error while fetching from Telegram.', true);
+  }
+}
+
 /* ---------- wireless sync between devices (PeerJS) ---------- */
 const APP_BUILD='2026-09-20a';
 const SYNC_TTL=180000;
@@ -2021,6 +2158,7 @@ function openBackup(){
   $('#rs-text').value=''; try{ $('#rs-file').value=''; }catch(e){}
   checkRestore();
   renderBackupStatus(); renderSnaps();
+  loadTgFields();
   openDlg($('#dlg-backup'));
 }
 
@@ -2093,6 +2231,10 @@ document.addEventListener('click',async e=>{
   if(t.closest('#bk-sheet')) return doCopySchedule();
   if(t.closest('#bk-csv')) return doDownloadSchedule();
   if(t.closest('#rs-apply')) return applyRestore();
+  if(t.closest('#tg-save')) return saveTgCreds();
+  if(t.closest('#tg-clear')) return clearTgCreds();
+  if(t.closest('#tg-send')) return sendToTelegram();
+  if(t.closest('#tg-fetch')) return fetchFromTelegram();
   const sn=t.closest('[data-snap]'); if(sn) return restoreSnapshot(Number(sn.dataset.snap));
 });
 document.addEventListener('pointerover',e=>{
