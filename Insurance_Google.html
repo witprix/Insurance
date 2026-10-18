@@ -473,6 +473,7 @@ small:empty{display:none}
               <input id="calc-yr" type="number" inputmode="numeric" min="2" step="1" placeholder="Year (e.g. 2)" style="min-height:36px; font-size:14px;">
             </div>
             <div id="calc-res" style="font-size:.84rem; color:var(--focus); margin-top:6px; min-height:1.2em; font-weight:600;"></div>
+            <small style="display:block;margin-top:6px">This assumes the same % rise every year. If your insurer has already quoted a renewal premium, use "Known premium changes" below (health policies) and leave the increase at 0 when later years are not known.</small>
           </div>
           
           <small id="sm-inc">Leave empty if the premium is fixed.</small>
@@ -1633,12 +1634,13 @@ function renderCards(list){
     const meta2=[p.insurer,p.number?'Policy '+p.number:''].filter(Boolean).join(', ');
     const tagCls=(a.status==='Active'||a.status==='Matured'||a.status==='Paid up'||a.status==='Not started')?'':'warn';
     let kv='';
+    { const cur=makeAmountFn(p,pd(p.start))(TODAY); if(Math.round(cur)!==Math.round(Number(p.premium))) kv+='<dt>Current premium</dt><dd>'+fmt(cur)+' '+f.adv+'</dd>'; }
     kv+='<dt>Premium</dt><dd>'+fmt(p.premium)+' '+f.adv+(Number(p.inc)>0?', rising '+p.inc+'% a year':'')+((a.h&&p.incSenior!==''&&p.incSenior!=null)?', '+p.incSenior+'% once 60 or over':'')+'</dd>';
     kv+='<dt>Started</dt><dd>'+fmtDate(a.start)+(a.ageStart!=null?' (age '+a.ageStart+')':'')+'</dd>';
     if(!a.h&&a.ageNow!=null) kv+='<dt>Life assured\'s age</dt><dd>'+a.ageNow+' now</dd>';
     kv+='<dt>Last premium</dt><dd>'+(a.lastPremium?fmtDate(a.lastPremium)+(a.ageLast!=null?' (age '+a.ageLast+')':''):'None')+'</dd>';
     kv+='<dt>'+(a.h?'Planned until':'Matures')+'</dt><dd>'+(a.hasMat?fmtDate(a.end)+(a.endAge!=null?' (age '+a.endAge+')':''):(a.ageEnd?'Age '+p.untilAge+', on '+fmtDate(a.end):'Renewable, projected to '+state.horizon+(a.endAge!=null?' (age '+a.endAge+')':'')))+'</dd>';
-    kv+='<dt>Next payment</dt><dd>'+(a.next?fmtDate(a.next.date)+', '+rel(a.next.date).toLowerCase():'None left')+'</dd>';
+    kv+='<dt>Next payment</dt><dd>'+(a.next?fmtDate(a.next.date)+', '+rel(a.next.date).toLowerCase()+', '+fmt(a.next.amount):'None left')+'</dd>';
     if(Number(p.cover)>0) kv+='<dt>'+(a.h?'Sum insured':'Cover')+'</dt><dd>'+fmt(p.cover)+'</dd>';
     if(a.hasMat && Number(p.benefit)>0){
       kv+='<dt>Maturity benefit</dt><dd>'+fmt(p.benefit)+'</dd>';
@@ -1877,7 +1879,7 @@ function openFdForm(id) {
   openDlg($('#dlg-fd'));
 }
 
-function tenureMonths(){ const y=Number($('#fd-tenure').value); return (y>0&&isFinite(y))?Math.min(600,Math.round(y*12)):0; }
+function tenureMonths(){ const y=Number($('#fd-tenure').value); return (y>0&&isFinite(y))?Math.min(600,Math.max(1,Math.round(y*12))):0; }
 function fmtTenure(m){
   m=Math.round(Number(m)||0); if(m<=0) return '';
   const y=Math.floor(m/12), r=m%12;
@@ -2989,7 +2991,7 @@ $('#sav-form').addEventListener('submit', e => {
     id: editSavId || uid(), bank, amount: amt,
     accName: $('#sav-accName').value.trim(),
     accNo: $('#sav-accNo').value.trim(),
-    ifsc: $('#sav-ifsc').value.trim(),
+    ifsc: $('#sav-ifsc').value.trim().toUpperCase(),
     branch: $('#sav-branch').value.trim()
   };
   if(editSavId) {
@@ -3114,7 +3116,7 @@ window.addEventListener('resize',()=>{
   clearTimeout(tm);
   tm=setTimeout(()=>{
     const w=document.documentElement.clientWidth;
-    if(Math.abs(w-lastW)>8){ lastW=w; if(state.policies.length) render(); }
+    if(Math.abs(w-lastW)>8){ lastW=w; render(); }
   },150);
 });
 
@@ -3129,6 +3131,7 @@ $('#fd-mat').addEventListener('change',()=>{
 ['input','change'].forEach(ev=>document.addEventListener(ev,e=>{
   if(e.target&&e.target.type==='date'&&e.target.parentNode) refreshDateHints(e.target.parentNode);
 }));
+$('#pform').addEventListener('submit',submitForm);
 let qT=null;
 $('#q').addEventListener('input',e=>{ clearTimeout(qT); const v=e.target.value; qT=setTimeout(()=>{ ui.q=v; render(); },150); });
 $('#status-f').addEventListener('change',e=>{ ui.status=e.target.value; render(); });
