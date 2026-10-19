@@ -39,7 +39,8 @@
 [hidden]{display:none!important}
 html{-webkit-text-size-adjust:100%}
 body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.5 var(--body)}
-.wrap{max-width:1200px;margin:0 auto;padding:12px clamp(14px,3vw,32px) 64px}
+.wrap{max-width:1760px;margin:0 auto;padding:12px clamp(14px,3vw,40px) 64px}
+@media (min-width:1500px){.cards{grid-template-columns:repeat(auto-fill,minmax(360px,1fr))}}
 h1,h2,h3{font-family:var(--display);margin:0;letter-spacing:-.01em}
 p{margin:0}
 button{font:inherit;color:inherit;cursor:pointer}
