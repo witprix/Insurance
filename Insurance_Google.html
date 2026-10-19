@@ -283,6 +283,12 @@ small:empty{display:none}
   #print-area,#print-area *{color:#000!important;background:#fff!important}
   #print-area table{width:100%}
 }
+body.priv .pc-total .n,body.priv .fig .v,body.priv .fig .n,body.priv .kv dd,body.priv .due .amt,body.priv .pc-split b{filter:blur(8px);user-select:none}
+.acc{cursor:pointer;border-bottom:1px dotted var(--muted)}
+#lock{position:fixed;inset:0;z-index:100;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:24px;text-align:center}
+#lock[hidden]{display:none}
+.spark{width:100%;height:36px;margin-top:8px;color:var(--focus)}
+.claim-row .cl-status{grid-column:1/-1}
 </style>
 </head>
 <body>
@@ -295,6 +301,7 @@ small:empty{display:none}
     <div class="actions">
       <button class="btn primary" id="btn-add" type="button">Add policy</button>
       <button class="btn" id="btn-backup" type="button">Backup &amp; sync<span class="badge" id="bk-badge" hidden><span class="sr">, changes not backed up</span></span></button>
+      <button class="btn" id="btn-priv" type="button" aria-pressed="false">Hide amounts</button>
       <button class="btn" id="btn-report" type="button">Report</button>
       <button class="btn" id="btn-settings" type="button">Settings</button>
     </div>
@@ -386,7 +393,13 @@ small:empty{display:none}
         <h2>Savings Accounts</h2>
         <button class="btn primary small" id="btn-add-sav" type="button">Add account</button>
       </div>
+      <section class="panel" id="sav-total" aria-label="Overall balance" style="margin-bottom:14px" hidden></section>
       <div class="cards" id="sav-cards"></div>
+    </div>
+
+    <div id="view-networth" hidden>
+      <div class="sec-head"><h2>Net worth</h2></div>
+      <section class="panel" id="nw-body"></section>
     </div>
 
     <!-- FIXED DEPOSITS VIEW -->
@@ -395,6 +408,7 @@ small:empty{display:none}
         <h2>Fixed Deposits</h2>
         <button class="btn primary small" id="btn-add-fd" type="button">Add FD</button>
       </div>
+      <section class="panel" id="fd-total" aria-label="Overall balance" style="margin-bottom:14px" hidden></section>
       <section class="panel" id="fd-ladder-wrap" hidden style="margin-bottom:14px"><h2>Maturity ladder</h2><p class="sub">When each fixed deposit matures, so you can plan reinvestment.</p><div class="gantt" id="fd-ladder"></div></section>
       <div class="cards" id="fd-cards"></div>
     </div>
@@ -511,6 +525,7 @@ small:empty{display:none}
           <textarea id="f-notes" placeholder="Add policy notes or paste links to Google Drive / iCloud for your PDFs and images..."></textarea>
         </div>
         <div class="field" id="fld-pension"><label for="f-pension">Expected monthly pension (₹)</label><input id="f-pension" type="number" inputmode="decimal" min="0" step="any" placeholder="Optional"><small>Compared with the premiums you pay. Assumes payouts start on the maturity date.</small></div>
+        <div class="field"><label for="f-owner">Policy holder</label><input id="f-owner" maxlength="80" autocomplete="off" placeholder="Whose policy is it? Search by this name"></div>
         <div class="field"><label for="f-nominee">Nominee</label><input id="f-nominee" maxlength="80" autocomplete="off" placeholder="Optional"></div>
         <div class="field"><label for="f-agent">Agent name</label><input id="f-agent" maxlength="80" autocomplete="off" placeholder="Optional"></div>
         <div class="field"><label for="f-agentph">Agent phone</label><input id="f-agentph" type="tel" inputmode="tel" maxlength="20" autocomplete="off" placeholder="Optional"></div>
@@ -595,6 +610,8 @@ small:empty{display:none}
         <div class="field"><label for="sav-ifsc">IFSC Code</label><input id="sav-ifsc" autocomplete="off" maxlength="11" pattern="[A-Za-z]{4}0[A-Za-z0-9]{6}" title="11 characters, for example SBIN0001234" placeholder="e.g. SBIN0001234" style="text-transform:uppercase"></div>
         <div class="field"><label for="sav-branch">Branch Name</label><input id="sav-branch" autocomplete="off"></div>
         <div class="field"><label for="sav-amt">Current Balance (₹)</label><input id="sav-amt" type="number" min="0" step="any" required></div>
+        <div class="field"><label for="sav-rate">Interest rate (% a year)</label><input id="sav-rate" type="number" inputmode="decimal" min="0" max="100" step="any" placeholder="Optional"></div>
+        <div class="field"><label for="sav-note">Note</label><input id="sav-note" maxlength="200" autocomplete="off" placeholder="Debit card, net banking, nominee"></div>
       </div>
     </div>
     <div class="dlg-foot">
@@ -618,6 +635,7 @@ small:empty{display:none}
         <div class="field"><label for="fd-invested">Invested on</label><input id="fd-invested" type="date"></div>
         <div class="field"><label for="fd-mat">Maturing on</label><input id="fd-mat" type="date"></div>
         <div class="field"><label for="fd-mat-amt">Maturity Amt (₹)</label><input id="fd-mat-amt" type="number" inputmode="decimal" min="0" step="any"><small>Estimated automatically. Type your own to override.</small></div>
+        <div class="field"><label><input type="checkbox" id="fd-renew" style="width:auto;min-height:0"> Auto-renews at maturity</label><small>Adds a reminder to decide before it renews.</small></div>
         <div class="field"><label for="fd-method">Investment Method</label><input id="fd-method" autocomplete="off" placeholder="e.g. Netbanking, Branch"></div>
         <div class="field"><label for="fd-txnId">Transaction Id</label><input id="fd-txnId" autocomplete="off"></div>
         <div class="field full">
@@ -781,6 +799,10 @@ small:empty{display:none}
       <button type="button" class="btn small" data-close>Close</button>
     </div>
     <div class="dlg-body">
+      <div class="set-row"><div class="field"><label for="s-pin">App lock PIN (4 to 8 digits)</label><input id="s-pin" type="password" inputmode="numeric" maxlength="8" autocomplete="new-password" placeholder="Leave empty for no lock"><small id="s-pin-note"></small></div>
+        <div class="field"><label for="s-lockmin">Lock after idle (minutes)</label><select id="s-lockmin"><option value="1">1</option><option value="5">5</option><option value="15">15</option></select></div>
+        <div class="field"><label for="s-income">Yearly income for the cover check (₹)</label><input id="s-income" type="number" min="0" step="any" placeholder="Optional"></div>
+        <div class="actions"><button type="button" class="btn small" id="s-secsave">Save lock and income</button><button type="button" class="btn small" id="s-pinoff">Remove lock</button></div></div>
       <div class="set-row">
         <div class="field">
           <label for="s-horizon">Project renewable policies until (year)</label>
@@ -822,10 +844,12 @@ small:empty{display:none}
   <button type="button" class="bn" data-v="policies">Policies</button>
   <button type="button" class="bn" data-v="savings">Savings</button>
   <button type="button" class="bn" data-v="fds">FDs</button>
-  <button type="button" class="bn" id="bn-report">Report</button>
+  <button type="button" class="bn" data-v="networth">Net worth</button>
 </nav>
 <div id="toast" role="status" hidden><span id="toast-msg"></span><button type="button" class="btn small" id="toast-undo">Undo</button></div>
 <div id="print-area"></div>
+
+<div id="lock" hidden><h2>Premium ledger is locked</h2><input id="lock-pin" type="password" inputmode="numeric" maxlength="8" placeholder="PIN" autocomplete="off" style="max-width:200px;text-align:center"><button class="btn primary" id="lock-go" type="button">Unlock</button><p id="lock-msg" class="sub"></p></div>
 
 <!-- Report -->
 <dialog id="dlg-report" aria-labelledby="rp-title">
@@ -942,7 +966,7 @@ try{ localStorage.setItem(KEY+'-t','1'); localStorage.removeItem(KEY+'-t'); }cat
 const RECEIPT_RE=/^data:(image\/(?:png|jpeg|gif|webp)|application\/pdf);base64,[A-Za-z0-9+\/=]+$/;
 function okReceipt(u){ u=String(u||''); return u.length<4e6 && RECEIPT_RE.test(u); }
 function cleanPhone(v){ return String(v||'').replace(/[^0-9+\-() ]/g,'').slice(0,20); }
-function cleanClaims(a){ if(!Array.isArray(a)) return []; return a.map(c=>({date:String((c&&c.date)||''),amount:Math.max(0,Number(c&&c.amount)||0),note:String((c&&c.note)||'').slice(0,120)})).filter(c=>validISO(c.date)).sort((x,y)=>x.date<y.date?-1:(x.date>y.date?1:0)).slice(0,50); }
+function cleanClaims(a){ if(!Array.isArray(a)) return []; return a.map(c=>({date:String((c&&c.date)||''),amount:Math.max(0,Number(c&&c.amount)||0),note:String((c&&c.note)||'').slice(0,120),status:['Filed','Approved','Settled','Rejected'].indexOf(c&&c.status)>=0?c.status:'Filed'})).filter(c=>validISO(c.date)).sort((x,y)=>x.date<y.date?-1:(x.date>y.date?1:0)).slice(0,50); }
 const DOC_TYPES=/^(image\/(png|jpeg|gif|webp)|application\/pdf)$/;
 function cleanDocs(a){ if(!Array.isArray(a)) return []; return a.map(d=>({id:String((d&&d.id)||'').replace(/[^a-z0-9]/gi,'').slice(0,40),name:String((d&&d.name)||'').slice(0,80),type:String((d&&d.type)||''),size:Math.max(0,Number(d&&d.size)||0)})).filter(d=>d.id&&DOC_TYPES.test(d.type)).slice(0,10); }
 function cleanChanges(a){
@@ -961,7 +985,9 @@ function cleanSav(s){
     accName: String(s.accName||'').slice(0,80),
     accNo: String(s.accNo||'').slice(0,40),
     ifsc: String(s.ifsc||'').slice(0,20),
-    branch: String(s.branch||'').slice(0,80)
+    branch: String(s.branch||'').slice(0,80),
+    rate: Math.max(0,Math.min(100,Number(s.rate)||0)), note: String(s.note||'').slice(0,200),
+    hist: Array.isArray(s.hist)?s.hist.filter(h=>h&&validISO(h.d)).map(h=>({d:h.d,a:Number(h.a)||0})).slice(-60):[]
   };
 }
 function cleanFd(f){
@@ -979,6 +1005,7 @@ function cleanFd(f){
     txnId: String(f.txnId||'').slice(0,80),
     method: String(f.method||'').slice(0,80),
     fdNum: String(f.fdNum||'').slice(0,80),
+    renew: !!f.renew,
     receiptUrl: okReceipt(f.receiptUrl)?String(f.receiptUrl):'',
     receiptType: okReceipt(f.receiptUrl)?String(f.receiptUrl).slice(5,String(f.receiptUrl).indexOf(';')):''
   };
@@ -1014,7 +1041,7 @@ function clean(p){
     changes:cleanChanges(p.changes),
     sample:!!p.sample,
     notes:String(p.notes||'').slice(0,3000),
-    nominee:String(p.nominee||'').slice(0,80), agentName:String(p.agentName||'').slice(0,80),
+    nominee:String(p.nominee||'').slice(0,80), owner:String(p.owner||'').slice(0,80), agentName:String(p.agentName||'').slice(0,80),
     agentPhone:cleanPhone(p.agentPhone), claimsPhone:cleanPhone(p.claimsPhone),
     pensionMonthly:num(p.pensionMonthly), claims:cleanClaims(p.claims), docs:cleanDocs(p.docs)
   };
@@ -1221,6 +1248,8 @@ function render(){
   $('#view-policies').hidden = ui.view !== 'policies' || !hasPol;
   $('#view-savings').hidden = ui.view !== 'savings';
   $('#view-fds').hidden = ui.view !== 'fds';
+  $('#view-networth').hidden = ui.view !== 'networth';
+  if(ui.view==='networth') renderNetWorth();
 
   if (ui.view === 'policies' && hasPol) {
     const list=getList();
@@ -1263,6 +1292,7 @@ function renderPills(){
   html += '<span class="pill-sep"></span>';
   html += '<button type="button" class="pill" data-v="savings" aria-pressed="'+(ui.view==='savings')+'">Savings</button>';
   html += '<button type="button" class="pill" data-v="fds" aria-pressed="'+(ui.view==='fds')+'">Fixed Deposits</button>';
+  html += '<button type="button" class="pill" data-v="networth" aria-pressed="'+(ui.view==='networth')+'">Net worth</button>';
 
   $('#pills').innerHTML = html;
 }
@@ -1358,6 +1388,8 @@ function fdExtraKv(f){
   const acc=(d.inv&&d.inv<=TODAY)?fdAccrued(f,TODAY):null;
   if(acc!=null) r+='<dt>'+(d.mat&&d.mat<=TODAY?'Interest earned':'Interest earned so far')+'</dt><dd>'+fmt(acc)+'</dd>';
   if(d.mat&&d.mat>TODAY) r+='<dt>Days left</dt><dd>'+Math.round((d.mat-TODAY)/864e5)+'</dd>';
+  if(f.renew&&d.mat&&d.mat>TODAY) r+='<dt>Renewal</dt><dd>Auto-renews. Decide before '+fmtDate(d.mat)+'</dd>';
+  if(f.rate>1&&d.inv&&d.inv<=TODAY&&d.mat&&d.mat>TODAY){ const q=(TODAY-d.inv)/864e5/91.3125; r+='<dt>If closed today</dt><dd>about '+fmt(f.amount*Math.pow(1+(f.rate-1)/400,q))+' (estimate, 1% lower rate)</dd>'; }
   return r;
 }
 function renderFdLadder(){
@@ -1385,7 +1417,25 @@ function renderFdLadder(){
   const yearly=Object.keys(by).sort().map(y=>'<span><b>'+y+'</b>: '+fmtC(by[y].amt)+' from '+by[y].n+(by[y].n===1?' FD':' FDs')+'</span>').join('');
   el.innerHTML='<div class="g-axis">'+ticks+flag+'</div>'+body+'<div class="legend">'+yearly+'</div>';
 }
+function renderBalance(){
+  const sv=state.savings, svTot=sv.reduce((t,x)=>t+x.amount,0);
+  const act=state.fds.filter(x=>{ const m=fdDates(x).mat; return !(m&&m<=TODAY); });
+  const mat=state.fds.filter(x=>{ const m=fdDates(x).mat; return m&&m<=TODAY; });
+  const fdTot=act.reduce((t,x)=>t+x.amount,0), fdAtMat=act.reduce((t,x)=>t+(x.matAmt||x.amount),0);
+  const matTot=mat.reduce((t,x)=>t+(x.matAmt||x.amount),0);
+  const box=(k,v,n)=>'<div class="fig"><div class="k">'+k+'</div><div class="v">'+v+'</div><div class="n">'+n+'</div></div>';
+  const html=(!sv.length&&!state.fds.length)?'':
+    '<h2 style="font-size:1.1rem">Overall balance</h2>'+
+    '<div class="figs" style="grid-template-columns:repeat(auto-fit,minmax(190px,1fr));margin-top:12px">'+
+      box('Total balance',fmt(svTot+fdTot),'Savings plus FDs that have not matured')+
+      box('Savings accounts',fmt(svTot),sv.length+(sv.length===1?' account':' accounts'))+
+      box('Fixed deposits',fmt(fdTot),act.length+(act.length===1?' active FD':' active FDs')+(fdAtMat>fdTot?', worth '+fmt(fdAtMat)+' at maturity':''))+
+    '</div>'+
+    (mat.length?'<p class="sub" style="margin-top:10px">'+mat.length+(mat.length===1?' matured FD':' matured FDs')+' ('+fmt(matTot)+') not counted. Add that money to a savings account or a new FD once you move it.</p>':'');
+  ['#sav-total','#fd-total'].forEach(id=>{ const el=$(id); el.innerHTML=html; el.hidden=!html; });
+}
 function renderSavings() {
+  renderBalance();
   const el = $('#sav-cards');
   if(!state.savings.length) { el.innerHTML = '<p class="sub">No savings accounts added yet.</p>'; return; }
   const sv = state.savings.filter(s=>matchQ([s.bank,s.accName,s.accNo,s.branch,s.ifsc].join(' ')));
@@ -1393,7 +1443,7 @@ function renderSavings() {
   el.innerHTML = sv.map(s => {
     let kv='';
     if(s.accName) kv+=`<dt>A/C Name</dt><dd>${esc(s.accName)}</dd>`;
-    if(s.accNo) kv+=`<dt>Account No</dt><dd>${esc(s.accNo)}</dd>`;
+    if(s.accNo) kv+=`<dt>Account No</dt><dd>${maskAcc(s.accNo)}</dd>`;
     if(s.ifsc) kv+=`<dt>IFSC Code</dt><dd>${esc(s.ifsc)}</dd>`;
     if(s.branch) kv+=`<dt>Branch</dt><dd>${esc(s.branch)}</dd>`;
     return `
@@ -1401,7 +1451,7 @@ function renderSavings() {
         <div class="pc-head"><h3>${esc(s.bank)}</h3></div>
         <div class="pc-total"><span class="n">${fmt(s.amount)}</span></div>
         ${kv ? `<dl class="kv" style="margin-top:10px">${kv}</dl>` : ''}
-        <div class="pc-actions" style="margin-top:12px" data-sid="${esc(s.id)}">
+        ${savExtra(s)}<div class="pc-actions" style="margin-top:12px" data-sid="${esc(s.id)}">
           <button type="button" class="btn small" data-act="tgsav">Send via Telegram</button>
           <button type="button" class="btn small" data-act="editsav">Edit</button>
           <button type="button" class="btn small danger" data-act="delsav">Delete</button>
@@ -1563,7 +1613,7 @@ function renderToday(list){
   $('#today-card').innerHTML='<h2 style="font-size:1.1rem">Today, '+esc(day)+' '+fmtDate(TODAY)+'</h2><div class="figs" style="grid-template-columns:repeat(auto-fit,minmax(170px,1fr));margin-top:12px">'+
     box('Due in 7 days',n?fmtC(amt):'Nothing',n?n+(n===1?' payment':' payments'):'You are clear this week')+
     box('Next premium',nxt?fmtDate(nxt.date):'None left',nxt?esc(fmtC(nxt.amount)+' for '+nxt.name):'All premiums paid')+
-    box('Next FD maturity',fd?fmtDate(fd.date):'None',fd?esc(fd.name+', '+rel(fd.date).toLowerCase()):'No FD dates added')+'</div>';
+    box('Next FD maturity',fd?fmtDate(fd.date):'None',fd?esc(fd.name+', '+rel(fd.date).toLowerCase()):'No FD dates added')+'</div>'+attnHtml();
 }
 
 function renderRecent(list){
@@ -1598,6 +1648,7 @@ function renderRecent(list){
 function telLink(v){ const d=cleanPhone(v); return d?'<a href="tel:'+esc(d.replace(/[^0-9+]/g,''))+'">'+esc(d)+'</a>':''; }
 function extraCard(a){
   const p=a.p; let kv='', out='';
+  if(p.owner) kv+='<dt>Policy holder</dt><dd>'+esc(p.owner)+'</dd>';
   if(p.nominee) kv+='<dt>Nominee</dt><dd>'+esc(p.nominee)+'</dd>';
   if(p.agentName||p.agentPhone) kv+='<dt>Agent</dt><dd>'+esc(p.agentName)+(p.agentName&&p.agentPhone?', ':'')+telLink(p.agentPhone)+'</dd>';
   if(p.claimsPhone) kv+='<dt>Claims helpline</dt><dd>'+telLink(p.claimsPhone)+'</dd>';
@@ -1618,7 +1669,7 @@ function extraCard(a){
   }
   if(p.claims&&p.claims.length){
     const tot=p.claims.reduce((t,c)=>t+c.amount,0);
-    out+='<div class="hk"><div class="hk-title">Claim log, '+fmt(tot)+' claimed</div>'+p.claims.map(c=>'<div style="font-size:.9rem;color:var(--muted)">'+esc(fmtDate(pd(c.date)))+', '+fmt(c.amount)+(c.note?', '+esc(c.note):'')+'</div>').join('')+'</div>';
+    out+='<div class="hk"><div class="hk-title">Claim log, '+fmt(tot)+' claimed</div>'+p.claims.map(c=>'<div style="font-size:.9rem;color:var(--muted)">'+esc(fmtDate(pd(c.date)))+', '+fmt(c.amount)+(c.note?', '+esc(c.note):'')+', '+esc(c.status||'Filed')+'</div>').join('')+'</div>';
   }
   if(p.docs&&p.docs.length){
     out+='<div class="hk"><div class="hk-title">Documents</div>'+p.docs.map(d=>'<div class="snap" style="padding:6px 0"><b style="font-size:.9rem;overflow-wrap:anywhere">'+esc(d.name)+'</b><button type="button" class="btn small" data-act="viewdoc" data-doc="'+esc(d.id)+'">View</button></div>').join('')+'</div>';
@@ -1626,7 +1677,7 @@ function extraCard(a){
   return out;
 }
 function renderCards(list){
-  const rows=list.filter(a=>(ui.status==='all'||a.status===ui.status)&&matchQ([a.p.name,a.p.insurer,a.p.number,a.p.nominee,a.p.agentName].join(' '))).sort(sorters[ui.sort]||sorters.next);
+  const rows=list.filter(a=>(ui.status==='all'||a.status===ui.status)&&matchQ([a.p.name,a.p.insurer,a.p.number,a.p.nominee,a.p.agentName,a.p.owner].join(' '))).sort(sorters[ui.sort]||sorters.next);
   if(!rows.length){ $('#cards').innerHTML='<p class="sub">No policies match your search or filter.</p>'; return; }
   $('#cards').innerHTML=rows.map(a=>{
     const p=a.p, f=FREQ[p.freq];
@@ -1786,14 +1837,14 @@ function openDoc(id){
     openViewerBlob(b);
   }).catch(()=>alert('Documents are not available in this browser.'));
 }
-function addClaimRow(date,amt,note){
+function addClaimRow(date,amt,note,status){
   const row=document.createElement('div'); row.className='claim-row';
-  row.innerHTML='<input type="date" class="cl-date" aria-label="Claim date"><input type="number" class="cl-amt" inputmode="decimal" min="0" step="any" placeholder="Amount (₹)" aria-label="Claim amount"><input class="cl-note" maxlength="120" placeholder="Note, for example hospital or claim number" aria-label="Claim note"><button type="button" class="btn small claim-del">Remove this claim</button>';
-  row.querySelector('.cl-date').value=date||''; row.querySelector('.cl-amt').value=amt||''; row.querySelector('.cl-note').value=note||'';
+  row.innerHTML='<input type="date" class="cl-date" aria-label="Claim date"><input type="number" class="cl-amt" inputmode="decimal" min="0" step="any" placeholder="Amount (₹)" aria-label="Claim amount"><select class="cl-status" aria-label="Claim status"><option>Filed</option><option>Approved</option><option>Settled</option><option>Rejected</option></select><input class="cl-note" maxlength="120" placeholder="Note, for example hospital or claim number" aria-label="Claim note"><button type="button" class="btn small claim-del">Remove this claim</button>';
+  row.querySelector('.cl-date').value=date||''; row.querySelector('.cl-amt').value=amt||''; row.querySelector('.cl-note').value=note||''; row.querySelector('.cl-status').value=status||'Filed';
   $('#claim-list').appendChild(row);
 }
 function readClaims(){
-  return $$('#claim-list .claim-row').map(r=>({date:r.querySelector('.cl-date').value,amount:Number(r.querySelector('.cl-amt').value)||0,note:r.querySelector('.cl-note').value.trim().slice(0,120)})).filter(c=>validISO(c.date));
+  return $$('#claim-list .claim-row').map(r=>({date:r.querySelector('.cl-date').value,amount:Number(r.querySelector('.cl-amt').value)||0,note:r.querySelector('.cl-note').value.trim().slice(0,120),status:r.querySelector('.cl-status').value})).filter(c=>validISO(c.date));
 }
 let editingId=null;
 function openForm(id){
@@ -1825,10 +1876,10 @@ function openForm(id){
   $('#f-notes').value=p?(p.notes||''):'';
   $('#chg-list').innerHTML='';
   if(p&&Array.isArray(p.changes)) p.changes.forEach(c=>addChangeRow(c.date,c.amount));
-  $('#f-nominee').value=p?(p.nominee||''):''; $('#f-agent').value=p?(p.agentName||''):'';
+  $('#f-nominee').value=p?(p.nominee||''):''; $('#f-owner').value=p?(p.owner||''):''; $('#f-agent').value=p?(p.agentName||''):'';
   $('#f-agentph').value=p?(p.agentPhone||''):''; $('#f-claimph').value=p?(p.claimsPhone||''):'';
   $('#f-pension').value=(p&&p.pensionMonthly!==''&&p.pensionMonthly!=null)?p.pensionMonthly:'';
-  $('#claim-list').innerHTML=''; if(p&&Array.isArray(p.claims)) p.claims.forEach(c=>addClaimRow(c.date,c.amount,c.note));
+  $('#claim-list').innerHTML=''; if(p&&Array.isArray(p.claims)) p.claims.forEach(c=>addClaimRow(c.date,c.amount,c.note,c.status));
   formDocs=(p&&Array.isArray(p.docs))?p.docs.slice():[]; formNewDocs=new Set(); formRemoved=[]; formSaved=false; $('#f-docs').value=''; renderDocList();
   syncFormType();
   updateIncCalc(true);
@@ -1850,6 +1901,7 @@ function openSavForm(id) {
   $('#sav-ifsc').value = s ? s.ifsc : '';
   $('#sav-branch').value = s ? s.branch : '';
   $('#sav-amt').value = s ? s.amount : '';
+  $('#sav-rate').value = s && s.rate ? s.rate : ''; $('#sav-note').value = s ? (s.note||'') : '';
   openDlg($('#dlg-sav'));
 }
 
@@ -1868,7 +1920,7 @@ function openFdForm(id) {
   $('#fd-invested').value = f ? f.invested : '';
   $('#fd-mat').value = f ? f.maturity : '';
   $('#fd-mat-amt').value = f && f.matAmt ? f.matAmt : '';
-  $('#fd-mat-amt').dataset.manual='';
+  $('#fd-mat-amt').dataset.manual=''; $('#fd-renew').checked=!!(f&&f.renew);
   $('#fd-method').value = f ? f.method : '';
   $('#fd-txnId').value = f ? f.txnId : '';
   $('#fd-receipt').value = '';
@@ -1951,7 +2003,7 @@ function formPolicy(){
     untilAge:(health&&Math.floor(Number(v('h-until')))>=1)?clamp(Math.floor(Number(v('h-until'))),1,120):'',
     changes:health?readChanges():[],
     notes:v('f-notes'),
-    nominee:v('f-nominee'), agentName:v('f-agent'), agentPhone:v('f-agentph'), claimsPhone:v('f-claimph'),
+    nominee:v('f-nominee'), owner:v('f-owner'), agentName:v('f-agent'), agentPhone:v('f-agentph'), claimsPhone:v('f-claimph'),
     pensionMonthly:($('#f-type').value==='pension')?opt('f-pension'):'',
     claims:readClaims(), docs:formDocs.slice()
   };
@@ -2413,7 +2465,7 @@ async function fetchFromTelegram() {
 }
 
 /* ---------- wireless sync between devices (PeerJS) ---------- */
-const APP_BUILD='2026-10-17b';
+const APP_BUILD='2026-10-19a';
 const SYNC_TTL=180000;
 const SYNC_LIBS=['https://cdn.jsdelivr.net/npm/peerjs@1.5.2/dist/peerjs.min.js','https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js'];
 const STUN_SERVERS=[{urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun1.l.google.com:19302'},{urls:'stun:stun.cloudflare.com:3478'},{urls:'stun:global.stun.twilio.com:3478'}];
@@ -2800,6 +2852,7 @@ function openBackup(){
 function openSettings(){
   $('#s-horizon').value=state.horizon;
   $('#s-theme').value=state.theme;
+  { const sc=getSec(); $('#s-lockmin').value=String(sc.min||5); $('#s-income').value=sc.income||''; $('#s-pin').value=''; $('#s-pin-note').textContent=sc.h?'Lock is on. Enter a new PIN to change it.':'A convenience lock for shared devices. It does not encrypt your data.'; }
   openDlg($('#dlg-settings'));
 }
 
@@ -2945,6 +2998,7 @@ document.addEventListener('click',async e=>{
   const cd=t.closest('.chg-del'); if(cd){ cd.parentElement.remove(); updatePreview(); return; }
   if(t.closest('#claim-add')){ addClaimRow('','',''); updatePreview(); return; }
   const cx=t.closest('.claim-del'); if(cx){ cx.closest('.claim-row').remove(); updatePreview(); return; }
+  const ac=t.closest('.acc'); if(ac){ const m=ac.dataset.m==='1'; ac.textContent=m?ac.dataset.full:'•••• '+ac.dataset.full.slice(-4); ac.dataset.m=m?'0':'1'; return; }
   const dv=t.closest('.doc-view'); if(dv) return openDoc(dv.dataset.doc);
   const dr=t.closest('.doc-rm'); if(dr){ const id=dr.dataset.doc; formDocs=formDocs.filter(d=>d.id!==id); if(formNewDocs.has(id)){ formNewDocs.delete(id); docDel(id); } else formRemoved.push(id); renderDocList(); return; }
   if(t.closest('#sy-test')) return runSyncTest();
@@ -2988,7 +3042,7 @@ $('#sav-form').addEventListener('submit', e => {
   const amt = Number($('#sav-amt').value) || 0;
   if(!bank) return;
   const obj = { 
-    id: editSavId || uid(), bank, amount: amt,
+    id: editSavId || uid(), bank, amount: amt, rate: Math.max(0,Number($('#sav-rate').value)||0), note: $('#sav-note').value.trim().slice(0,200), hist: savHist(amt),
     accName: $('#sav-accName').value.trim(),
     accNo: $('#sav-accNo').value.trim(),
     ifsc: $('#sav-ifsc').value.trim().toUpperCase(),
@@ -3014,7 +3068,7 @@ $('#fd-form').addEventListener('submit', e => {
   const obj = { 
     id: editFdId || uid(), bank, amount: amt, 
     rate: Number($('#fd-rate').value)||0,
-    tenure: tenureMonths(),
+    tenure: tenureMonths(), renew: $('#fd-renew').checked,
     invested: validISO(inv)?inv:'',
     maturity: validISO(mat)?mat:'',
     matAmt: Number($('#fd-mat-amt').value)||0,
@@ -3184,12 +3238,95 @@ window.addEventListener('storage',e=>{
   }catch(err){}
 });
 
+const SEC_KEY=KEY+'-sec', PRIV_KEY=KEY+'-priv';
+function getSec(){ try{ return JSON.parse(localStorage.getItem(SEC_KEY)||'null')||{}; }catch(e){ return {}; } }
+function putSec(o){ try{ localStorage.setItem(SEC_KEY,JSON.stringify(o)); return true; }catch(e){ return false; } }
+async function sha(t){ const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(t)); return Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join(''); }
+let idleT=null, hiddenAt=0;
+function lockNow(){ if(!getSec().h) return; $$('dialog[open]').forEach(d=>d.close()); $('#lock').hidden=false; $('#lock-pin').value=''; $('#lock-msg').textContent=''; setTimeout(()=>$('#lock-pin').focus(),50); }
+function armIdle(){ clearTimeout(idleT); const sc=getSec(); if(!sc.h||!$('#lock').hidden) return; idleT=setTimeout(lockNow,(sc.min||5)*60000); }
+['click','keydown','touchstart','scroll'].forEach(ev=>document.addEventListener(ev,armIdle,{passive:true}));
+document.addEventListener('visibilitychange',()=>{ if(document.hidden) hiddenAt=Date.now(); else if(hiddenAt&&Date.now()-hiddenAt>60000) lockNow(); });
+async function tryUnlock(){ const sc=getSec(); if(await sha(sc.salt+$('#lock-pin').value)===sc.h){ $('#lock').hidden=true; armIdle(); } else { $('#lock-msg').textContent='Wrong PIN.'; $('#lock-pin').value=''; } }
+$('#lock-go').addEventListener('click',tryUnlock);
+$('#lock-pin').addEventListener('keydown',e=>{ if(e.key==='Enter') tryUnlock(); });
+$('#s-secsave').addEventListener('click',async()=>{
+  const pin=$('#s-pin').value.trim(), sc=getSec(), note=$('#s-pin-note');
+  sc.min=Number($('#s-lockmin').value)||5; sc.income=Math.max(0,Number($('#s-income').value)||0);
+  if(pin){ if(!/^\d{4,8}$/.test(pin)){ note.textContent='The PIN must be 4 to 8 digits.'; return; } sc.salt=uid(); sc.h=await sha(sc.salt+pin); }
+  note.textContent=putSec(sc)?(sc.h?'Saved. The app will lock after '+sc.min+' idle minutes.':'Saved.'):'Could not save in this browser.';
+  $('#s-pin').value=''; armIdle(); render();
+});
+$('#s-pinoff').addEventListener('click',()=>{ const sc=getSec(); delete sc.h; delete sc.salt; putSec(sc); clearTimeout(idleT); $('#s-pin-note').textContent='Lock removed.'; });
+function applyPriv(){ const on=localStorage.getItem(PRIV_KEY)==='1'; document.body.classList.toggle('priv',on); $('#btn-priv').setAttribute('aria-pressed',String(on)); $('#btn-priv').textContent=on?'Show amounts':'Hide amounts'; }
+$('#btn-priv').addEventListener('click',()=>{ try{ localStorage.setItem(PRIV_KEY,localStorage.getItem(PRIV_KEY)==='1'?'0':'1'); }catch(e){} applyPriv(); });
+function maskAcc(v){ v=String(v||''); if(v.length<=4) return esc(v); return '<span class="acc" data-full="'+esc(v)+'" data-m="1" title="Tap to show or hide">•••• '+esc(v.slice(-4))+'</span>'; }
+function savHist(amt){
+  const old=editSavId?state.savings.find(x=>x.id===editSavId):null;
+  let h=(old&&old.hist)?old.hist.slice():[];
+  if(!old||old.amount!==amt||!h.length){ const d=toISO(TODAY); if(h.length&&h[h.length-1].d===d) h[h.length-1].a=amt; else h.push({d:d,a:amt}); }
+  return h.slice(-60);
+}
+function savExtra(s){
+  let r=''; const best=Math.max(0,...state.savings.map(x=>x.rate||0));
+  if(s.rate>0){ r+='<dt>Interest rate</dt><dd>'+s.rate+'% a year</dd><dt>Expected interest</dt><dd>'+fmt(s.amount*s.rate/100)+' a year</dd>'; if(best>s.rate&&s.amount>0) r+='<dt>Versus your best</dt><dd>'+(best-s.rate).toFixed(2)+'% lower</dd>'; }
+  if(s.hist&&s.hist.length) r+='<dt>Balance updated</dt><dd>'+fmtDate(pd(s.hist[s.hist.length-1].d))+'</dd>';
+  if(s.note) r+='<dt>Note</dt><dd>'+esc(s.note)+'</dd>';
+  let sp='';
+  if(s.hist&&s.hist.length>=2){
+    const v=s.hist.map(h=>h.a), lo=Math.min(...v), hi=Math.max(...v), W=200, H=36;
+    const pts=v.map((a,i)=>(i/(v.length-1)*W).toFixed(1)+','+(H-2-(hi===lo?H/2:(a-lo)/(hi-lo)*(H-6))).toFixed(1)).join(' ');
+    sp='<svg class="spark" viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none" role="img" aria-label="Balance history"><polyline points="'+pts+'" fill="none" stroke="currentColor" stroke-width="2"/></svg>';
+  }
+  return (r?'<dl class="kv">'+r+'</dl>':'')+sp;
+}
+function attnHtml(){
+  const L=[];
+  state.fds.forEach(f=>{ const m=fdDates(f).mat; if(!m) return; const n=Math.round((m-TODAY)/864e5);
+    if(n>0&&n<=30) L.push(esc(f.bank)+' FD '+(f.renew?'auto-renews ':'matures ')+rel(m).toLowerCase()+'. Decide what to do with it.');
+    else if(n<=0&&n>-30) L.push(esc(f.bank)+' FD matured on '+fmtDate(m)+'. Move the money if you have not.'); });
+  state.policies.forEach(p=>{ if(p.sample) return;
+    if((p.type==='life'||p.type==='pension')&&!p.nominee) L.push('No nominee noted for '+esc(p.name)+'.');
+    (p.claims||[]).forEach(c=>{ if(c.status==='Filed'||c.status==='Approved') L.push('Claim of '+fmt(c.amount)+' on '+esc(p.name)+' is still '+c.status.toLowerCase()+'.'); }); });
+  const bd=backupDue(); if(bd) L.push(esc(bd));
+  return L.length?'<h3 style="font-size:.95rem;margin-top:14px">Needs attention</h3><ul class="sub" style="margin:6px 0 0 18px">'+L.slice(0,8).map(x=>'<li>'+x+'</li>').join('')+'</ul>':'';
+}
+function renderNetWorth(){
+  const svT=state.savings.reduce((t,x)=>t+x.amount,0);
+  const act=state.fds.filter(x=>{ const m=fdDates(x).mat; return !(m&&m<=TODAY); });
+  const fdT=act.reduce((t,x)=>t+x.amount,0);
+  const an=state.policies.map(analyse);
+  const ben=an.filter(a=>a.hasMat&&a.end>TODAY&&Number(a.p.benefit)>0);
+  const benT=ben.reduce((t,a)=>t+Number(a.p.benefit),0);
+  const box=(k,v,n)=>'<div class="fig"><div class="k">'+k+'</div><div class="v">'+v+'</div><div class="n">'+n+'</div></div>';
+  let h='<div class="figs" style="grid-template-columns:repeat(auto-fit,minmax(190px,1fr))">'+
+    box('Cash and FDs today',fmt(svT+fdT),'Savings '+fmt(svT)+', active FDs '+fmt(fdT))+
+    box('Policy benefits due',fmt(benT),ben.length+(ben.length===1?' policy':' policies')+' with a maturity benefit entered')+
+    box('Premiums still to pay',fmt(an.reduce((t,a)=>t+a.remain,0)),'Across '+an.length+(an.length===1?' policy':' policies'))+'</div>';
+  const rows=[];
+  for(let y=THIS_YEAR;y<=THIS_YEAR+30;y++){
+    let out=0,inn=0;
+    an.forEach(a=>{ a.items.forEach(i=>{ if(i.date>TODAY&&i.date.getFullYear()===y) out+=i.amount; }); if(a.hasMat&&a.end>TODAY&&a.end.getFullYear()===y) inn+=Number(a.p.benefit)||0; });
+    act.forEach(f=>{ const m=fdDates(f).mat; if(m&&m.getFullYear()===y) inn+=f.matAmt||f.amount; });
+    if(out||inn) rows.push('<tr><td>'+y+'</td><td>'+fmt(out)+'</td><td>'+fmt(inn)+'</td><td>'+(inn-out<0?'-':'')+fmt(Math.abs(inn-out))+'</td></tr>');
+  }
+  h+='<h3 style="margin-top:18px">Money going out and coming in, by year</h3><p class="sub">Out is premiums you still have to pay. In is FD maturities and policy benefits you entered.</p>'+
+    (rows.length?'<div class="tbl-wrap"><table><thead><tr><th>Year</th><th>Out</th><th>In</th><th>Net</th></tr></thead><tbody>'+rows.join('')+'</tbody></table></div>':'<p class="sub">Nothing is due yet.</p>');
+  const inc=getSec().income||0, live=an.filter(a=>a.p.type==='life'&&a.status!=='Matured').reduce((t,a)=>t+(Number(a.p.cover)||0),0), hl=an.filter(a=>a.p.type==='health'&&a.status!=='Matured').reduce((t,a)=>t+(Number(a.p.cover)||0),0);
+  h+='<h3 style="margin-top:18px">Cover check</h3><p>Life cover '+fmt(live)+'. Health cover '+fmt(hl)+'.</p>'+
+    (inc>0?'<p class="sub">A common rule of thumb is life cover of about 10 times your yearly income, which is '+fmt(inc*10)+' for you. '+(live>=inc*10?'You are at or above that.':'You are '+fmt(inc*10-live)+' short of it.')+' This is a rough guide, not advice.</p>':'<p class="sub">Add your yearly income in Settings to compare life cover with a rule of thumb.</p>');
+  $('#nw-body').innerHTML=h;
+}
+
 /* ---------- start ---------- */
 applyTheme();
 save();
 render();
 refreshDateHints();
 setTimeout(maybeAutoBackup,4000);
+applyPriv();
+if(getSec().h){ $('#lock').hidden=false; setTimeout(()=>$('#lock-pin').focus(),100); }
+armIdle();
 lastW=document.documentElement.clientWidth;
 })();
 </script>
