@@ -636,6 +636,7 @@ body.priv .pc-total .n,body.priv .fig .v,body.priv .fig .n,body.priv .kv dd,body
         <div class="field"><label for="fd-invested">Invested on</label><input id="fd-invested" type="date"></div>
         <div class="field"><label for="fd-mat">Maturing on</label><input id="fd-mat" type="date"></div>
         <div class="field"><label for="fd-mat-amt">Maturity Amt (₹)</label><input id="fd-mat-amt" type="number" inputmode="decimal" min="0" step="any"><small>Estimated automatically. Type your own to override.</small></div>
+        <div class="field"><label for="fd-dob">Holder date of birth</label><input id="fd-dob" type="date"><small>Optional. Shows the holder's age at opening and at maturity.</small></div>
         <div class="field"><label><input type="checkbox" id="fd-renew" style="width:auto;min-height:0"> Auto-renews at maturity</label><small>Adds a reminder to decide before it renews.</small></div>
         <div class="field"><label for="fd-method">Investment Method</label><input id="fd-method" autocomplete="off" placeholder="e.g. Netbanking, Branch"></div>
         <div class="field"><label for="fd-txnId">Transaction Id</label><input id="fd-txnId" autocomplete="off"></div>
@@ -1006,7 +1007,7 @@ function cleanFd(f){
     txnId: String(f.txnId||'').slice(0,80),
     method: String(f.method||'').slice(0,80),
     fdNum: String(f.fdNum||'').slice(0,80),
-    renew: !!f.renew,
+    renew: !!f.renew, dob: validISO(f.dob)?f.dob:'',
     receiptUrl: okReceipt(f.receiptUrl)?String(f.receiptUrl):'',
     receiptType: okReceipt(f.receiptUrl)?String(f.receiptUrl).slice(5,String(f.receiptUrl).indexOf(';')):''
   };
@@ -1360,6 +1361,10 @@ function renderHero(list){
 }
 
 function matchQ(txt){ const q=(ui.q||'').trim().toLowerCase(); return !q||String(txt).toLowerCase().indexOf(q)>=0; }
+function defaultFdDob(){
+  const a=state.fds.slice().reverse().find(x=>validISO(x.dob)); if(a) return a.dob;
+  const p=state.policies.find(x=>!x.sample&&validISO(x.dob))||state.policies.find(x=>validISO(x.dob)); return p?p.dob:'';
+}
 function fdName(f){ const n=String(f.fdNum||'').replace(/\s/g,''); return f.bank+(n.length>=4?' ••'+n.slice(-4):''); }
 function fdDates(f){
   const inv=validISO(f.invested)?pd(f.invested):null;
@@ -1386,6 +1391,10 @@ function fdMeta(f){
 }
 function fdExtraKv(f){
   const d=fdDates(f); let r='';
+  const dob=validISO(f.dob)?pd(f.dob):null;
+  if(dob&&d.inv) r+='<dt>Holder age at opening</dt><dd>'+ageOn(dob,d.inv)+' years</dd>';
+  if(dob&&d.mat) r+='<dt>Holder age at maturity</dt><dd>'+ageOn(dob,d.mat)+' years</dd>';
+  if(d.inv&&d.inv<=TODAY&&!(d.mat&&d.mat<=TODAY)){ const m=Math.max(0,(TODAY.getFullYear()-d.inv.getFullYear())*12+TODAY.getMonth()-d.inv.getMonth()-(TODAY.getDate()<d.inv.getDate()?1:0)); r+='<dt>Age of this FD</dt><dd>'+(fmtTenure(m)||'Less than a month')+'</dd>'; }
   if(f.matAmt>f.amount) r+='<dt>Total interest</dt><dd>'+fmt(f.matAmt-f.amount)+'</dd>';
   const acc=(d.inv&&d.inv<=TODAY)?fdAccrued(f,TODAY):null;
   if(acc!=null) r+='<dt>'+(d.mat&&d.mat<=TODAY?'Interest earned':'Interest earned so far')+'</dt><dd>'+fmt(acc)+'</dd>';
@@ -1922,7 +1931,7 @@ function openFdForm(id) {
   $('#fd-invested').value = f ? f.invested : '';
   $('#fd-mat').value = f ? f.maturity : '';
   $('#fd-mat-amt').value = f && f.matAmt ? f.matAmt : '';
-  $('#fd-mat-amt').dataset.manual=''; $('#fd-renew').checked=!!(f&&f.renew);
+  $('#fd-mat-amt').dataset.manual=''; $('#fd-renew').checked=!!(f&&f.renew); $('#fd-dob').value = f ? (f.dob||'') : defaultFdDob();
   $('#fd-method').value = f ? f.method : '';
   $('#fd-txnId').value = f ? f.txnId : '';
   $('#fd-receipt').value = '';
@@ -3070,7 +3079,7 @@ $('#fd-form').addEventListener('submit', e => {
   const obj = { 
     id: editFdId || uid(), bank, amount: amt, 
     rate: Number($('#fd-rate').value)||0,
-    tenure: tenureMonths(), renew: $('#fd-renew').checked,
+    tenure: tenureMonths(), renew: $('#fd-renew').checked, dob: validISO($('#fd-dob').value)?$('#fd-dob').value:'',
     invested: validISO(inv)?inv:'',
     maturity: validISO(mat)?mat:'',
     matAmt: Number($('#fd-mat-amt').value)||0,
