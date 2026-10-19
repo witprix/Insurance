@@ -1607,14 +1607,14 @@ function renderToday(list){
     a.upcoming.forEach(i=>{ if(i.date<=wk){ n++; amt+=i.amount; } });
     if(a.next&&(!nxt||a.next.date<nxt.date)) nxt={date:a.next.date,name:a.p.name,amount:a.next.amount};
   });
-  let fd=null; const nAct=state.fds.filter(f=>{ const m=fdDates(f).mat; return m&&m>TODAY; }).length;
+  let fd=null; const fdList=state.fds.map(f=>({name:fdName(f),date:fdDates(f).mat})).filter(x=>x.date&&x.date>TODAY).sort((a,b)=>a.date-b.date);
   state.fds.forEach(f=>{ const m=fdDates(f).mat; if(m&&m>TODAY&&(!fd||m<fd.date)) fd={date:m,name:fdName(f)}; });
   const day=TODAY.toLocaleDateString('en-IN',{weekday:'long'});
   const box=(k,v,sub)=>'<div class="fig"><div class="k">'+k+'</div><div class="v">'+v+'</div><div class="n">'+sub+'</div></div>';
   $('#today-card').innerHTML='<h2 style="font-size:1.1rem">Today, '+esc(day)+' '+fmtDate(TODAY)+'</h2><div class="figs" style="grid-template-columns:repeat(auto-fit,minmax(170px,1fr));margin-top:12px">'+
     box('Due in 7 days',n?fmtC(amt):'Nothing',n?n+(n===1?' payment':' payments'):'You are clear this week')+
     box('Next premium',nxt?fmtDate(nxt.date):'None left',nxt?esc(fmtC(nxt.amount)+' for '+nxt.name):'All premiums paid')+
-    box('Next FD maturity',fd?fmtDate(fd.date):'None',fd?esc(fd.name+', '+rel(fd.date).toLowerCase())+(nAct>1?'. '+nAct+' active FDs in all.':''):'No FD dates added')+'</div>'+attnHtml();
+    box('Next FD maturity',fd?fmtDate(fd.date):'None',fdList.length?fdList.slice(0,5).map(x=>esc(x.name)+': '+fmtDate(x.date)+', '+rel(x.date).toLowerCase()).join('<br>')+(fdList.length>5?'<br>+'+(fdList.length-5)+' more':''):'No FD dates added')+'</div>'+attnHtml();
 }
 
 function renderRecent(list){
