@@ -290,15 +290,30 @@ body.priv .pc-total .n,body.priv .fig .v,body.priv .fig .n,body.priv .kv dd,body
 #lock[hidden]{display:none}
 .spark{width:100%;height:36px;margin-top:8px;color:var(--focus)}
 .claim-row .cl-status{grid-column:1/-1}
-#ch-fab{position:fixed;right:14px;bottom:calc(84px + env(safe-area-inset-bottom,0px));z-index:40;border-radius:50%;width:52px;height:52px;font-size:1.4rem;padding:0}
-#ch-panel{position:fixed;left:10px;right:10px;margin-left:auto;max-width:420px;bottom:calc(84px + env(safe-area-inset-bottom,0px));max-height:72vh;z-index:41;background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:14px;display:flex;flex-direction:column;box-shadow:0 8px 30px #0004}
+#ch-fab{position:fixed;right:14px;bottom:calc(84px + env(safe-area-inset-bottom,0px));z-index:40;width:54px;height:54px;border-radius:50%;padding:0;display:grid;place-items:center;box-shadow:0 6px 18px #0005}
+#ch-panel svg,#ch-fab svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+#ch-panel{position:fixed;z-index:41;right:12px;bottom:calc(150px + env(safe-area-inset-bottom,0px));width:min(400px,calc(100vw - 24px));height:min(580px,calc(100dvh - 200px));display:flex;flex-direction:column;background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:18px;box-shadow:0 16px 48px #0006;overflow:hidden}
 #ch-panel[hidden]{display:none}
-#ch-panel .chh,#ch-panel .chf,#ch-panel .chi{display:flex;gap:6px;align-items:center;padding:8px;flex-wrap:wrap}
-#ch-log{overflow-y:auto;padding:0 10px;flex:1;min-height:120px}
-.cm{white-space:pre-wrap;padding:8px 10px;margin:6px 0;border-radius:10px;background:var(--tint);font-size:.9rem}
-.cm.u{background:var(--line);margin-left:28px}
-#ch-in{flex:1;min-width:0;padding:8px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);font:inherit}
-.chq{font-size:.78rem}
+#ch-panel button{font:inherit;cursor:pointer}
+.ch-top{display:flex;align-items:center;gap:7px;padding:11px 12px;border-bottom:1px solid var(--line)}
+.ch-av{width:34px;height:34px;border-radius:50%;background:var(--ink);color:var(--panel);display:grid;place-items:center;flex:none}
+.ch-ti{flex:1;min-width:0;line-height:1.25}.ch-ti b{display:block;font-size:.97rem}.ch-ti span{font-size:.72rem;color:var(--muted)}
+.ch-ib{width:34px;height:34px;border-radius:50%;border:1px solid var(--line);background:transparent;color:var(--ink);display:grid;place-items:center;padding:0;flex:none}
+.ch-ib[aria-pressed=true]{background:var(--ink);color:var(--panel)}
+#ch-lang{width:auto;height:34px;padding:0 6px;margin:0;border-radius:17px;border:1px solid var(--line);background:transparent;color:var(--ink);font-size:.78rem}
+#ch-log{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:8px;background:var(--bg)}
+.cm{max-width:88%;white-space:pre-wrap;word-break:break-word;padding:9px 12px;border-radius:14px 14px 14px 4px;background:var(--panel);border:1px solid var(--line);font-size:.9rem;line-height:1.45}
+.cm.u{align-self:flex-end;background:var(--ink);color:var(--panel);border-color:transparent;border-radius:14px 14px 4px 14px}
+.ch-chips{display:flex;gap:6px;overflow-x:auto;padding:8px 12px;border-top:1px solid var(--line);scrollbar-width:none}
+.ch-chips button{flex:none;border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:16px;padding:5px 11px;font-size:.78rem}
+.ch-in{display:flex;gap:8px;align-items:center;padding:8px 12px 12px}
+#ch-in{flex:1;min-width:0;height:40px;margin:0;padding:0 14px;border:1px solid var(--line);border-radius:20px;background:var(--bg);color:var(--ink);font:inherit;font-size:.9rem}
+#ch-go{width:40px;height:40px;border-radius:50%;border:0;background:var(--ink);color:var(--panel);display:grid;place-items:center;padding:0;flex:none}
+#ch-mic.on{animation:chp 1s infinite}@keyframes chp{50%{box-shadow:0 0 0 6px #e5484d66}}
+.ch-more{padding:8px 12px;border-top:1px solid var(--line);display:grid;gap:8px;font-size:.82rem}
+.ch-more[hidden]{display:none}
+.ch-more label{display:flex;gap:8px;align-items:center;margin:0}.ch-more input[type=checkbox]{width:18px;height:18px;margin:0;flex:none}
+.ch-more button{border:1px solid var(--line);background:transparent;color:var(--ink);border-radius:10px;padding:9px 10px;text-align:left}
 @media print{#ch-fab,#ch-panel{display:none!important}}
 </style>
 </head>
@@ -901,25 +916,13 @@ body.priv .pc-total .n,body.priv .fig .v,body.priv .fig .n,body.priv .kv dd,body
   </div>
 </dialog>
 
-<button class="btn primary" id="ch-fab" type="button" aria-label="Open assistant">&#128172;</button>
+<button class="btn primary" id="ch-fab" type="button" aria-label="Open assistant"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg></button>
 <div id="ch-panel" role="dialog" aria-label="Ledger assistant" hidden>
- <div class="chh"><b style="flex:1">Ledger assistant</b>
-  <select id="ch-lang" aria-label="Voice language"><option value="en-IN">English</option><option value="te-IN">తెలుగు</option><option value="hi-IN">हिन्दी</option></select>
-  <label class="sub"><input type="checkbox" id="ch-speak"> Speak</label>
-  <button class="btn small" type="button" id="ch-x" aria-label="Close">&#10005;</button></div>
- <div class="sub" style="padding:0 10px">Offline mode: answers are worked out on this device. Nothing is sent anywhere.</div>
+ <div class="ch-top"><div class="ch-av"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 3v6c0 4.5-3.2 7.8-8 9-4.8-1.2-8-4.5-8-9V6z"/><path d="M9 12l2 2 4-4"/></svg></div><div class="ch-ti"><b>Ledger assistant</b><span>Private. Works on this device</span></div><select id="ch-lang" aria-label="Voice language"><option value="en-IN">EN</option><option value="te-IN">తె</option><option value="hi-IN">हि</option></select><button class="ch-ib" type="button" id="ch-speak" aria-pressed="false" aria-label="Read answers aloud"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 5L6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/></svg></button><button class="ch-ib" type="button" id="ch-menu" aria-label="More options"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg></button><button class="ch-ib" type="button" id="ch-x" aria-label="Close"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+ <div id="ch-more" class="ch-more" hidden><button type="button" id="ch-sum">Copy safe summary for an AI chat</button><button type="button" id="ch-tg">Check Telegram commands now</button><label><input type="checkbox" id="ch-tgauto"> Auto-answer /due /networth /backup</label><button type="button" id="ch-clear">Clear chat</button></div>
  <div id="ch-log" aria-live="polite"></div>
- <div class="chf">
-  <button class="btn small chq" type="button" data-q="premiums this FY">This FY</button>
-  <button class="btn small chq" type="button" data-q="next due">Next due</button>
-  <button class="btn small chq" type="button" data-q="which FD matures first">FDs</button>
-  <button class="btn small chq" type="button" data-q="reminders">Reminders</button>
-  <button class="btn small chq" type="button" data-q="cover check">Cover</button>
-  <button class="btn small chq" type="button" data-q="net worth">Net worth</button></div>
- <div class="chi"><button class="btn small" type="button" id="ch-mic" aria-label="Speak">&#127908;</button><input id="ch-in" placeholder="Ask or say: add LIC term policy 5000 monthly from 5 Apr 2020" autocomplete="off"><button class="btn primary small" type="button" id="ch-go">Send</button></div>
- <div class="chf"><button class="btn small" type="button" id="ch-sum">Copy safe summary for an AI chat</button>
-  <button class="btn small" type="button" id="ch-tg">Check Telegram commands</button>
-  <label class="sub"><input type="checkbox" id="ch-tgauto"> Auto-answer /due /networth /backup</label></div>
+ <div class="ch-chips"><button class="chq" type="button" data-q="premiums this FY">This FY</button><button class="chq" type="button" data-q="next due">Next due</button><button class="chq" type="button" data-q="which FD matures first">FDs</button><button class="chq" type="button" data-q="reminders">Reminders</button><button class="chq" type="button" data-q="cover check">Cover</button><button class="chq" type="button" data-q="net worth">Net worth</button><button class="chq" type="button" data-q="add new policy">Add policy</button><button class="chq" type="button" data-q="claim help">Claim help</button></div>
+ <div class="ch-in"><button class="ch-ib" type="button" id="ch-mic" aria-label="Speak"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button><input id="ch-in" placeholder="Ask about your policies…" autocomplete="off" enterkeyhint="send"><button type="button" id="ch-go" aria-label="Send"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button></div>
 </div>
 <script>
 (function(){
@@ -3398,10 +3401,10 @@ function ans(raw){
   if(hasK(q,'prem')){ const y=fyOf(TODAY), t=fyTotals(y); return 'FY '+y+'-'+String(y+1).slice(2)+': paid '+fmt(t.paid)+', still due '+fmt(t.due)+', total '+fmt(t.paid+t.due)+'.'; }
   return 'Try: "premiums this FY", "next due", "which FD matures first", "net worth", "cover check", "reminders", "claim help <policy>", or "add LIC term policy 5000 monthly from 5 Apr 2020".';
 }
-function addMsg(t,u){ const d=document.createElement('div'); d.className='cm'+(u?' u':''); d.textContent=t; const l=$('#ch-log'); l.appendChild(d); l.scrollTop=l.scrollHeight; }
-function speak(t){ if(!window.speechSynthesis||!$('#ch-speak').checked) return; try{ const u=new SpeechSynthesisUtterance(t.replace(/₹/g,' rupees ').slice(0,400)); u.lang='en-IN'; speechSynthesis.cancel(); speechSynthesis.speak(u); }catch(e){} }
-function chSend(){ const i=$('#ch-in'), q=i.value.trim(); if(!q) return; i.value=''; addMsg(q,1); let a; try{ a=ans(q); }catch(e){ a='Sorry, I could not work that out.'; } addMsg(a); speak(a); }
-function chListen(){ const R=window.SpeechRecognition||window.webkitSpeechRecognition; if(!R){ addMsg('Voice input is not supported in this browser. Type instead.'); return; } const r=new R(); r.lang=$('#ch-lang').value; r.onresult=e=>{ $('#ch-in').value=e.results[0][0].transcript; chSend(); }; r.onerror=()=>addMsg('Could not hear that. Try again.'); try{ r.start(); }catch(e){} }
+function addMsg(t,u){ const d=document.createElement('div'); d.className='cm'+(u?' u':''); d.textContent=t; const l=$('#ch-log'); l.appendChild(d); l.scrollTop=l.scrollHeight; return d; }
+function speak(t){ if(!window.speechSynthesis||$('#ch-speak').getAttribute('aria-pressed')!=='true') return; try{ const u=new SpeechSynthesisUtterance(t.replace(/₹/g,' rupees ').slice(0,400)); u.lang='en-IN'; speechSynthesis.cancel(); speechSynthesis.speak(u); }catch(e){} }
+function chSend(){ const i=$('#ch-in'), q=i.value.trim(); if(!q) return; i.value=''; addMsg(q,1); const b=addMsg('…'); setTimeout(()=>{ let a; try{ a=ans(q); }catch(e){ a='Sorry, I could not work that out.'; } b.textContent=a; const l=$('#ch-log'); l.scrollTop=l.scrollHeight; speak(a); },250); }
+function chListen(){ const R=window.SpeechRecognition||window.webkitSpeechRecognition; if(!R) return; const r=new R(), mic=$('#ch-mic'); r.lang=$('#ch-lang').value; r.onresult=e=>{ $('#ch-in').value=e.results[0][0].transcript; chSend(); }; r.onerror=()=>addMsg('Could not hear that. Try again.'); r.onend=()=>mic.classList.remove('on'); try{ mic.classList.add('on'); r.start(); }catch(e){ mic.classList.remove('on'); } }
 const TGC_KEY=KEY+'-tgcmd', TGO_KEY=KEY+'-tgoff';
 async function tgPoll(){
   const c=getTgCreds(); if(!c||!c.token||!c.chatId) return -1;
@@ -3421,7 +3424,7 @@ async function tgPoll(){
     return n;
   }catch(e){ return -1; }
 }
-$('#ch-fab').addEventListener('click',()=>{ const p=$('#ch-panel'); p.hidden=!p.hidden; if(!p.hidden){ if(!$('#ch-log').children.length) addMsg('Hi. Ask about premiums, due dates, FDs, cover or net worth. I can also open the add-policy form and help with a claim.'); $('#ch-in').focus(); } });
+$('#ch-fab').addEventListener('click',()=>{ const p=$('#ch-panel'); p.hidden=!p.hidden; if(!p.hidden){ if(!$('#ch-log').children.length) { const d=dues(30), n=attn().length; addMsg('Hi! '+(d.length?'Coming up in the next 30 days:\n'+d.join('\n'):'Nothing is due in the next 30 days.')+(n?'\n\n'+n+' item'+(n===1?'':'s')+' need attention. Tap Reminders.':'')+'\n\nAsk me anything, or tap a suggestion below.'); } $('#ch-in').focus(); } });
 $('#ch-x').addEventListener('click',()=>{ $('#ch-panel').hidden=true; });
 $('#ch-go').addEventListener('click',chSend);
 $('#ch-in').addEventListener('keydown',e=>{ if(e.key==='Enter') chSend(); });
@@ -3429,6 +3432,11 @@ $('#ch-mic').addEventListener('click',chListen);
 $$('#ch-panel .chq').forEach(b=>b.addEventListener('click',()=>{ $('#ch-in').value=b.dataset.q; chSend(); }));
 $('#ch-sum').addEventListener('click',()=>{ const t=safeSummary(); if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(()=>addMsg('Copied. It has no names, account numbers or receipts. Paste it into any AI chat with your question.'),()=>addMsg(t)); else addMsg(t); });
 $('#ch-tg').addEventListener('click',async()=>{ addMsg('Checking Telegram…'); const n=await tgPoll(); addMsg(n<0?'Could not reach Telegram. Save the bot token and chat ID under Backup first.':'Answered '+n+(n===1?' command.':' commands.')); });
+if(!(window.SpeechRecognition||window.webkitSpeechRecognition)){ $('#ch-mic').hidden=true; $('#ch-lang').hidden=true; }
+$('#ch-speak').addEventListener('click',e=>{ const b=e.currentTarget; b.setAttribute('aria-pressed',String(b.getAttribute('aria-pressed')!=='true')); });
+$('#ch-menu').addEventListener('click',()=>{ const m=$('#ch-more'); m.hidden=!m.hidden; });
+$('#ch-clear').addEventListener('click',()=>{ $('#ch-log').textContent=''; $('#ch-more').hidden=true; addMsg('Chat cleared.'); });
+document.addEventListener('keydown',e=>{ if(e.key==='Escape') $('#ch-panel').hidden=true; });
 $('#ch-tgauto').checked=localStorage.getItem(TGC_KEY)==='1';
 $('#ch-tgauto').addEventListener('change',e=>{ try{ localStorage.setItem(TGC_KEY,e.target.checked?'1':'0'); }catch(x){} });
 setInterval(()=>{ if(!document.hidden&&localStorage.getItem(TGC_KEY)==='1') tgPoll(); },120000);
