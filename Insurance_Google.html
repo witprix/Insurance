@@ -3368,7 +3368,10 @@ function renderNetWorth(){
 const KW={prem:['premium','pay','paid','spend','प्रीमियम','भुगतान','ప్రీమియం','చెల్లి'],next:['next','due','upcoming','अगला','देय','తదుపరి','గడువు'],fd:['fd','fixed','deposit','matur','एफडी','ఎఫ్‌డీ','పరిపక్వ'],net:['net worth','networth','balance','savings','नेट','निधि','ఆస్తి'],cover:['cover','gap','income','कवर','కవర్'],claim:['claim','क्लेम','క్లెయిమ్'],rem:['remind','attention','alert','nominee','याद','గుర్తు']};
 const hasK=(q,k)=>KW[k].some(w=>q.indexOf(w)>=0);
 function fyTotals(y){ const A=new Date(y,3,1),B=new Date(y+1,3,1); let paid=0,due=0; state.policies.map(analyse).forEach(a=>a.items.forEach(i=>{ if(i.date>=A&&i.date<B){ if(i.date<=TODAY) paid+=i.amount; else due+=i.amount; } })); return {paid,due}; }
-function dues(days){ const L=[]; state.policies.map(analyse).forEach(a=>{ if(a.next&&Math.round((a.next.date-TODAY)/864e5)<=days) L.push({d:a.next.date,t:a.p.name+': '+fmt(a.next.amount)+' on '+fmtDate(a.next.date)}); }); state.fds.forEach(f=>{ const m=fdDates(f).mat; if(m){ const n=Math.round((m-TODAY)/864e5); if(n>=0&&n<=days) L.push({d:m,t:fdName(f)+' FD matures '+fmtDate(m)+' ('+fmt(f.matAmt||f.amount)+')'}); } }); return L.sort((x,y)=>x.d-y.d).map(x=>'• '+x.t); }
+function duesObj(days,kind){ const L=[], lim=addDays(TODAY,days); if(kind!=='fd') state.policies.map(analyse).forEach(a=>a.items.forEach(i=>{ if(i.date>=TODAY&&i.date<=lim) L.push({d:i.date,a:i.amount,t:a.p.name+': '+fmt(i.amount)+' on '+fmtDate(i.date)}); })); if(kind!=='prem') state.fds.forEach(f=>{ const m=fdDates(f).mat; if(m&&m>=TODAY&&m<=lim) L.push({d:m,a:0,t:fdName(f)+' FD matures '+fmtDate(m)+' ('+fmt(f.matAmt||f.amount)+')'}); }); return L.sort((x,y)=>x.d-y.d); }
+function dues(days,kind){ return duesObj(days,kind).map(x=>'• '+x.t); }
+function winDays(q){ const m=q.match(/(\d+)\s*(day|week|month|दिन|రోజు)/); if(m){ const n=+m[1]; return m[2]==='week'?n*7:m[2]==='month'?n*30:n; } if(/today/.test(q)) return 0; if(/tomorrow/.test(q)) return 1; if(/week/.test(q)) return 7; if(/month/.test(q)) return 30; return null; }
+function dueTxt(days,kind){ const lab=days===0?'today':days===1?'by tomorrow':'in the next '+days+' days', L=duesObj(days,kind), what=kind==='fd'?'FD maturities':'premiums and maturities'; if(L.length){ const tot=L.reduce((t,x)=>t+x.a,0); return 'Due '+lab+(tot?' (premiums total '+fmt(tot)+')':'')+':\n'+L.map(x=>'• '+x.t).join('\n'); } const n=duesObj(3650,kind)[0]; return 'No '+what+' '+lab+'.'+(n?' The next one is: '+n.t+'.':''); }
 function attn(){ const d=document.createElement('div'); d.innerHTML=attnHtml(); return Array.from(d.querySelectorAll('li')).map(l=>'• '+l.textContent); }
 function netTxt(){ const sv=state.savings.reduce((t,x)=>t+x.amount,0), fd=state.fds.filter(f=>{ const m=fdDates(f).mat; return !(m&&m<=TODAY); }).reduce((t,x)=>t+x.amount,0); return 'Savings '+fmt(sv)+', active FDs '+fmt(fd)+', total '+fmt(sv+fd)+'. Premiums still to pay: '+fmt(state.policies.map(analyse).reduce((t,a)=>t+a.remain,0))+'.'; }
 function fdTxt(){ const L=state.fds.map(f=>({f,m:fdDates(f).mat})).filter(x=>x.m&&x.m>TODAY).sort((a,b)=>a.m-b.m); return L.length?L.slice(0,5).map(x=>'• '+fdName(x.f)+': '+fmt(x.f.matAmt||x.f.amount)+' on '+fmtDate(x.m)).join('\n'):'No active FD maturities found.'; }
@@ -3392,12 +3395,14 @@ function safeSummary(){ const L=['Answer using only this anonymised ledger data 
 function ans(raw){
   const q=raw.toLowerCase().trim();
   if(/^add\b/.test(q)) return addTxt(raw);
+  const w=winDays(q);
+  if(w!=null&&!hasK(q,'claim')&&!hasK(q,'cover')&&!hasK(q,'net')) return dueTxt(w,hasK(q,'fd')?'fd':undefined);
   if(hasK(q,'claim')) return claimTxt(q);
   if(hasK(q,'cover')) return coverTxt();
   if(hasK(q,'rem')) return attn().concat(dues(30)).join('\n')||'Nothing needs attention right now.';
   if(hasK(q,'fd')) return fdTxt();
   if(hasK(q,'net')) return netTxt();
-  if(hasK(q,'next')) return dues(60).join('\n')||'Nothing is due in the next 60 days.';
+  if(hasK(q,'next')) return dueTxt(60);
   if(hasK(q,'prem')){ const y=fyOf(TODAY), t=fyTotals(y); return 'FY '+y+'-'+String(y+1).slice(2)+': paid '+fmt(t.paid)+', still due '+fmt(t.due)+', total '+fmt(t.paid+t.due)+'.'; }
   return 'Try: "premiums this FY", "next due", "which FD matures first", "net worth", "cover check", "reminders", "claim help <policy>", or "add LIC term policy 5000 monthly from 5 Apr 2020".';
 }
