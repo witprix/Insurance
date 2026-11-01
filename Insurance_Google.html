@@ -298,22 +298,26 @@ body.priv .pc-total .n,body.priv .fig .v,body.priv .fig .n,body.priv .kv dd,body
 .ch-top{display:flex;align-items:center;gap:7px;padding:11px 12px;border-bottom:1px solid var(--line)}
 .ch-av{width:34px;height:34px;border-radius:50%;background:var(--ink);color:var(--panel);display:grid;place-items:center;flex:none}
 .ch-ti{flex:1;min-width:0;line-height:1.25}.ch-ti b{display:block;font-size:.97rem}.ch-ti span{font-size:.72rem;color:var(--muted)}
-.ch-ib{width:34px;height:34px;border-radius:50%;border:1px solid var(--line);background:transparent;color:var(--ink);display:grid;place-items:center;padding:0;flex:none}
+.ch-ib{width:38px;height:38px;border-radius:50%;border:1px solid var(--line);background:transparent;color:var(--ink);display:grid;place-items:center;padding:0;flex:none}
 .ch-ib[aria-pressed=true]{background:var(--ink);color:var(--panel)}
 #ch-lang{width:auto;height:34px;padding:0 6px;margin:0;border-radius:17px;border:1px solid var(--line);background:transparent;color:var(--ink);font-size:.78rem}
 #ch-log{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:8px;background:var(--bg)}
 .cm{max-width:88%;white-space:pre-wrap;word-break:break-word;padding:9px 12px;border-radius:14px 14px 14px 4px;background:var(--panel);border:1px solid var(--line);font-size:.9rem;line-height:1.45}
 .cm.u{align-self:flex-end;background:var(--ink);color:var(--panel);border-color:transparent;border-radius:14px 14px 4px 14px}
-.ch-chips{display:flex;gap:6px;overflow-x:auto;padding:8px 12px;border-top:1px solid var(--line);scrollbar-width:none}
-.ch-chips button{flex:none;border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:16px;padding:5px 11px;font-size:.78rem}
+.ch-chips{display:flex;flex-wrap:wrap;gap:6px;padding:8px 12px;border-top:1px solid var(--line);max-height:96px;overflow-y:auto}
+.ch-chips button{border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:16px;padding:5px 11px;font-size:.78rem}
 .ch-in{display:flex;gap:8px;align-items:center;padding:8px 12px 12px}
-#ch-in{flex:1;min-width:0;height:40px;margin:0;padding:0 14px;border:1px solid var(--line);border-radius:20px;background:var(--bg);color:var(--ink);font:inherit;font-size:.9rem}
+#ch-in{flex:1;min-width:0;height:40px;margin:0;padding:0 14px;border:1px solid var(--line);border-radius:20px;background:var(--bg);color:var(--ink);font:inherit;font-size:16px;-webkit-appearance:none;appearance:none}
 #ch-go{width:40px;height:40px;border-radius:50%;border:0;background:var(--ink);color:var(--panel);display:grid;place-items:center;padding:0;flex:none}
 #ch-mic.on{animation:chp 1s infinite}@keyframes chp{50%{box-shadow:0 0 0 6px #e5484d66}}
 .ch-more{padding:8px 12px;border-top:1px solid var(--line);display:grid;gap:8px;font-size:.82rem}
 .ch-more[hidden]{display:none}
 .ch-more label{display:flex;gap:8px;align-items:center;margin:0}.ch-more input[type=checkbox]{width:18px;height:18px;margin:0;flex:none}
 .ch-more button{border:1px solid var(--line);background:transparent;color:var(--ink);border-radius:10px;padding:9px 10px;text-align:left}
+#ch-log{overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+.ch-ti b,.ch-ti span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ch-top{padding-top:calc(11px + env(safe-area-inset-top,0px) * 0)}
+@media(max-width:520px){#ch-panel{left:8px;right:8px;width:auto;bottom:calc(8px + env(safe-area-inset-bottom,0px));height:calc(100vh - 24px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));height:calc(100dvh - 24px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));max-height:none;border-radius:16px}}
 @media print{#ch-fab,#ch-panel{display:none!important}}
 </style>
 </head>
@@ -3437,6 +3441,9 @@ $('#ch-mic').addEventListener('click',chListen);
 $$('#ch-panel .chq').forEach(b=>b.addEventListener('click',()=>{ $('#ch-in').value=b.dataset.q; chSend(); }));
 $('#ch-sum').addEventListener('click',()=>{ const t=safeSummary(); if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(()=>addMsg('Copied. It has no names, account numbers or receipts. Paste it into any AI chat with your question.'),()=>addMsg(t)); else addMsg(t); });
 $('#ch-tg').addEventListener('click',async()=>{ addMsg('Checking Telegram…'); const n=await tgPoll(); addMsg(n<0?'Could not reach Telegram. Save the bot token and chat ID under Backup first.':'Answered '+n+(n===1?' command.':' commands.')); });
+function fitPanel(){ const p=$('#ch-panel'), v=window.visualViewport; if(!v||p.hidden) return; const kb=Math.max(0,window.innerHeight-v.height-v.offsetTop); if(kb>80){ p.style.bottom=(kb+8)+'px'; p.style.height=Math.max(220,Math.min(580,v.height-16))+'px'; } else { p.style.bottom=''; p.style.height=''; } const l=$('#ch-log'); l.scrollTop=l.scrollHeight; }
+if(window.visualViewport){ visualViewport.addEventListener('resize',fitPanel); visualViewport.addEventListener('scroll',fitPanel); }
+$('#ch-in').addEventListener('focus',()=>setTimeout(fitPanel,300));
 if(!(window.SpeechRecognition||window.webkitSpeechRecognition)){ $('#ch-mic').hidden=true; $('#ch-lang').hidden=true; }
 $('#ch-speak').addEventListener('click',e=>{ const b=e.currentTarget; b.setAttribute('aria-pressed',String(b.getAttribute('aria-pressed')!=='true')); });
 $('#ch-menu').addEventListener('click',()=>{ const m=$('#ch-more'); m.hidden=!m.hidden; });
