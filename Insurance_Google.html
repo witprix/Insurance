@@ -290,6 +290,16 @@ body.priv .pc-total .n,body.priv .fig .v,body.priv .fig .n,body.priv .kv dd,body
 #lock[hidden]{display:none}
 .spark{width:100%;height:36px;margin-top:8px;color:var(--focus)}
 .claim-row .cl-status{grid-column:1/-1}
+#ch-fab{position:fixed;right:14px;bottom:calc(84px + env(safe-area-inset-bottom,0px));z-index:40;border-radius:50%;width:52px;height:52px;font-size:1.4rem;padding:0}
+#ch-panel{position:fixed;left:10px;right:10px;margin-left:auto;max-width:420px;bottom:calc(84px + env(safe-area-inset-bottom,0px));max-height:72vh;z-index:41;background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:14px;display:flex;flex-direction:column;box-shadow:0 8px 30px #0004}
+#ch-panel[hidden]{display:none}
+#ch-panel .chh,#ch-panel .chf,#ch-panel .chi{display:flex;gap:6px;align-items:center;padding:8px;flex-wrap:wrap}
+#ch-log{overflow-y:auto;padding:0 10px;flex:1;min-height:120px}
+.cm{white-space:pre-wrap;padding:8px 10px;margin:6px 0;border-radius:10px;background:var(--tint);font-size:.9rem}
+.cm.u{background:var(--line);margin-left:28px}
+#ch-in{flex:1;min-width:0;padding:8px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);font:inherit}
+.chq{font-size:.78rem}
+@media print{#ch-fab,#ch-panel{display:none!important}}
 </style>
 </head>
 <body>
@@ -891,6 +901,26 @@ body.priv .pc-total .n,body.priv .fig .v,body.priv .fig .n,body.priv .kv dd,body
   </div>
 </dialog>
 
+<button class="btn primary" id="ch-fab" type="button" aria-label="Open assistant">&#128172;</button>
+<div id="ch-panel" role="dialog" aria-label="Ledger assistant" hidden>
+ <div class="chh"><b style="flex:1">Ledger assistant</b>
+  <select id="ch-lang" aria-label="Voice language"><option value="en-IN">English</option><option value="te-IN">తెలుగు</option><option value="hi-IN">हिन्दी</option></select>
+  <label class="sub"><input type="checkbox" id="ch-speak"> Speak</label>
+  <button class="btn small" type="button" id="ch-x" aria-label="Close">&#10005;</button></div>
+ <div class="sub" style="padding:0 10px">Offline mode: answers are worked out on this device. Nothing is sent anywhere.</div>
+ <div id="ch-log" aria-live="polite"></div>
+ <div class="chf">
+  <button class="btn small chq" type="button" data-q="premiums this FY">This FY</button>
+  <button class="btn small chq" type="button" data-q="next due">Next due</button>
+  <button class="btn small chq" type="button" data-q="which FD matures first">FDs</button>
+  <button class="btn small chq" type="button" data-q="reminders">Reminders</button>
+  <button class="btn small chq" type="button" data-q="cover check">Cover</button>
+  <button class="btn small chq" type="button" data-q="net worth">Net worth</button></div>
+ <div class="chi"><button class="btn small" type="button" id="ch-mic" aria-label="Speak">&#127908;</button><input id="ch-in" placeholder="Ask or say: add LIC term policy 5000 monthly from 5 Apr 2020" autocomplete="off"><button class="btn primary small" type="button" id="ch-go">Send</button></div>
+ <div class="chf"><button class="btn small" type="button" id="ch-sum">Copy safe summary for an AI chat</button>
+  <button class="btn small" type="button" id="ch-tg">Check Telegram commands</button>
+  <label class="sub"><input type="checkbox" id="ch-tgauto"> Auto-answer /due /networth /backup</label></div>
+</div>
 <script>
 (function(){
 'use strict';
@@ -1090,7 +1120,7 @@ const ui={view:'policies', filter:'all', sort:'next', mode:'year', sel:null, q:'
 
 function save(){
   try{ localStorage.setItem(KEY,JSON.stringify(state)); storageOK=true; }
-  catch(e){ storageOK=false; }
+  catch(e){ if(storageOK) setTimeout(()=>alert('Could not save: browser storage is full. Your latest change is NOT stored. Remove large FD receipts or download a backup now.'),0); storageOK=false; }
   $('#storage-note').textContent = storageOK
     ? 'Your data stays in this browser only. Use Backup to keep a copy.'
     : 'Saving is not available in this browser session, so changes will be lost when you close the page. Use Backup to keep a copy.';
@@ -2638,16 +2668,16 @@ function onHostConn(conn,tok,peer){
       sync.hello=true; clearTimer('hello');
       const chk=String(m.chk||'').replace(/\D/g,'').slice(0,3);
       if(chk.length!==3){ syncEnd('The other device sent an unexpected message. Reload both devices and try again.',true); return; }
-      const n=state.policies.length;
+      const n=state.policies.length+state.savings.length+state.fds.length;
       $('#sy-host-spin').hidden=true;
       $('#sy-check').textContent=chk; $('#sy-check').hidden=false;
-      $('#sy-host-status').textContent='A device connected and shows the number below. Does the other device show the same number? Send '+n+(n===1?' policy':' policies')+' only if it does.';
+      $('#sy-host-status').textContent='A device connected and shows the number below. Does the other device show the same number? Send '+n+(n===1?' item':' items')+' only if it does.';
       $('#sy-confirm').hidden=false;
       try{ $('#sy-send-now').focus(); }catch(e){}
       setTimer('confirm',120000,()=>{ if(alive()) syncEnd('No answer, so nothing was sent.'); });
     } else if(m.t==='ack'){
       clearTimer('ack');
-      if(Number(m.count)>0) syncEnd('Sent '+sync.sentCount+(sync.sentCount===1?' policy':' policies')+'. Finish on the other device by choosing Add or Replace under Restore.');
+      if(Number(m.count)>0) syncEnd('Sent '+sync.sentCount+(sync.sentCount===1?' item':' items')+'. Finish on the other device by choosing Add or Replace under Restore.');
       else syncEnd('The other device could not read the data. Nothing was changed there.',true);
     }
   });
@@ -2659,7 +2689,7 @@ function hostSendNow(){
   const tok=sync.token, bk=buildBackup();
   try{ conn.send(JSON.stringify({t:'ledger',payload:bk})); }
   catch(e){ syncEnd('Sending failed. Try again.',true); return; }
-  sync.sent=true; sync.sentCount=bk.count; clearTimer('confirm');
+  sync.sent=true; sync.sentCount=bk.policies.length+bk.savings.length+bk.fds.length; clearTimer('confirm');
   $('#sy-confirm').hidden=true; $('#sy-check').hidden=true; $('#sy-host-status').textContent='Sending…'; $('#sy-host-spin').hidden=false;
   setTimer('ack',15000,()=>{ if(tok===sync.token) syncEnd('The other device did not confirm it received the data. Check that device before trying again.',true); });
 }
@@ -2734,7 +2764,7 @@ function onRecvData(d){
     if(tok!==sync.token) return;
     syncCleanup();
     if(n>0){
-      syMsg('Received '+n+(n===1?' policy':' policies')+'. Review them under Restore below, then choose Add or Replace.');
+      syMsg('Received '+n+(n===1?' item':' items')+'. Review them under Restore below, then choose Add or Replace.');
       try{ $('#rs-report').scrollIntoView({block:'center'}); }catch(e){}
     } else syMsg('The other device sent data that could not be read.',true);
   },700);
@@ -3073,7 +3103,8 @@ $('#fd-form').addEventListener('submit', e => {
   const amt = Number($('#fd-amt').value) || 0;
   const mat = $('#fd-mat').value;
   const inv = $('#fd-invested').value;
-  if(!bank) return;
+  if(!bank){ alert('Enter the bank name.'); return; }
+  if(!(amt>0)){ alert('Enter the deposit amount.'); return; }
   if(receiptBusy){ alert('Please wait, the receipt is still being prepared.'); return; }
   if(validISO(inv)&&validISO(mat)&&pd(mat)<=pd(inv)){ alert('The maturity date must be after the investment date.'); return; }
   const obj = { 
@@ -3254,11 +3285,12 @@ function getSec(){ try{ return JSON.parse(localStorage.getItem(SEC_KEY)||'null')
 function putSec(o){ try{ localStorage.setItem(SEC_KEY,JSON.stringify(o)); return true; }catch(e){ return false; } }
 async function sha(t){ const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(t)); return Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join(''); }
 let idleT=null, hiddenAt=0;
-function lockNow(){ if(!getSec().h) return; $$('dialog[open]').forEach(d=>d.close()); $('#lock').hidden=false; $('#lock-pin').value=''; $('#lock-msg').textContent=''; setTimeout(()=>$('#lock-pin').focus(),50); }
+function lockNow(){ if(!getSec().h) return; $('#ch-panel').hidden=true; $$('dialog[open]').forEach(d=>d.close()); $('#lock').hidden=false; $('#lock-pin').value=''; $('#lock-msg').textContent=''; setTimeout(()=>$('#lock-pin').focus(),50); }
 function armIdle(){ clearTimeout(idleT); const sc=getSec(); if(!sc.h||!$('#lock').hidden) return; idleT=setTimeout(lockNow,(sc.min||5)*60000); }
 ['click','keydown','touchstart','scroll'].forEach(ev=>document.addEventListener(ev,armIdle,{passive:true}));
 document.addEventListener('visibilitychange',()=>{ if(document.hidden) hiddenAt=Date.now(); else if(hiddenAt&&Date.now()-hiddenAt>60000) lockNow(); });
-async function tryUnlock(){ const sc=getSec(); if(await sha(sc.salt+$('#lock-pin').value)===sc.h){ $('#lock').hidden=true; armIdle(); } else { $('#lock-msg').textContent='Wrong PIN.'; $('#lock-pin').value=''; } }
+let badPin=0, pinWaitUntil=0;
+async function tryUnlock(){ const sc=getSec(), left=Math.ceil((pinWaitUntil-Date.now())/1000); if(left>0){ $('#lock-msg').textContent='Too many tries. Wait '+left+' seconds.'; return; } if(await sha(sc.salt+$('#lock-pin').value)===sc.h){ badPin=0; $('#lock').hidden=true; armIdle(); } else { badPin++; if(badPin>=3) pinWaitUntil=Date.now()+Math.min(300,5*Math.pow(2,badPin-3))*1000; $('#lock-msg').textContent='Wrong PIN.'; $('#lock-pin').value=''; } }
 $('#lock-go').addEventListener('click',tryUnlock);
 $('#lock-pin').addEventListener('keydown',e=>{ if(e.key==='Enter') tryUnlock(); });
 $('#s-secsave').addEventListener('click',async()=>{
@@ -3328,6 +3360,78 @@ function renderNetWorth(){
     (inc>0?'<p class="sub">A common rule of thumb is life cover of about 10 times your yearly income, which is '+fmt(inc*10)+' for you. '+(live>=inc*10?'You are at or above that.':'You are '+fmt(inc*10-live)+' short of it.')+' This is a rough guide, not advice.</p>':'<p class="sub">Add your yearly income in Settings to compare life cover with a rule of thumb.</p>');
   $('#nw-body').innerHTML=h;
 }
+
+/* ---------- chat assistant ---------- */
+const KW={prem:['premium','pay','paid','spend','प्रीमियम','भुगतान','ప్రీమియం','చెల్లి'],next:['next','due','upcoming','अगला','देय','తదుపరి','గడువు'],fd:['fd','fixed','deposit','matur','एफडी','ఎఫ్‌డీ','పరిపక్వ'],net:['net worth','networth','balance','savings','नेट','निधि','ఆస్తి'],cover:['cover','gap','income','कवर','కవర్'],claim:['claim','क्लेम','క్లెయిమ్'],rem:['remind','attention','alert','nominee','याद','గుర్తు']};
+const hasK=(q,k)=>KW[k].some(w=>q.indexOf(w)>=0);
+function fyTotals(y){ const A=new Date(y,3,1),B=new Date(y+1,3,1); let paid=0,due=0; state.policies.map(analyse).forEach(a=>a.items.forEach(i=>{ if(i.date>=A&&i.date<B){ if(i.date<=TODAY) paid+=i.amount; else due+=i.amount; } })); return {paid,due}; }
+function dues(days){ const L=[]; state.policies.map(analyse).forEach(a=>{ if(a.next&&Math.round((a.next.date-TODAY)/864e5)<=days) L.push({d:a.next.date,t:a.p.name+': '+fmt(a.next.amount)+' on '+fmtDate(a.next.date)}); }); state.fds.forEach(f=>{ const m=fdDates(f).mat; if(m){ const n=Math.round((m-TODAY)/864e5); if(n>=0&&n<=days) L.push({d:m,t:fdName(f)+' FD matures '+fmtDate(m)+' ('+fmt(f.matAmt||f.amount)+')'}); } }); return L.sort((x,y)=>x.d-y.d).map(x=>'• '+x.t); }
+function attn(){ const d=document.createElement('div'); d.innerHTML=attnHtml(); return Array.from(d.querySelectorAll('li')).map(l=>'• '+l.textContent); }
+function netTxt(){ const sv=state.savings.reduce((t,x)=>t+x.amount,0), fd=state.fds.filter(f=>{ const m=fdDates(f).mat; return !(m&&m<=TODAY); }).reduce((t,x)=>t+x.amount,0); return 'Savings '+fmt(sv)+', active FDs '+fmt(fd)+', total '+fmt(sv+fd)+'. Premiums still to pay: '+fmt(state.policies.map(analyse).reduce((t,a)=>t+a.remain,0))+'.'; }
+function fdTxt(){ const L=state.fds.map(f=>({f,m:fdDates(f).mat})).filter(x=>x.m&&x.m>TODAY).sort((a,b)=>a.m-b.m); return L.length?L.slice(0,5).map(x=>'• '+fdName(x.f)+': '+fmt(x.f.matAmt||x.f.amount)+' on '+fmtDate(x.m)).join('\n'):'No active FD maturities found.'; }
+function coverTxt(){ const an=state.policies.map(analyse), inc=getSec().income||0; const s=t=>an.filter(a=>a.p.type===t&&a.status!=='Matured').reduce((x,a)=>x+(Number(a.p.cover)||0),0); const L=s('life'), H=s('health'); let r='Life cover '+fmt(L)+', health cover '+fmt(H)+'. '; r+=inc>0?(L>=inc*10?'Life cover meets the 10 times income rule of thumb ('+fmt(inc*10)+').':'Life cover is '+fmt(inc*10-L)+' short of the 10 times income rule of thumb ('+fmt(inc*10)+'). This is a rough guide, not advice.'):'Add your yearly income in Settings to compare.'; return r; }
+function findPol(q){ return state.policies.find(p=>q.indexOf(p.name.toLowerCase())>=0)||state.policies.find(p=>p.name.toLowerCase().split(/\s+/).some(w=>w.length>3&&q.indexOf(w)>=0)); }
+function claimTxt(q){ const p=findPol(q); if(!p) return 'Which policy? Say for example: claim help '+(state.policies[0]?state.policies[0].name:'LIC term plan'); const n=p.number||'[policy number]'; return 'Claim help: '+p.name+'\nPolicy no.: '+(p.number||'not saved')+'\nClaims phone: '+(p.claimsPhone||'not saved')+'\nAgent: '+(p.agentName||'-')+' '+(p.agentPhone||'')+'\nDocuments saved: '+((p.docs||[]).map(d=>d.name).join(', ')||'none')+'\n\nDraft message:\nSubject: Claim intimation for policy '+n+'\nDear Sir or Madam, I wish to intimate a claim under policy '+n+' ('+p.name+', '+(p.insurer||'insurer')+'). Please share the claim form and the list of documents needed, and confirm receipt.\nRegards, '+(p.owner||'[your name]'); }
+function addTxt(q){
+  let date='', m=q.match(/(\d{4}-\d{2}-\d{2})/);
+  if(m) date=m[1]; else { m=q.match(/(\d{1,2})\s+([a-z]{3,9})\s+(\d{4})/i); const mi=m?MON.findIndex(x=>x.toLowerCase()===m[2].slice(0,3).toLowerCase()):-1; if(mi>=0) date=toISO(new Date(+m[3],mi,+m[1])); }
+  const rest=q.replace(/\d{4}-\d{2}-\d{2}|\d{1,2}\s+[a-z]{3,9}\s+\d{4}/i,' '), n=rest.match(/(\d[\d,]{2,})/), prem=n?Number(n[1].replace(/,/g,'')):0;
+  const freq=/month/i.test(q)?'monthly':/quarter/i.test(q)?'quarterly':/half/i.test(q)?'half':/one time|single/i.test(q)?'single':'yearly';
+  const type=/health|mediclaim/i.test(q)?'health':/pension/i.test(q)?'pension':/lic|life|term/i.test(q)?'life':'other';
+  const nm=q.replace(/^\s*add\s*/i,'').split(/\s+(?:policy|premium|\d)/i)[0].trim()||'New policy';
+  openForm(null);
+  const set=(id,v)=>{ const e=$('#'+id); if(e&&v){ e.value=v; e.dispatchEvent(new Event('input',{bubbles:true})); e.dispatchEvent(new Event('change',{bubbles:true})); } };
+  set('f-type',type); set('f-name',nm); set('f-freq',freq); set('f-premium',prem||''); set('f-start',date);
+  const miss=[!prem&&'premium amount',!date&&'start date'].filter(Boolean);
+  return 'I opened the policy form with what I understood: '+nm+', '+type+', '+freq+(prem?', '+fmt(prem):'')+(date?', from '+fmtDate(pd(date)):'')+'.'+(miss.length?' Please fill in the '+miss.join(' and ')+'.':'')+' Check it and press Save.';
+}
+function safeSummary(){ const L=['Answer using only this anonymised ledger data (amounts in INR). Today is '+toISO(TODAY)+'.']; state.policies.map(analyse).forEach((a,i)=>L.push('Policy '+(i+1)+': '+a.p.type+', premium '+a.p.premium+' '+a.p.freq+', status '+a.status+', paid '+Math.round(a.paid)+', remaining '+Math.round(a.remain)+', next due '+(a.next?toISO(a.next.date):'none')+', cover '+(a.p.cover||0))); state.fds.forEach((f,i)=>{ const m=fdDates(f).mat; L.push('FD '+(i+1)+': '+f.amount+' at '+f.rate+'%, matures '+(m?toISO(m):'unknown')); }); L.push('Savings total: '+state.savings.reduce((t,x)=>t+x.amount,0)); return L.join('\n'); }
+function ans(raw){
+  const q=raw.toLowerCase().trim();
+  if(/^add\b/.test(q)) return addTxt(raw);
+  if(hasK(q,'claim')) return claimTxt(q);
+  if(hasK(q,'cover')) return coverTxt();
+  if(hasK(q,'rem')) return attn().concat(dues(30)).join('\n')||'Nothing needs attention right now.';
+  if(hasK(q,'fd')) return fdTxt();
+  if(hasK(q,'net')) return netTxt();
+  if(hasK(q,'next')) return dues(60).join('\n')||'Nothing is due in the next 60 days.';
+  if(hasK(q,'prem')){ const y=fyOf(TODAY), t=fyTotals(y); return 'FY '+y+'-'+String(y+1).slice(2)+': paid '+fmt(t.paid)+', still due '+fmt(t.due)+', total '+fmt(t.paid+t.due)+'.'; }
+  return 'Try: "premiums this FY", "next due", "which FD matures first", "net worth", "cover check", "reminders", "claim help <policy>", or "add LIC term policy 5000 monthly from 5 Apr 2020".';
+}
+function addMsg(t,u){ const d=document.createElement('div'); d.className='cm'+(u?' u':''); d.textContent=t; const l=$('#ch-log'); l.appendChild(d); l.scrollTop=l.scrollHeight; }
+function speak(t){ if(!window.speechSynthesis||!$('#ch-speak').checked) return; try{ const u=new SpeechSynthesisUtterance(t.replace(/₹/g,' rupees ').slice(0,400)); u.lang='en-IN'; speechSynthesis.cancel(); speechSynthesis.speak(u); }catch(e){} }
+function chSend(){ const i=$('#ch-in'), q=i.value.trim(); if(!q) return; i.value=''; addMsg(q,1); let a; try{ a=ans(q); }catch(e){ a='Sorry, I could not work that out.'; } addMsg(a); speak(a); }
+function chListen(){ const R=window.SpeechRecognition||window.webkitSpeechRecognition; if(!R){ addMsg('Voice input is not supported in this browser. Type instead.'); return; } const r=new R(); r.lang=$('#ch-lang').value; r.onresult=e=>{ $('#ch-in').value=e.results[0][0].transcript; chSend(); }; r.onerror=()=>addMsg('Could not hear that. Try again.'); try{ r.start(); }catch(e){} }
+const TGC_KEY=KEY+'-tgcmd', TGO_KEY=KEY+'-tgoff';
+async function tgPoll(){
+  const c=getTgCreds(); if(!c||!c.token||!c.chatId) return -1;
+  try{
+    const r=await fetch('https://api.telegram.org/bot'+c.token+'/getUpdates?offset=-20'), d=await r.json(); if(!d.ok) return -1;
+    let last=Number(localStorage.getItem(TGO_KEY))||0, n=0;
+    for(const u of d.result){
+      if(u.update_id<=last) continue; last=u.update_id;
+      const m=u.message; if(!m||!m.text||m.text[0]!=='/'||String(m.chat.id)!==String(c.chatId)) continue;
+      const cmd=m.text.split(/[\s@]/)[0].toLowerCase(); let t=null;
+      if(cmd==='/backup'){ sendToTelegram(); n++; continue; }
+      if(cmd==='/due') t=dues(30).join('\n')||'Nothing due in the next 30 days.'; else if(cmd==='/networth') t=netTxt(); else if(cmd==='/help') t='Commands: /due /networth /backup';
+      if(t==null) continue; n++;
+      await fetch('https://api.telegram.org/bot'+c.token+'/sendMessage',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({chat_id:c.chatId,text:t})});
+    }
+    try{ localStorage.setItem(TGO_KEY,String(last)); }catch(e){}
+    return n;
+  }catch(e){ return -1; }
+}
+$('#ch-fab').addEventListener('click',()=>{ const p=$('#ch-panel'); p.hidden=!p.hidden; if(!p.hidden){ if(!$('#ch-log').children.length) addMsg('Hi. Ask about premiums, due dates, FDs, cover or net worth. I can also open the add-policy form and help with a claim.'); $('#ch-in').focus(); } });
+$('#ch-x').addEventListener('click',()=>{ $('#ch-panel').hidden=true; });
+$('#ch-go').addEventListener('click',chSend);
+$('#ch-in').addEventListener('keydown',e=>{ if(e.key==='Enter') chSend(); });
+$('#ch-mic').addEventListener('click',chListen);
+$$('#ch-panel .chq').forEach(b=>b.addEventListener('click',()=>{ $('#ch-in').value=b.dataset.q; chSend(); }));
+$('#ch-sum').addEventListener('click',()=>{ const t=safeSummary(); if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(()=>addMsg('Copied. It has no names, account numbers or receipts. Paste it into any AI chat with your question.'),()=>addMsg(t)); else addMsg(t); });
+$('#ch-tg').addEventListener('click',async()=>{ addMsg('Checking Telegram…'); const n=await tgPoll(); addMsg(n<0?'Could not reach Telegram. Save the bot token and chat ID under Backup first.':'Answered '+n+(n===1?' command.':' commands.')); });
+$('#ch-tgauto').checked=localStorage.getItem(TGC_KEY)==='1';
+$('#ch-tgauto').addEventListener('change',e=>{ try{ localStorage.setItem(TGC_KEY,e.target.checked?'1':'0'); }catch(x){} });
+setInterval(()=>{ if(!document.hidden&&localStorage.getItem(TGC_KEY)==='1') tgPoll(); },120000);
 
 /* ---------- start ---------- */
 applyTheme();
