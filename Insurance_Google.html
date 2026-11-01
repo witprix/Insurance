@@ -395,7 +395,7 @@ body.priv .pc-total .n,body.priv .fig .v,body.priv .fig .n,body.priv .kv dd,body
 
         <section class="panel" aria-labelledby="du-h">
           <h2 id="du-h">Coming up</h2>
-          <p class="sub">The next payments across your policies.</p>
+          <p class="sub">Upcoming payments across your policies.</p>
           <div id="dues"></div>
         </section>
       </div>
@@ -1735,7 +1735,7 @@ function renderCards(list){
     let kv='';
     { const cur=makeAmountFn(p,pd(p.start))(TODAY); if(Math.round(cur)!==Math.round(Number(p.premium))) kv+='<dt>Current premium</dt><dd>'+fmt(cur)+' '+f.adv+'</dd>'; }
     kv+='<dt>Premium</dt><dd>'+fmt(p.premium)+' '+f.adv+(Number(p.inc)>0?', rising '+p.inc+'% a year':'')+((a.h&&p.incSenior!==''&&p.incSenior!=null)?', '+p.incSenior+'% once 60 or over':'')+'</dd>';
-    kv+='<dt>Started</dt><dd>'+fmtDate(a.start)+(a.ageStart!=null?' (age '+a.ageStart+')':'')+'</dd>';
+    kv+='<dt>'+(a.start>TODAY?'Starts':'Started')+'</dt><dd>'+fmtDate(a.start)+(a.ageStart!=null?' (age '+a.ageStart+')':'')+'</dd>';
     if(!a.h&&a.ageNow!=null) kv+='<dt>Life assured\'s age</dt><dd>'+a.ageNow+' now</dd>';
     kv+='<dt>Last premium</dt><dd>'+(a.lastPremium?fmtDate(a.lastPremium)+(a.ageLast!=null?' (age '+a.ageLast+')':''):'None')+'</dd>';
     kv+='<dt>'+(a.h?'Planned until':'Matures')+'</dt><dd>'+(a.hasMat?fmtDate(a.end)+(a.endAge!=null?' (age '+a.endAge+')':''):(a.ageEnd?'Age '+p.untilAge+', on '+fmtDate(a.end):'Renewable, projected to '+state.horizon+(a.endAge!=null?' (age '+a.endAge+')':'')))+'</dd>';
@@ -2108,7 +2108,7 @@ function openSchedule(id){
   }).join('');
   $('#ds-title').textContent=p.name;
   $('#ds-body').innerHTML=
-    '<div class="dl-meta"><span>Started '+fmtDate(a.start)+'</span><span>'+(a.lastPremium?'Last premium '+fmtDate(a.lastPremium):'')+'</span><span>'+(a.hasMat?'Matures '+fmtDate(a.end):(a.ageEnd?'Planned to age '+p.untilAge+' ('+fmtDate(a.end)+')':'Projected to '+state.horizon+(a.endAge!=null?' (age '+a.endAge+')':'')))+'</span></div>'+
+    '<div class="dl-meta"><span>'+(a.start>TODAY?'Starts ':'Started ')+fmtDate(a.start)+'</span><span>'+(a.lastPremium?'Last premium '+fmtDate(a.lastPremium):'')+'</span><span>'+(a.hasMat?'Matures '+fmtDate(a.end):(a.ageEnd?'Planned to age '+p.untilAge+' ('+fmtDate(a.end)+')':'Projected to '+state.horizon+(a.endAge!=null?' (age '+a.endAge+')':'')))+'</span></div>'+
     '<div class="tbl-wrap"><table><thead><tr><th>Year</th>'+(dobS?'<th>Age</th>':'')+'<th>Premiums</th><th>Amount</th><th>Running total</th><th>Status</th></tr></thead><tbody>'+rows+'</tbody>'+
     '<tfoot><tr><td>Total</td>'+(dobS?'<td></td>':'')+'<td>'+a.items.length+'</td><td>'+fmt(a.total)+'</td><td></td><td></td></tr></tfoot></table></div>';
   openDlg($('#dlg-sched'));
